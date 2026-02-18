@@ -1,0 +1,431 @@
+@page "/images"
+@rendermode InteractiveServer
+@inject HttpClient Http
+@inject IConfiguration Configuration
+
+<PageTitle>Imágenes - DermaUH</PageTitle>
+
+<div class="images-page-fullbleed">
+<div class="images-layout">
+    <aside class="filters-panel-left">
+        <h5 class="mb-3">Filtros</h5>
+
+        <div class="mb-3">
+            <label class="form-label">Diagnóstico</label>
+            <input @ref="diagnosisInputRef" type="text" value="@diagnosisContains" @oninput="OnDiagnosisInputChangedAsync" class="form-control" placeholder="Buscar por texto" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Visibilidad</label>
+            <InputSelect @bind-Value="publicFilter" @bind-Value:after="ApplyFiltersAsync" class="form-select">
+                <option value="all">Todas</option>
+                <option value="public">Públicas</option>
+                <option value="private">Privadas</option>
+            </InputSelect>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Tipo de imagen</label>
+            @foreach (var option in imageTypeOptions)
+            {
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" checked="@selectedImageTypes.Contains(option.Value)" @onchange="(e) => ToggleSelection(e, option.Value, selectedImageTypes)" id="@($"type-{option.Value}")" />
+                    <label class="form-check-label" for="@($"type-{option.Value}")">@option.Label</label>
+                </div>
+            }
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Categoría</label>
+            @foreach (var option in diagnosisCategoryOptions)
+            {
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" checked="@selectedDiagnosisCategories.Contains(option.Value)" @onchange="(e) => ToggleSelection(e, option.Value, selectedDiagnosisCategories)" id="@($"cat-{option.Value}")" />
+                    <label class="form-check-label" for="@($"cat-{option.Value}")">@option.Label</label>
+                </div>
+            }
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Sexo</label>
+            @foreach (var option in sexOptions)
+            {
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" checked="@selectedSexes.Contains(option.Value)" @onchange="(e) => ToggleSelection(e, option.Value, selectedSexes)" id="@($"sex-{option.Value}")" />
+                    <label class="form-check-label" for="@($"sex-{option.Value}")">@option.Label</label>
+                </div>
+            }
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Sitio anatómico</label>
+            @foreach (var option in anatomSiteOptions)
+            {
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" checked="@selectedAnatomSites.Contains(option.Value)" @onchange="(e) => ToggleSelection(e, option.Value, selectedAnatomSites)" id="@($"site-{option.Value}")" />
+                    <label class="form-check-label" for="@($"site-{option.Value}")">@option.Label</label>
+                </div>
+            }
+        </div>
+
+        <div class="d-grid gap-2">
+            <button class="btn btn-outline-secondary" @onclick="ClearFiltersAsync">Limpiar</button>
+        </div>
+    </aside>
+
+    <section class="images-content">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <h2 class="mb-0">Imágenes Dermatológicas</h2>
+                <small class="text-muted">Total: @totalCount</small>
+            </div>
+            <a href="images/create" class="btn btn-success">+ Nueva Imagen</a>
+        </div>
+
+        @if (loadingError is not null)
+        {
+            <div class="alert alert-danger">@loadingError</div>
+        }
+
+        @if (hasLoaded && totalCount == 0)
+        {
+            <div class="alert alert-info">
+                No se encontraron imágenes con los filtros actuales. <a href="images/create">Agregar nueva imagen</a>.
+            </div>
+        }
+
+        <div class="images-grid">
+            <Virtualize @ref="virtualizeRef" Context="img" ItemsProvider="LoadImagesAsync" ItemSize="300" OverscanCount="2">
+                <a href="images/@img.Id" class="image-card" title="Ver detalle">
+                    <div class="image-preview-wrapper">
+                        <img src="@GetPreviewUrl(img.Id)" alt="@img.FileName" class="image-preview" loading="lazy" />
+                    </div>
+                    <div class="image-card-footer">
+                        <div class="image-name" title="@img.FileName">@img.FileName</div>
+                        <div class="image-meta">@(img.DiagnosisCategory ?? "—") · @(img.ImageType ?? "—")</div>
+                    </div>
+                </a>
+            </Virtualize>
+        </div>
+    </section>
+</div>
+</div>
+
+@code {
+    private Virtualize<DermaImgDto>? virtualizeRef;
+
+    private bool hasLoaded;
+    private int totalCount;
+    private string? loadingError;
+    private int diagnosisInputVersion;
+    private ElementReference diagnosisInputRef;
+
+    private const int DefaultPageSize = 24;
+
+    private string? diagnosisContains;
+    private string publicFilter = "all";
+
+    private readonly HashSet<string> selectedImageTypes = [];
+    private readonly HashSet<string> selectedDiagnosisCategories = [];
+    private readonly HashSet<string> selectedSexes = [];
+    private readonly HashSet<string> selectedAnatomSites = [];
+
+    private static readonly IReadOnlyList<FilterOption> imageTypeOptions =
+    [
+        new("Dermoscopic", "Dermoscópica"),
+        new("ClinicalOverview", "Clínica: Vista General"),
+        new("ClinicalCloseUp", "Clínica: Primer Plano"),
+        new("TBPTileOverview", "TBP: Vista General"),
+        new("TBPTileCloseUp", "TBP: Primer Plano"),
+        new("RCMMacroscopic", "RCM: Macroscópica"),
+        new("RCMTile", "RCM: Tile"),
+        new("RCMMosaic", "RCM: Mosaico")
+    ];
+
+    private static readonly IReadOnlyList<FilterOption> diagnosisCategoryOptions =
+    [
+        new("Benign", "Benigno"),
+        new("Indeterminate", "Indeterminado"),
+        new("Malignant", "Maligno")
+    ];
+
+    private static readonly IReadOnlyList<FilterOption> sexOptions =
+    [
+        new("Male", "Masculino"),
+        new("Female", "Femenino")
+    ];
+
+    private static readonly IReadOnlyList<FilterOption> anatomSiteOptions =
+    [
+        new("HeadNeck", "Cabeza/Cuello"),
+        new("UpperExtremity", "Extremidad Superior"),
+        new("LowerExtremity", "Extremidad Inferior"),
+        new("AnteriorTorso", "Torso Anterior"),
+        new("LateralTorso", "Torso Lateral"),
+        new("PosteriorTorso", "Torso Posterior"),
+        new("PalmsSoles", "Palmas/Plantas"),
+        new("OralGenital", "Oral/Genital")
+    ];
+
+    protected override async Task OnInitializedAsync()
+    {
+        await RefreshVirtualizedListAsync();
+    }
+
+    private async Task ApplyFiltersAsync()
+    {
+        await RefreshVirtualizedListAsync();
+    }
+
+    private async Task OnDiagnosisInputChangedAsync(ChangeEventArgs args)
+    {
+        diagnosisContains = args.Value?.ToString();
+        var version = ++diagnosisInputVersion;
+        await Task.Delay(350);
+
+        if (version != diagnosisInputVersion)
+        {
+            return;
+        }
+
+        await ApplyFiltersAsync();
+    }
+
+    private async Task ClearFiltersAsync()
+    {
+        diagnosisContains = null;
+        diagnosisInputVersion++;
+        publicFilter = "all";
+        selectedImageTypes.Clear();
+        selectedDiagnosisCategories.Clear();
+        selectedSexes.Clear();
+        selectedAnatomSites.Clear();
+
+        await RefreshVirtualizedListAsync();
+        await diagnosisInputRef.FocusAsync();
+    }
+
+    private async Task RefreshVirtualizedListAsync()
+    {
+        hasLoaded = false;
+        loadingError = null;
+
+        if (virtualizeRef is not null)
+        {
+            await virtualizeRef.RefreshDataAsync();
+        }
+
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async ValueTask<ItemsProviderResult<DermaImgDto>> LoadImagesAsync(ItemsProviderRequest request)
+    {
+        var pageSize = request.Count <= 0 ? DefaultPageSize : request.Count;
+        var page = (request.StartIndex / pageSize) + 1;
+
+        try
+        {
+            var query = BuildQuery(page, pageSize);
+            var response = await Http.GetFromJsonAsync<PagedResponse<DermaImgDto>>(query);
+            if (response is null)
+            {
+                totalCount = 0;
+                hasLoaded = true;
+                loadingError = "No se pudo obtener la respuesta del servidor.";
+                return new ItemsProviderResult<DermaImgDto>([], 0);
+            }
+
+            totalCount = response.TotalCount;
+            hasLoaded = true;
+            loadingError = null;
+
+            return new ItemsProviderResult<DermaImgDto>(response.Items, response.TotalCount);
+        }
+        catch
+        {
+            totalCount = 0;
+            hasLoaded = true;
+            loadingError = "Error al cargar imágenes.";
+            return new ItemsProviderResult<DermaImgDto>([], 0);
+        }
+    }
+
+    private string BuildQuery(int page, int pageSize)
+    {
+        var queryParams = new List<string>
+        {
+            $"page={page}",
+            $"pageSize={pageSize}"
+        };
+
+        foreach (var value in selectedImageTypes)
+        {
+            queryParams.Add($"imageTypes={Uri.EscapeDataString(value)}");
+        }
+
+        foreach (var value in selectedDiagnosisCategories)
+        {
+            queryParams.Add($"diagnosisCategories={Uri.EscapeDataString(value)}");
+        }
+
+        foreach (var value in selectedSexes)
+        {
+            queryParams.Add($"sexes={Uri.EscapeDataString(value)}");
+        }
+
+        foreach (var value in selectedAnatomSites)
+        {
+            queryParams.Add($"anatomSites={Uri.EscapeDataString(value)}");
+        }
+
+        if (!string.IsNullOrWhiteSpace(diagnosisContains))
+        {
+            queryParams.Add($"diagnosisContains={Uri.EscapeDataString(diagnosisContains.Trim())}");
+        }
+
+        if (publicFilter == "public")
+        {
+            queryParams.Add("isPublic=true");
+        }
+        else if (publicFilter == "private")
+        {
+            queryParams.Add("isPublic=false");
+        }
+
+        return $"api/images?{string.Join("&", queryParams)}";
+    }
+
+    private async Task ToggleSelection(ChangeEventArgs args, string value, HashSet<string> selectedValues)
+    {
+        var isChecked = args.Value as bool? ?? false;
+        if (isChecked)
+        {
+            selectedValues.Add(value);
+        }
+        else
+        {
+            selectedValues.Remove(value);
+        }
+
+        await ApplyFiltersAsync();
+    }
+
+    private string GetPreviewUrl(Guid imageId)
+    {
+        var apiBase = (Configuration["ApiBaseUrl"] ?? string.Empty).TrimEnd('/');
+        return string.IsNullOrWhiteSpace(apiBase)
+            ? $"api/images/{imageId}/preview"
+            : $"{apiBase}/api/images/{imageId}/preview";
+    }
+
+    private sealed record FilterOption(string Value, string Label);
+}
+
+<style>
+    .images-page-fullbleed {
+        width: 100vw;
+        margin-left: calc(50% - 50vw);
+    }
+
+    .images-layout {
+        display: grid;
+        grid-template-columns: 320px minmax(0, 1fr);
+        gap: 0;
+        align-items: start;
+    }
+
+    .filters-panel-left {
+        position: sticky;
+        top: 3.5rem;
+        max-height: calc(100vh - 3.5rem);
+        overflow-y: auto;
+        padding: 1rem 0.75rem 1rem 1rem;
+        border-right: 1px solid #f2e6ec;
+        background: #fff;
+        margin: 0;
+    }
+
+    .images-content {
+        min-height: 70vh;
+        padding: 1rem 1.5rem 1rem 0.35rem;
+    }
+
+    .images-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 1rem;
+    }
+
+    .image-card {
+        display: block;
+        text-decoration: none;
+        background: #fff;
+        border: 1px solid #f2e6ec;
+        border-radius: 12px;
+        overflow: hidden;
+        transition: transform .18s ease, box-shadow .18s ease;
+    }
+
+    .image-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 22px rgba(233, 30, 99, 0.12);
+    }
+
+    .image-preview-wrapper {
+        width: 100%;
+        aspect-ratio: 4 / 3;
+        background: #fdf2f6;
+        overflow: hidden;
+    }
+
+    .image-preview {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+
+    .image-card-footer {
+        padding: 0.75rem;
+    }
+
+    .image-name {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #4a2040;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        margin-bottom: 0.25rem;
+    }
+
+    .image-meta {
+        font-size: 0.78rem;
+        color: #8e6f7f;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    @@media (max-width: 992px) {
+        .images-page-fullbleed {
+            width: 100%;
+            margin-left: 0;
+        }
+
+        .images-layout {
+            grid-template-columns: 1fr;
+        }
+
+        .filters-panel-left {
+            position: static;
+            max-height: none;
+            border-right: none;
+            border-bottom: 1px solid #f2e6ec;
+        }
+
+        .images-content {
+            padding: 1rem;
+        }
+    }
+</style>

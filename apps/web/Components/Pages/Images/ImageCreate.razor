@@ -1,0 +1,377 @@
+@page "/images/create"
+@rendermode InteractiveServer
+@using System.Globalization
+@using System.Net.Http.Headers
+@inject HttpClient Http
+@inject NavigationManager Navigation
+@inject IConfiguration Configuration
+
+<PageTitle>Nueva Imagen - DermaUH</PageTitle>
+
+<h2>Registrar Nueva Imagen</h2>
+<hr />
+
+<EditForm Model="model" OnValidSubmit="HandleSubmit" FormName="createImage">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger">@errorMessage</div>
+    }
+
+    <div class="row">
+        <div class="col-md-6">
+            <h5>Selección del Archivo</h5>
+            <div class="mb-3">
+                <label class="form-label">Imagen *</label>
+                <InputFile OnChange="OnFileSelected" accept="image/*" class="form-control" />
+                @if (selectedFile is not null)
+                {
+                    <small class="text-muted">Archivo seleccionado: @selectedFile.Name (@(selectedFile.Size / 1024) KB)</small>
+                }
+            </div>
+
+            <h5>Información del Archivo</h5>
+            <div class="mb-3">
+                <label class="form-label">Nombre de Archivo *</label>
+                <InputText @bind-Value="model.FileName" class="form-control" readonly />
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Ruta del Archivo *</label>
+                <InputText @bind-Value="model.FilePath" class="form-control" readonly />
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Tipo de Contenido</label>
+                <InputText @bind-Value="model.ContentType" class="form-control" readonly />
+            </div>
+
+            <h5 class="mt-4">Tipo de Imagen</h5>
+            <div class="mb-3">
+                <label class="form-label">Tipo de Imagen</label>
+                <InputSelect @bind-Value="model.ImageType" class="form-select">
+                    <option value="">— Seleccionar —</option>
+                    <option value="Dermoscopic">Dermoscópica</option>
+                    <option value="ClinicalOverview">Clínica: Vista General</option>
+                    <option value="ClinicalCloseUp">Clínica: Primer Plano</option>
+                    <option value="TBPTileOverview">TBP Tile: Vista General</option>
+                    <option value="TBPTileCloseUp">TBP Tile: Primer Plano</option>
+                    <option value="RCMMacroscopic">RCM: Macroscópica</option>
+                    <option value="RCMTile">RCM: Tile</option>
+                    <option value="RCMMosaic">RCM: Mosaico</option>
+                </InputSelect>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Manipulación de Imagen</label>
+                <InputSelect @bind-Value="model.ImageManipulation" class="form-select">
+                    <option value="">— Seleccionar —</option>
+                    <option value="InstrumentOnly">Solo Instrumento</option>
+                    <option value="Altered">Alterada</option>
+                    <option value="Synthetic">Sintética</option>
+                    <option value="Unknown">Desconocida</option>
+                </InputSelect>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Tipo Dermatoscópico</label>
+                <InputSelect @bind-Value="model.DermoscopicType" class="form-select">
+                    <option value="">— Seleccionar —</option>
+                    <option value="ContactPolarized">Contacto Polarizado</option>
+                    <option value="ContactNonPolarized">Contacto No Polarizado</option>
+                    <option value="NonContactPolarized">Sin Contacto Polarizado</option>
+                </InputSelect>
+            </div>
+
+            <h5 class="mt-4">Datos del Paciente</h5>
+            <div class="mb-3">
+                <label class="form-label">Edad Aproximada</label>
+                <InputNumber @bind-Value="model.AgeApprox" class="form-control" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Sexo</label>
+                <InputSelect @bind-Value="model.Sex" class="form-select">
+                    <option value="">— Seleccionar —</option>
+                    <option value="Male">Masculino</option>
+                    <option value="Female">Femenino</option>
+                </InputSelect>
+            </div>
+            <div class="mb-3 form-check">
+                <InputCheckbox @bind-Value="personalHxMm" class="form-check-input" id="personalHxMm" />
+                <label class="form-check-label" for="personalHxMm">Historial Personal de Melanoma</label>
+            </div>
+            <div class="mb-3 form-check">
+                <InputCheckbox @bind-Value="familyHxMm" class="form-check-input" id="familyHxMm" />
+                <label class="form-check-label" for="familyHxMm">Historial Familiar de Melanoma</label>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <h5>Localización de la Lesión</h5>
+            <div class="mb-3">
+                <label class="form-label">Sitio Anatómico General</label>
+                <InputSelect @bind-Value="model.AnatomSiteGeneral" class="form-select">
+                    <option value="">— Seleccionar —</option>
+                    <option value="HeadNeck">Cabeza/Cuello</option>
+                    <option value="UpperExtremity">Extremidad Superior</option>
+                    <option value="LowerExtremity">Extremidad Inferior</option>
+                    <option value="AnteriorTorso">Torso Anterior</option>
+                    <option value="LateralTorso">Torso Lateral</option>
+                    <option value="PosteriorTorso">Torso Posterior</option>
+                    <option value="PalmsSoles">Palmas/Plantas</option>
+                    <option value="OralGenital">Oral/Genital</option>
+                </InputSelect>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Diámetro Mayor (mm)</label>
+                <InputNumber @bind-Value="model.ClinSizeLongDiamMm" class="form-control" />
+            </div>
+
+            <h5 class="mt-4">Diagnóstico</h5>
+            <div class="mb-3">
+                <label class="form-label">Diagnóstico</label>
+                <InputText @bind-Value="model.Diagnosis" class="form-control" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Categoría</label>
+                <InputSelect @bind-Value="model.DiagnosisCategory" class="form-select">
+                    <option value="">— Seleccionar —</option>
+                    <option value="Benign">Benigno</option>
+                    <option value="Indeterminate">Indeterminado</option>
+                    <option value="Malignant">Maligno</option>
+                </InputSelect>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Método de Confirmación</label>
+                <InputSelect @bind-Value="model.DiagnosisConfirmType" class="form-select">
+                    <option value="">— Seleccionar —</option>
+                    <option value="Histopathology">Histopatología</option>
+                    <option value="SingleContributorClinicalAssessment">Evaluación Clínica Individual</option>
+                    <option value="SerialImagingShowingNoChange">Imágenes Seriadas Sin Cambio</option>
+                    <option value="SingleImageExpertConsensus">Consenso de Expertos</option>
+                    <option value="ConfocalMicroscopyWithConsensusDermoscopy">Microscopía Confocal</option>
+                </InputSelect>
+            </div>
+            <div class="mb-3 form-check">
+                <InputCheckbox @bind-Value="melanocytic" class="form-check-input" id="melanocytic" />
+                <label class="form-check-label" for="melanocytic">Lesión Melanocítica</label>
+            </div>
+            <div class="mb-3 form-check">
+                <InputCheckbox @bind-Value="concomitantBiopsy" class="form-check-input" id="concomitantBiopsy" />
+                <label class="form-check-label" for="concomitantBiopsy">Biopsia Concomitante</label>
+            </div>
+
+            <h5 class="mt-4">Histología (Melanoma)</h5>
+            <div class="mb-3">
+                <label class="form-label">Espesor de Melanoma (mm)</label>
+                <InputNumber @bind-Value="model.MelThickMm" class="form-control" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Índice Mitótico</label>
+                <InputSelect @bind-Value="model.MelMitoticIndex" class="form-select">
+                    <option value="">— Seleccionar —</option>
+                    <option value="Zero">0/mm²</option>
+                    <option value="LessThanOne">&lt;1/mm²</option>
+                    <option value="One">1/mm²</option>
+                    <option value="Two">2/mm²</option>
+                    <option value="Three">3/mm²</option>
+                    <option value="Four">4/mm²</option>
+                    <option value="MoreThanFour">&gt;4/mm²</option>
+                </InputSelect>
+            </div>
+            <div class="mb-3 form-check">
+                <InputCheckbox @bind-Value="melUlcer" class="form-check-input" id="melUlcer" />
+                <label class="form-check-label" for="melUlcer">Ulceración Histopatológica</label>
+            </div>
+
+            <h5 class="mt-4">Notas</h5>
+            <div class="mb-3">
+                <label class="form-label">Notas Clínicas</label>
+                <InputTextArea @bind-Value="model.ClinicalNotes" class="form-control" rows="3" />
+            </div>
+
+            <h5 class="mt-4">Licencia</h5>
+            <div class="mb-3">
+                <label class="form-label">Licencia</label>
+                <InputSelect @bind-Value="model.CopyrightLicense" class="form-select">
+                    <option value="">— Seleccionar —</option>
+                    <option value="CC0">CC-0</option>
+                    <option value="CCBY">CC-BY</option>
+                    <option value="CCBYNC">CC-BY-NC</option>
+                </InputSelect>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Atribución</label>
+                <InputText @bind-Value="model.Attribution" class="form-control" />
+            </div>
+            <div class="mb-3 form-check">
+                <InputCheckbox @bind-Value="model.IsPublic" class="form-check-input" id="isPublic" />
+                <label class="form-check-label" for="isPublic">Visible públicamente</label>
+            </div>
+        </div>
+    </div>
+
+    <hr />
+    <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-primary" disabled="@submitting">
+            @(submitting ? "Guardando..." : "Guardar Imagen")
+        </button>
+        <a href="images" class="btn btn-outline-secondary">Cancelar</a>
+    </div>
+</EditForm>
+
+@code {
+    private const long MaxUploadSizeBytes = 20 * 1024 * 1024;
+
+    private CreateImageModel model = new();
+    private bool submitting = false;
+    private string? errorMessage;
+    private IBrowserFile? selectedFile;
+
+    private bool personalHxMm;
+    private bool familyHxMm;
+    private bool melanocytic;
+    private bool concomitantBiopsy;
+    private bool melUlcer;
+
+    private void OnFileSelected(InputFileChangeEventArgs e)
+    {
+        selectedFile = e.File;
+
+        model.FileName = selectedFile.Name;
+        model.ContentType = string.IsNullOrWhiteSpace(selectedFile.ContentType)
+            ? "application/octet-stream"
+            : selectedFile.ContentType;
+
+        var storageRoot = Configuration["ServerImageStoragePath"] ?? "ImageStorage";
+        model.FilePath = Path.Combine(storageRoot, model.FileName);
+    }
+
+    private async Task HandleSubmit()
+    {
+        submitting = true;
+        errorMessage = null;
+
+        try
+        {
+            if (selectedFile is null)
+            {
+                errorMessage = "Debe seleccionar una imagen.";
+                return;
+            }
+
+            using var formData = new MultipartFormDataContent();
+            await using var fileStream = selectedFile.OpenReadStream(MaxUploadSizeBytes);
+            using var fileContent = new StreamContent(fileStream);
+
+            fileContent.Headers.ContentType = new MediaTypeHeaderValue(model.ContentType);
+            formData.Add(fileContent, "file", selectedFile.Name);
+
+            AddIfNotEmpty(formData, "FileName", model.FileName);
+            AddIfNotEmpty(formData, "FilePath", model.FilePath);
+            AddIfNotEmpty(formData, "ContentType", model.ContentType);
+            AddIfNotEmpty(formData, "CopyrightLicense", model.CopyrightLicense);
+            AddIfNotEmpty(formData, "Attribution", model.Attribution);
+            AddIfNotEmpty(formData, "ImageType", model.ImageType);
+            AddIfNotEmpty(formData, "ImageManipulation", model.ImageManipulation);
+            AddIfNotEmpty(formData, "DermoscopicType", model.DermoscopicType);
+            AddIfNotEmpty(formData, "Sex", model.Sex);
+            AddIfNotEmpty(formData, "AnatomSiteGeneral", model.AnatomSiteGeneral);
+            AddIfNotEmpty(formData, "Diagnosis", model.Diagnosis);
+            AddIfNotEmpty(formData, "DiagnosisCategory", model.DiagnosisCategory);
+            AddIfNotEmpty(formData, "DiagnosisConfirmType", model.DiagnosisConfirmType);
+            AddIfNotEmpty(formData, "MelMitoticIndex", model.MelMitoticIndex);
+            AddIfNotEmpty(formData, "ClinicalNotes", model.ClinicalNotes);
+
+            AddIfValue(formData, "AgeApprox", model.AgeApprox);
+            AddIfValue(formData, "ClinSizeLongDiamMm", model.ClinSizeLongDiamMm);
+            AddIfValue(formData, "MelThickMm", model.MelThickMm);
+
+            AddNullableBool(formData, "PersonalHxMm", personalHxMm);
+            AddNullableBool(formData, "FamilyHxMm", familyHxMm);
+            AddNullableBool(formData, "Melanocytic", melanocytic);
+            AddNullableBool(formData, "ConcomitantBiopsy", concomitantBiopsy);
+            AddNullableBool(formData, "MelUlcer", melUlcer);
+
+            formData.Add(new StringContent(model.IsPublic.ToString()), "IsPublic");
+
+            var response = await Http.PostAsync("api/images", formData);
+            if (response.IsSuccessStatusCode)
+            {
+                Navigation.NavigateTo("images");
+            }
+            else
+            {
+                var details = await response.Content.ReadAsStringAsync();
+                errorMessage = string.IsNullOrWhiteSpace(details)
+                    ? $"Error al guardar: {response.StatusCode}"
+                    : $"Error al guardar: {details}";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error: {ex.Message}";
+        }
+        finally
+        {
+            submitting = false;
+        }
+    }
+
+    private static void AddIfNotEmpty(MultipartFormDataContent formData, string key, string? value)
+    {
+        if (!string.IsNullOrWhiteSpace(value))
+        {
+            formData.Add(new StringContent(value), key);
+        }
+    }
+
+    private static void AddIfValue<T>(MultipartFormDataContent formData, string key, T? value)
+        where T : struct
+    {
+        if (value.HasValue)
+        {
+            var text = value.Value switch
+            {
+                double number => number.ToString(CultureInfo.InvariantCulture),
+                float number => number.ToString(CultureInfo.InvariantCulture),
+                decimal number => number.ToString(CultureInfo.InvariantCulture),
+                _ => value.Value.ToString()
+            };
+
+            if (!string.IsNullOrWhiteSpace(text))
+            {
+                formData.Add(new StringContent(text), key);
+            }
+        }
+    }
+
+    private static void AddNullableBool(MultipartFormDataContent formData, string key, bool value)
+    {
+        if (value)
+        {
+            formData.Add(new StringContent("true"), key);
+        }
+    }
+
+    private class CreateImageModel
+    {
+        public string FileName { get; set; } = string.Empty;
+        public string FilePath { get; set; } = string.Empty;
+        public string ContentType { get; set; } = "image/jpeg";
+        public string? CopyrightLicense { get; set; }
+        public string? Attribution { get; set; }
+        public bool IsPublic { get; set; }
+        public string? ImageType { get; set; }
+        public string? ImageManipulation { get; set; }
+        public string? DermoscopicType { get; set; }
+        public int? AgeApprox { get; set; }
+        public string? Sex { get; set; }
+        public string? AnatomSiteGeneral { get; set; }
+        public double? ClinSizeLongDiamMm { get; set; }
+        public string? Diagnosis { get; set; }
+        public string? DiagnosisCategory { get; set; }
+        public string? DiagnosisConfirmType { get; set; }
+        public double? MelThickMm { get; set; }
+        public string? MelMitoticIndex { get; set; }
+        public string? ClinicalNotes { get; set; }
+    }
+}

@@ -1,0 +1,74 @@
+﻿@page "/"
+
+<PageTitle>DermaUH - Base de Datos de Imágenes Dermatológicas</PageTitle>
+
+<div class="hero-section">
+    <h1>DermaUH</h1>
+    <p class="hero-subtitle">Base de Datos de Imágenes Dermatológicas</p>
+</div>
+
+<div class="row g-4 mt-2">
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body d-flex flex-column">
+                <div class="card-icon">&#128248;</div>
+                <h5 class="card-title">Imágenes</h5>
+                <p class="card-text flex-grow-1">
+                    Explore la colección de imágenes dermatológicas con metadatos clínicos,
+                    diagnósticos e histológicos detallados.
+                </p>
+                <a href="images" class="btn btn-primary mt-auto">Ver Imágenes</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body d-flex flex-column">
+                <div class="card-icon">&#127963;</div>
+                <h5 class="card-title">Instituciones</h5>
+                <p class="card-text flex-grow-1">
+                    Gestione las instituciones médicas que contribuyen imágenes a la base de datos.
+                </p>
+                <a href="institutions" class="btn btn-primary mt-auto">Ver Instituciones</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body d-flex flex-column">
+                <div class="card-icon">&#128100;</div>
+                <h5 class="card-title">Usuarios</h5>
+                <p class="card-text flex-grow-1">
+                    Administre los usuarios y contribuidores del sistema.
+                </p>
+                <a href="users" class="btn btn-primary mt-auto">Ver Usuarios</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .hero-section {
+        text-align: center;
+        padding: 3rem 1rem 1.5rem;
+    }
+
+    .hero-section h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #880e4f;
+        margin-bottom: 0.25rem;
+    }
+
+    .hero-subtitle {
+        font-size: 1.1rem;
+        color: #9a7088 !important;
+        font-weight: 300;
+        letter-spacing: 0.02em;
+    }
+
+    .card-icon {
+        font-size: 2rem;
+        margin-bottom: 0.75rem;
+    }
+</style>

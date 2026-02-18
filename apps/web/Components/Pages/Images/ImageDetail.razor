@@ -1,0 +1,171 @@
+@page "/images/{Id:guid}"
+@rendermode InteractiveServer
+@inject HttpClient Http
+
+<PageTitle>Detalle de Imagen - DermaUH</PageTitle>
+
+@if (loading)
+{
+    <p><em>Cargando...</em></p>
+}
+else if (image is null)
+{
+    <div class="alert alert-warning">Imagen no encontrada.</div>
+}
+else
+{
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>@image.PublicId</h2>
+        <a href="images" class="btn btn-outline-secondary">Volver al listado</a>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card mb-3">
+                <div class="card-header"><strong>Información General</strong></div>
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-5">ID Público</dt>
+                        <dd class="col-sm-7">@image.PublicId</dd>
+                        <dt class="col-sm-5">Archivo</dt>
+                        <dd class="col-sm-7">@image.FileName</dd>
+                        <dt class="col-sm-5">Tipo de Imagen</dt>
+                        <dd class="col-sm-7">@(image.ImageType ?? "—")</dd>
+                        <dt class="col-sm-5">Manipulación</dt>
+                        <dd class="col-sm-7">@(image.ImageManipulation ?? "—")</dd>
+                        <dt class="col-sm-5">Tipo Dermatoscópico</dt>
+                        <dd class="col-sm-7">@(image.DermoscopicType ?? "—")</dd>
+                        <dt class="col-sm-5">Licencia</dt>
+                        <dd class="col-sm-7">@(image.CopyrightLicense ?? "—")</dd>
+                        <dt class="col-sm-5">Atribución</dt>
+                        <dd class="col-sm-7">@(image.Attribution ?? "—")</dd>
+                        <dt class="col-sm-5">Público</dt>
+                        <dd class="col-sm-7">@(image.IsPublic ? "Sí" : "No")</dd>
+                    </dl>
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="card-header"><strong>Datos del Paciente</strong></div>
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-5">Edad Aproximada</dt>
+                        <dd class="col-sm-7">@(image.AgeApprox?.ToString() ?? "—")</dd>
+                        <dt class="col-sm-5">Sexo</dt>
+                        <dd class="col-sm-7">@(image.Sex ?? "—")</dd>
+                        <dt class="col-sm-5">Historial Personal MM</dt>
+                        <dd class="col-sm-7">@FormatBool(image.PersonalHxMm)</dd>
+                        <dt class="col-sm-5">Historial Familiar MM</dt>
+                        <dd class="col-sm-7">@FormatBool(image.FamilyHxMm)</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card mb-3">
+                <div class="card-header"><strong>Información Clínica de la Lesión</strong></div>
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-5">Sitio Anatómico</dt>
+                        <dd class="col-sm-7">@(image.AnatomSiteGeneral ?? "—")</dd>
+                        <dt class="col-sm-5">Sitio Especial</dt>
+                        <dd class="col-sm-7">@(image.AnatomSiteSpecial ?? "—")</dd>
+                        <dt class="col-sm-5">Diámetro Mayor (mm)</dt>
+                        <dd class="col-sm-7">@(image.ClinSizeLongDiamMm?.ToString("F1") ?? "—")</dd>
+                    </dl>
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="card-header"><strong>Diagnóstico</strong></div>
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-5">Diagnóstico</dt>
+                        <dd class="col-sm-7">@(image.Diagnosis ?? "—")</dd>
+                        <dt class="col-sm-5">Categoría</dt>
+                        <dd class="col-sm-7">
+                            @if (image.DiagnosisCategory is not null)
+                            {
+                                <span class="badge @GetBadgeClass(image.DiagnosisCategory)">@image.DiagnosisCategory</span>
+                            }
+                            else
+                            {
+                                <span>—</span>
+                            }
+                        </dd>
+                        <dt class="col-sm-5">Nivel 2</dt>
+                        <dd class="col-sm-7">@(image.DiagnosisLevel2 ?? "—")</dd>
+                        <dt class="col-sm-5">Nivel 3</dt>
+                        <dd class="col-sm-7">@(image.DiagnosisLevel3 ?? "—")</dd>
+                        <dt class="col-sm-5">Confirmación</dt>
+                        <dd class="col-sm-7">@(image.DiagnosisConfirmType ?? "—")</dd>
+                        <dt class="col-sm-5">Melanocítico</dt>
+                        <dd class="col-sm-7">@FormatBool(image.Melanocytic)</dd>
+                        <dt class="col-sm-5">Biopsia Concomitante</dt>
+                        <dd class="col-sm-7">@FormatBool(image.ConcomitantBiopsy)</dd>
+                    </dl>
+                </div>
+            </div>
+
+            <div class="card mb-3">
+                <div class="card-header"><strong>Histología (Melanoma)</strong></div>
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-5">Espesor (mm)</dt>
+                        <dd class="col-sm-7">@(image.MelThickMm?.ToString("F2") ?? "—")</dd>
+                        <dt class="col-sm-5">Índice Mitótico</dt>
+                        <dd class="col-sm-7">@(image.MelMitoticIndex ?? "—")</dd>
+                        <dt class="col-sm-5">Ulceración</dt>
+                        <dd class="col-sm-7">@FormatBool(image.MelUlcer)</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(image.ClinicalNotes))
+    {
+        <div class="card mb-3">
+            <div class="card-header"><strong>Notas Clínicas</strong></div>
+            <div class="card-body">
+                <p>@image.ClinicalNotes</p>
+            </div>
+        </div>
+    }
+}
+
+@code {
+    [Parameter] public Guid Id { get; set; }
+
+    private DermaImgDto? image;
+    private bool loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            image = await Http.GetFromJsonAsync<DermaImgDto>($"api/images/{Id}");
+        }
+        catch
+        {
+            image = null;
+        }
+        loading = false;
+    }
+
+    private string FormatBool(bool? value) => value switch
+    {
+        true => "Sí",
+        false => "No",
+        null => "—"
+    };
+
+    private string GetBadgeClass(string category) => category switch
+    {
+        "Benign" => "bg-success",
+        "Malignant" => "bg-danger",
+        "Indeterminate" => "bg-warning text-dark",
+        _ => "bg-secondary"
+    };
+}
