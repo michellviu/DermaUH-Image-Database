@@ -13,7 +13,7 @@ public class DermaImgConfiguration : IEntityTypeConfiguration<DermaImg>
         builder.HasKey(e => e.Id);
 
         builder.HasIndex(e => e.PublicId).IsUnique();
-        builder.Property(e => e.PublicId).IsRequired().HasMaxLength(20);
+        builder.Property(e => e.PublicId).IsRequired().HasMaxLength(30);
 
         builder.Property(e => e.FileName).IsRequired().HasMaxLength(500);
         builder.Property(e => e.FilePath).IsRequired().HasMaxLength(1000);

@@ -50,6 +50,6 @@ public class CreateDermaImgDto
     public string? ClinicalNotes { get; set; }
 
     // Relationships
-    public Guid? ContributorId { get; set; }
-    public Guid? InstitutionId { get; set; }
+    public Guid ContributorId { get; set; }
+    public Guid InstitutionId { get; set; }
 }

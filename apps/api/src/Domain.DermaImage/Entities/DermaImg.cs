@@ -112,10 +112,10 @@ public class DermaImg : BaseEntity
 
     // ── Relationships ──────────────────────────────────────────────────
     /// <summary>User who contributed this image.</summary>
-    public Guid? ContributorId { get; set; }
-    public User? Contributor { get; set; }
+    public Guid ContributorId { get; set; }
+    public User Contributor { get; set; }
 
     /// <summary>Institution that provided this image.</summary>
-    public Guid? InstitutionId { get; set; }
-    public Institution? Institution { get; set; }
+    public Guid InstitutionId { get; set; }
+    public Institution Institution { get; set; }
 }
