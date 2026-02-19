@@ -8,9 +8,9 @@ public class DermaImgRepository : Repository<DermaImg>, IDermaImgRepository
 {
     public DermaImgRepository(DermaImageDbContext context) : base(context) { }
 
-    public async Task<DermaImg?> GetByPublicIdAsync(string publicId, CancellationToken cancellationToken = default)
+    public Task<DermaImg?> GetByPublicIdAsync(string publicId, CancellationToken cancellationToken = default)
     {
-        return await DbSet
+        return DbSet
             .Include(i => i.Contributor)
             .Include(i => i.Institution)
             .FirstOrDefaultAsync(i => i.PublicId == publicId, cancellationToken);
@@ -20,6 +20,8 @@ public class DermaImgRepository : Repository<DermaImg>, IDermaImgRepository
     {
         return await DbSet
             .Where(i => i.ContributorId == contributorId)
+            .Include(i => i.Contributor)
+            .Include(i => i.Institution)
             .OrderByDescending(i => i.CreatedAt)
             .ToListAsync(cancellationToken);
     }
@@ -28,6 +30,8 @@ public class DermaImgRepository : Repository<DermaImg>, IDermaImgRepository
     {
         return await DbSet
             .Where(i => i.InstitutionId == institutionId)
+            .Include(i => i.Contributor)
+            .Include(i => i.Institution)
             .OrderByDescending(i => i.CreatedAt)
             .ToListAsync(cancellationToken);
     }
@@ -81,6 +85,8 @@ public class DermaImgRepository : Repository<DermaImg>, IDermaImgRepository
 
         var items = await query
             .OrderByDescending(i => i.CreatedAt)
+            .Include(i => i.Contributor)
+            .Include(i => i.Institution)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync(cancellationToken);

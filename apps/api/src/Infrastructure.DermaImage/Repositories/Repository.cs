@@ -16,9 +16,9 @@ public class Repository<T> : IRepository<T> where T : BaseEntity
         DbSet = context.Set<T>();
     }
 
-    public async Task<T?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    public Task<T?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        return await DbSet.FirstOrDefaultAsync(e => e.Id == id, cancellationToken);
+        return DbSet.FirstOrDefaultAsync(e => e.Id == id, cancellationToken);
     }
 
     public async Task<IEnumerable<T>> GetAllAsync(CancellationToken cancellationToken = default)
@@ -54,11 +54,11 @@ public class Repository<T> : IRepository<T> where T : BaseEntity
         }
     }
 
-    public async Task<int> CountAsync(Expression<Func<T, bool>>? predicate = null, CancellationToken cancellationToken = default)
+    public Task<int> CountAsync(Expression<Func<T, bool>>? predicate = null, CancellationToken cancellationToken = default)
     {
         return predicate is null
-            ? await DbSet.CountAsync(cancellationToken)
-            : await DbSet.CountAsync(predicate, cancellationToken);
+            ? DbSet.CountAsync(cancellationToken)
+            : DbSet.CountAsync(predicate, cancellationToken);
     }
 
     public async Task<(IEnumerable<T> Items, int TotalCount)> GetPagedAsync(int page, int pageSize, Expression<Func<T, bool>>? predicate = null, CancellationToken cancellationToken = default)

@@ -20,27 +20,26 @@ public class UserRepository : IUserRepository
     {
         return await _context.Users
             .Include(u => u.Institution)
-            .FirstOrDefaultAsync(u => u.Id == id && !u.IsDeleted, cancellationToken);
+            .FirstOrDefaultAsync(u => u.Id == id, cancellationToken);
     }
 
     public async Task<User?> GetByEmailAsync(string email, CancellationToken cancellationToken = default)
     {
         return await _context.Users
             .Include(u => u.Institution)
-            .FirstOrDefaultAsync(u => u.Email == email && !u.IsDeleted, cancellationToken);
+            .FirstOrDefaultAsync(u => u.Email == email, cancellationToken);
     }
 
     public async Task<IEnumerable<User>> GetAllAsync(CancellationToken cancellationToken = default)
     {
         return await _context.Users
-            .Where(u => !u.IsDeleted)
             .Include(u => u.Institution)
             .ToListAsync(cancellationToken);
     }
 
     public async Task<(IEnumerable<User> Items, int TotalCount)> GetPagedAsync(int page, int pageSize, CancellationToken cancellationToken = default)
     {
-        var query = _context.Users.Where(u => !u.IsDeleted);
+        var query = _context.Users.AsQueryable();
         var totalCount = await query.CountAsync(cancellationToken);
         var items = await query
             .Include(u => u.Institution)

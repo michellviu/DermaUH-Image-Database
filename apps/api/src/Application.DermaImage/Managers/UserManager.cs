@@ -37,7 +37,7 @@ public class UserManager : IUserManager
 
         var created = await _service.CreateAsync(user, dto.Password, cancellationToken);
 
-        var role = dto.Role ?? UserRole.Viewer;
+        var role = UserRole.Viewer;
         await _service.AddToRoleAsync(created, role.ToString());
 
         return created;
