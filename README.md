@@ -4,7 +4,7 @@ En este repositorio se estará desarrollando la base de imágenes de DermaUH.
 
 ## Requisitos
 
-- .NET 9.0 SDK
+- .NET 10.0 SDK
 - PostgreSQL
 
 ## Estructura del proyecto
