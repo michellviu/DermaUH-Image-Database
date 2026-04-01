@@ -1,4 +1,5 @@
 using Domain.DermaImage.Entities;
+using Microsoft.AspNetCore.Identity;
 
 namespace Domain.DermaImage.Interfaces.Repository;
 
@@ -13,8 +14,21 @@ public interface IUserRepository
     Task<IEnumerable<User>> GetAllAsync(CancellationToken cancellationToken = default);
     Task<(IEnumerable<User> Items, int TotalCount)> GetPagedAsync(int page, int pageSize, CancellationToken cancellationToken = default);
     Task<User> CreateAsync(User user, string password, CancellationToken cancellationToken = default);
+    Task<User> CreateExternalAsync(User user, CancellationToken cancellationToken = default);
     Task UpdateAsync(User user, CancellationToken cancellationToken = default);
     Task DeleteAsync(Guid id, CancellationToken cancellationToken = default);
     Task AddToRoleAsync(User user, string role);
     Task<IList<string>> GetRolesAsync(User user);
+
+    // Auth-specific
+    Task<bool> CheckPasswordAsync(User user, string password);
+    Task<string> GenerateEmailConfirmationTokenAsync(User user);
+    Task<IdentityResult> ConfirmEmailAsync(User user, string token);
+    Task<string> GeneratePasswordResetTokenAsync(User user);
+    Task<IdentityResult> ResetPasswordAsync(User user, string token, string newPassword);
+    Task<bool> HasPasswordAsync(User user);
+    Task<IdentityResult> AddPasswordAsync(User user, string newPassword);
+    Task<IdentityResult> ChangePasswordAsync(User user, string currentPassword, string newPassword);
+    Task<User?> FindByLoginAsync(string loginProvider, string providerKey);
+    Task<IdentityResult> AddLoginAsync(User user, UserLoginInfo loginInfo);
 }

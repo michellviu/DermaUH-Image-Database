@@ -94,4 +94,45 @@ public class UserRepository : IUserRepository
     {
         return await _userManager.GetRolesAsync(user);
     }
+
+    public async Task<User> CreateExternalAsync(User user, CancellationToken cancellationToken = default)
+    {
+        var result = await _userManager.CreateAsync(user);
+        if (!result.Succeeded)
+        {
+            var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+            throw new InvalidOperationException($"Failed to create external user: {errors}");
+        }
+        return user;
+    }
+
+    public Task<bool> CheckPasswordAsync(User user, string password)
+        => _userManager.CheckPasswordAsync(user, password);
+
+    public Task<string> GenerateEmailConfirmationTokenAsync(User user)
+        => _userManager.GenerateEmailConfirmationTokenAsync(user);
+
+    public Task<IdentityResult> ConfirmEmailAsync(User user, string token)
+        => _userManager.ConfirmEmailAsync(user, token);
+
+    public Task<string> GeneratePasswordResetTokenAsync(User user)
+        => _userManager.GeneratePasswordResetTokenAsync(user);
+
+    public Task<IdentityResult> ResetPasswordAsync(User user, string token, string newPassword)
+        => _userManager.ResetPasswordAsync(user, token, newPassword);
+
+    public Task<bool> HasPasswordAsync(User user)
+        => _userManager.HasPasswordAsync(user);
+
+    public Task<IdentityResult> AddPasswordAsync(User user, string newPassword)
+        => _userManager.AddPasswordAsync(user, newPassword);
+
+    public Task<IdentityResult> ChangePasswordAsync(User user, string currentPassword, string newPassword)
+        => _userManager.ChangePasswordAsync(user, currentPassword, newPassword);
+
+    public Task<User?> FindByLoginAsync(string loginProvider, string providerKey)
+        => _userManager.FindByLoginAsync(loginProvider, providerKey);
+
+    public Task<IdentityResult> AddLoginAsync(User user, UserLoginInfo loginInfo)
+        => _userManager.AddLoginAsync(user, loginInfo);
 }

@@ -31,7 +31,7 @@ public class UserManager : IUserManager
             FirstName = dto.FirstName,
             LastName = dto.LastName,
             Email = dto.Email,
-            UserName = dto.Email,
+            UserName = BuildUserName(dto.Email),
             InstitutionId = dto.InstitutionId
         };
 
@@ -62,5 +62,18 @@ public class UserManager : IUserManager
     public async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)
     {
         await _service.DeleteAsync(id, cancellationToken);
+    }
+
+    private static string BuildUserName(string email)
+    {
+        var localPart = email.Split('@')[0];
+        var filtered = new string(localPart
+            .Where(c => char.IsLetterOrDigit(c) || c == '-' || c == '_' || c == '.')
+            .ToArray());
+
+        if (string.IsNullOrWhiteSpace(filtered))
+            filtered = "user";
+
+        return $"{filtered}_{Guid.NewGuid():N}";
     }
 }
