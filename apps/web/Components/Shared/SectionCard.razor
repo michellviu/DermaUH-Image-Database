@@ -1,0 +1,30 @@
+<section class="content-card @Class">
+    @if (!string.IsNullOrWhiteSpace(Title) || HeaderContent is not null)
+    {
+        <header class="content-card__header">
+            @if (!string.IsNullOrWhiteSpace(Title))
+            {
+                <h2>@Title</h2>
+            }
+
+            @if (HeaderContent is not null)
+            {
+                <div class="content-card__header-actions">
+                    @HeaderContent
+                </div>
+            }
+        </header>
+    }
+
+    <div class="content-card__body @BodyClass">
+        @ChildContent
+    </div>
+</section>
+
+@code {
+    [Parameter] public string? Title { get; set; }
+    [Parameter] public string? Class { get; set; }
+    [Parameter] public string? BodyClass { get; set; }
+    [Parameter] public RenderFragment? HeaderContent { get; set; }
+    [Parameter, EditorRequired] public RenderFragment ChildContent { get; set; } = default!;
+}

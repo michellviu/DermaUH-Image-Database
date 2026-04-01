@@ -1,0 +1,60 @@
+@inject HttpClient Http
+
+<div class="@ContainerClass">
+    @if (loading)
+    {
+        <div class="image-preview-fallback">Cargando vista previa...</div>
+    }
+    else if (!string.IsNullOrWhiteSpace(imageDataUrl))
+    {
+        <img src="@imageDataUrl" alt="@Alt" class="@ImageClass" loading="lazy" />
+    }
+    else
+    {
+        <div class="image-preview-fallback">Vista previa no disponible</div>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public Guid ImageId { get; set; }
+    [Parameter] public string Alt { get; set; } = "Imagen";
+    [Parameter] public string ContainerClass { get; set; } = "image-preview-wrapper";
+    [Parameter] public string ImageClass { get; set; } = "image-preview";
+
+    private Guid? lastLoadedImageId;
+    private string? imageDataUrl;
+    private bool loading;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (lastLoadedImageId == ImageId)
+        {
+            return;
+        }
+
+        lastLoadedImageId = ImageId;
+        loading = true;
+        imageDataUrl = null;
+
+        try
+        {
+            using var response = await Http.GetAsync($"api/images/{ImageId}/preview");
+            if (!response.IsSuccessStatusCode)
+            {
+                return;
+            }
+
+            var contentType = response.Content.Headers.ContentType?.MediaType ?? "image/jpeg";
+            var bytes = await response.Content.ReadAsByteArrayAsync();
+            imageDataUrl = $"data:{contentType};base64,{Convert.ToBase64String(bytes)}";
+        }
+        catch
+        {
+            imageDataUrl = null;
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+}
