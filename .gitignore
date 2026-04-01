@@ -56,3 +56,11 @@ nunit-*.xml
 .idea/
 
 ImageStorage/
+# Node / TypeScript tooling
+node_modules/
+
+stitch*/
+
+# Local environment files
+.env
+.env.*

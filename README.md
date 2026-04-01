@@ -98,3 +98,23 @@ dotnet run --project WebApi.DermaImage
 cd apps/web
 dotnet run
 ```
+
+## Configuración de Email SMTP
+
+La API usa `MailKit` y configuración tipada en `EmailSettings`.
+
+Variables de entorno soportadas:
+
+- `EmailSettings__SmtpServerAddress` (ej.: `smtp.gmail.com`)
+- `EmailSettings__SmtpServerPort` (ej.: `587`)
+- `EmailSettings__SmtpUserName` (correo SMTP)
+- `EmailSettings__SmtpPassword` (contraseña SMTP)
+- `EmailSettings__EnableSSL` (`true` para SSL directo, `false` para STARTTLS)
+- `EmailSettings__EmailAddress` (remitente)
+- `EmailSettings__EmailAddressDisplay` (nombre visible del remitente)
+- `EmailSettings__EnvironmentSubjectPrefix` (prefijo opcional del asunto, ej. `DEV`)
+
+Notas:
+
+- En desarrollo local también se definieron estas variables en `apps/api/src/WebApi.DermaImage/Properties/launchSettings.json`.
+- Si usas Gmail, Google suele requerir **App Password** en vez de contraseña normal de cuenta para SMTP.
