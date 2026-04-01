@@ -116,6 +116,6 @@ public class DermaImg : BaseEntity
     public User Contributor { get; set; }
 
     /// <summary>Institution that provided this image.</summary>
-    public Guid InstitutionId { get; set; }
+    public Guid? InstitutionId { get; set; }
     public Institution Institution { get; set; }
 }
