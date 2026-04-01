@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "skills": {
+    "fluentui-blazor": {
+      "source": "github/awesome-copilot",
+      "sourceType": "github",
+      "computedHash": "54d30fd8565a8787fa7dfe6bc13e10c4c9139a3d32343a84b49bba6d5f547caf"
+    },
+    "frontend-design": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "computedHash": "063a0e6448123cd359ad0044cc46b0e490cc7964d45ef4bb9fd842bd2ffbca67"
+    }
+  }
+}
