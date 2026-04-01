@@ -2,8 +2,10 @@ using Application.DermaImage.DTOs;
 using Application.DermaImage.Managers;
 using Domain.DermaImage.Entities;
 using Domain.DermaImage.Entities.Enums;
-using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 using WebApi.DermaImage.Managers;
 
 namespace WebApi.DermaImage.Controllers;
@@ -23,8 +25,9 @@ public class ImagesController : ControllerBase
         _imageUploadManager = imageUploadManager;
     }
 
+    [AllowAnonymous]
     [HttpGet]
-    public async Task<ActionResult<PagedResponse<DermaImg>>> GetAll(
+    public async Task<ActionResult<PagedResponse<DermaImgResponseDto>>> GetAll(
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20,
         [FromQuery] List<ImageType>? imageTypes = null,
@@ -35,45 +38,63 @@ public class ImagesController : ControllerBase
         [FromQuery] string? diagnosisContains = null,
         CancellationToken cancellationToken = default)
     {
+        var canReadPrivate = CanReadPrivateImages();
+
         var filter = new DermaImgFilter
         {
             ImageTypes = imageTypes,
             DiagnosisCategories = diagnosisCategories,
             Sexes = sexes,
             AnatomSites = anatomSites,
-            IsPublic = isPublic,
+            IsPublic = canReadPrivate ? isPublic : true,
             DiagnosisContains = diagnosisContains
         };
 
         var (items, totalCount) = await _manager.GetPagedAsync(page, pageSize, filter, cancellationToken);
-        return Ok(new PagedResponse<DermaImg>
+        return Ok(new PagedResponse<DermaImgResponseDto>
         {
-            Items = items,
+            Items = items.Select(MapToResponseDto),
             TotalCount = totalCount,
             Page = page,
             PageSize = pageSize
         });
     }
 
+    [AllowAnonymous]
     [HttpGet("{id:guid}")]
-    public async Task<ActionResult<DermaImg>> GetById(Guid id, CancellationToken cancellationToken)
+    public async Task<ActionResult<DermaImgResponseDto>> GetById(Guid id, CancellationToken cancellationToken)
     {
         var image = await _manager.GetByIdAsync(id, cancellationToken);
-        return image is null ? NotFound() : Ok(image);
+        if (image is not null && !image.IsPublic && !CanReadPrivateImages())
+        {
+            return NotFound();
+        }
+        return image is null ? NotFound() : Ok(MapToResponseDto(image));
     }
 
+    [AllowAnonymous]
     [HttpGet("public/{publicId}")]
-    public async Task<ActionResult<DermaImg>> GetByPublicId(string publicId, CancellationToken cancellationToken)
+    public async Task<ActionResult<DermaImgResponseDto>> GetByPublicId(string publicId, CancellationToken cancellationToken)
     {
         var image = await _manager.GetByPublicIdAsync(publicId, cancellationToken);
-        return image is null ? NotFound() : Ok(image);
+        if (image is not null && !image.IsPublic && !CanReadPrivateImages())
+        {
+            return NotFound();
+        }
+        return image is null ? NotFound() : Ok(MapToResponseDto(image));
     }
 
+    [AllowAnonymous]
     [HttpGet("{id:guid}/preview")]
     public async Task<IActionResult> GetPreview(Guid id, CancellationToken cancellationToken)
     {
         var image = await _manager.GetByIdAsync(id, cancellationToken);
         if (image is null)
+        {
+            return NotFound();
+        }
+
+        if (!image.IsPublic && !CanReadPrivateImages())
         {
             return NotFound();
         }
@@ -90,9 +111,10 @@ public class ImagesController : ControllerBase
         return PhysicalFile(image.FilePath, contentType, enableRangeProcessing: true);
     }
 
+    [Authorize(Roles = "Admin,Contributor")]
     [HttpPost]
     [Consumes("multipart/form-data")]
-    public async Task<ActionResult<DermaImg>> Create(
+    public async Task<ActionResult<DermaImgResponseDto>> Create(
         [FromForm] CreateDermaImgDto dto,
         [FromForm] IFormFile? file,
         CancellationToken cancellationToken)
@@ -109,21 +131,150 @@ public class ImagesController : ControllerBase
         dto.ContentType = savedFile.ContentType;
         dto.FileSize = savedFile.FileSize;
 
+        var userId = GetCurrentUserId();
+        if (userId is null)
+        {
+            return Unauthorized();
+        }
+
+        // Contributors can only create images under their own identity.
+        // Admins may optionally pass a specific contributor id.
+        if (User.IsInRole("Admin") && dto.ContributorId != Guid.Empty)
+        {
+            // keep provided contributor id
+        }
+        else
+        {
+            dto.ContributorId = userId.Value;
+        }
+
+        if (dto.InstitutionId == Guid.Empty)
+        {
+            return BadRequest("InstitutionId es obligatorio.");
+        }
+
         var created = await _manager.CreateAsync(dto, cancellationToken);
-        return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
+        return CreatedAtAction(nameof(GetById), new { id = created.Id }, MapToResponseDto(created));
     }
 
+    [Authorize(Roles = "Admin,Contributor")]
     [HttpPut("{id:guid}")]
     public async Task<IActionResult> Update(Guid id, [FromBody] CreateDermaImgDto dto, CancellationToken cancellationToken)
     {
+        var existing = await _manager.GetByIdAsync(id, cancellationToken);
+        if (existing is null)
+        {
+            return NotFound();
+        }
+
+        var userId = GetCurrentUserId();
+        if (userId is null)
+        {
+            return Unauthorized();
+        }
+
+        var isAdmin = User.IsInRole("Admin");
+        if (!isAdmin && existing.ContributorId != userId.Value)
+        {
+            return Forbid();
+        }
+
+        if (!isAdmin)
+        {
+            dto.ContributorId = existing.ContributorId;
+        }
+
         await _manager.UpdateAsync(id, dto, cancellationToken);
         return NoContent();
     }
 
+    [Authorize(Roles = "Admin,Contributor")]
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
+        var existing = await _manager.GetByIdAsync(id, cancellationToken);
+        if (existing is null)
+        {
+            return NotFound();
+        }
+
+        var userId = GetCurrentUserId();
+        if (userId is null)
+        {
+            return Unauthorized();
+        }
+
+        var isAdmin = User.IsInRole("Admin");
+        if (!isAdmin && existing.ContributorId != userId.Value)
+        {
+            return Forbid();
+        }
+
         await _manager.DeleteAsync(id, cancellationToken);
         return NoContent();
+    }
+
+    private bool CanReadPrivateImages()
+    {
+        if (!(User.Identity?.IsAuthenticated ?? false))
+        {
+            return false;
+        }
+
+        return User.IsInRole("Admin") || User.IsInRole("Reviewer") || User.IsInRole("Contributor");
+    }
+
+    private Guid? GetCurrentUserId()
+    {
+        var value = User.FindFirstValue(ClaimTypes.NameIdentifier)
+            ?? User.FindFirstValue(ClaimTypes.Name)
+            ?? User.FindFirstValue("sub");
+
+        return Guid.TryParse(value, out var id) ? id : null;
+    }
+
+    private static DermaImgResponseDto MapToResponseDto(DermaImg image)
+    {
+        return new DermaImgResponseDto
+        {
+            Id = image.Id,
+            PublicId = image.PublicId,
+            FileName = image.FileName,
+            FilePath = image.FilePath,
+            ContentType = image.ContentType,
+            FileSize = image.FileSize,
+            CopyrightLicense = image.CopyrightLicense,
+            Attribution = image.Attribution,
+            IsPublic = image.IsPublic,
+            ImageType = image.ImageType,
+            ImageManipulation = image.ImageManipulation,
+            DermoscopicType = image.DermoscopicType,
+            AcquisitionDay = image.AcquisitionDay,
+            AgeApprox = image.AgeApprox,
+            Sex = image.Sex,
+            PersonalHxMm = image.PersonalHxMm,
+            FamilyHxMm = image.FamilyHxMm,
+            AnatomSiteGeneral = image.AnatomSiteGeneral,
+            AnatomSiteSpecial = image.AnatomSiteSpecial,
+            ClinSizeLongDiamMm = image.ClinSizeLongDiamMm,
+            Diagnosis = image.Diagnosis,
+            DiagnosisCategory = image.DiagnosisCategory,
+            DiagnosisLevel2 = image.DiagnosisLevel2,
+            DiagnosisLevel3 = image.DiagnosisLevel3,
+            DiagnosisLevel4 = image.DiagnosisLevel4,
+            DiagnosisLevel5 = image.DiagnosisLevel5,
+            ConcomitantBiopsy = image.ConcomitantBiopsy,
+            DiagnosisConfirmType = image.DiagnosisConfirmType,
+            Melanocytic = image.Melanocytic,
+            MelThickMm = image.MelThickMm,
+            MelMitoticIndex = image.MelMitoticIndex,
+            MelUlcer = image.MelUlcer,
+            ClinicalNotes = image.ClinicalNotes,
+            CreatedAt = image.CreatedAt,
+            ContributorId = image.ContributorId,
+            ContributorFullName = image.Contributor?.FullName,
+            InstitutionId = image.InstitutionId,
+            InstitutionName = image.Institution?.Name
+        };
     }
 }
