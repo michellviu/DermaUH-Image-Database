@@ -2,15 +2,21 @@
 @rendermode InteractiveServer
 @using System.Globalization
 @using System.Net.Http.Headers
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Admin,Contributor")]
 @inject HttpClient Http
 @inject NavigationManager Navigation
 @inject IConfiguration Configuration
 
 <PageTitle>Nueva Imagen - DermaUH</PageTitle>
 
-<h2>Registrar Nueva Imagen</h2>
-<hr />
+<PageHeader Title="Registrar nueva imagen" Subtitle="Capture metadatos clínicos y datos de la imagen para el repositorio.">
+    <Actions>
+        <a href="images" class="btn btn-outline-primary">Volver al listado</a>
+    </Actions>
+</PageHeader>
 
+<SectionCard>
 <EditForm Model="model" OnValidSubmit="HandleSubmit" FormName="createImage">
     <DataAnnotationsValidator />
     <ValidationSummary />
@@ -209,7 +215,6 @@
         </div>
     </div>
 
-    <hr />
     <div class="d-flex gap-2">
         <button type="submit" class="btn btn-primary" disabled="@submitting">
             @(submitting ? "Guardando..." : "Guardar Imagen")
@@ -217,6 +222,7 @@
         <a href="images" class="btn btn-outline-secondary">Cancelar</a>
     </div>
 </EditForm>
+</SectionCard>
 
 @code {
     private const long MaxUploadSizeBytes = 20 * 1024 * 1024;
