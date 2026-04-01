@@ -1,22 +1,23 @@
 @page "/users"
 @rendermode InteractiveServer
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Admin")]
 @inject HttpClient Http
 
 <PageTitle>Usuarios - DermaUH</PageTitle>
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h2>Usuarios</h2>
-    <button class="btn btn-success" @onclick="() => showForm = !showForm">
-        @(showForm ? "Cancelar" : "+ Nuevo Usuario")
-    </button>
-</div>
+<PageHeader Title="Usuarios" Subtitle="Administre cuentas, roles y estado de acceso.">
+    <Actions>
+        <button class="btn btn-success" @onclick="() => showForm = !showForm">
+            @(showForm ? "Cancelar" : "+ Nuevo usuario")
+        </button>
+    </Actions>
+</PageHeader>
 
 @if (showForm)
 {
-    <div class="card mb-4">
-        <div class="card-body">
-            <h5 class="card-title">Registrar Usuario</h5>
-            <EditForm Model="newUser" OnValidSubmit="HandleCreate" FormName="createUser">
+    <SectionCard Title="Registrar usuario" Class="mb-4">
+        <EditForm Model="newUser" OnValidSubmit="HandleCreate" FormName="createUser">
                 <div class="row">
                     <div class="col-md-6">
                         <div class="mb-3">
@@ -42,9 +43,8 @@
                 <button type="submit" class="btn btn-primary" disabled="@submitting">
                     @(submitting ? "Guardando..." : "Guardar")
                 </button>
-            </EditForm>
-        </div>
-    </div>
+        </EditForm>
+    </SectionCard>
 }
 
 @if (!string.IsNullOrEmpty(errorMessage))
@@ -62,40 +62,42 @@ else if (response is null || !response.Items.Any())
 }
 else
 {
-    <div class="table-responsive">
-        <table class="table table-striped table-hover">
-            <thead class="table-dark">
-                <tr>
-                    <th>Nombre</th>
-                    <th>Email</th>
-                    <th>Rol</th>
-                    <th>Estado</th>
-                    <th>Fecha de Registro</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var user in response.Items)
-                {
+    <SectionCard Title="Listado de usuarios">
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead>
                     <tr>
-                        <td><strong>@user.FirstName @user.LastName</strong></td>
-                        <td>@user.Email</td>
-                        <td><span class="badge bg-info">@user.Role</span></td>
-                        <td>
-                            @if (user.IsActive)
-                            {
-                                <span class="badge bg-success">Activo</span>
-                            }
-                            else
-                            {
-                                <span class="badge bg-secondary">Inactivo</span>
-                            }
-                        </td>
-                        <td>@user.CreatedAt.ToString("yyyy-MM-dd")</td>
+                        <th>Nombre</th>
+                        <th>Email</th>
+                        <th>Rol</th>
+                        <th>Estado</th>
+                        <th>Fecha de registro</th>
                     </tr>
-                }
-            </tbody>
-        </table>
-    </div>
+                </thead>
+                <tbody>
+                    @foreach (var user in response.Items)
+                    {
+                        <tr>
+                            <td><strong>@user.FirstName @user.LastName</strong></td>
+                            <td>@user.Email</td>
+                            <td><span class="badge text-bg-info">@user.Role</span></td>
+                            <td>
+                                @if (user.IsActive)
+                                {
+                                    <span class="badge text-bg-success">Activo</span>
+                                }
+                                else
+                                {
+                                    <span class="badge text-bg-secondary">Inactivo</span>
+                                }
+                            </td>
+                            <td>@user.CreatedAt.ToString("yyyy-MM-dd")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </SectionCard>
 }
 
 @code {
