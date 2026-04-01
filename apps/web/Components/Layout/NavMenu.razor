@@ -1,30 +1,119 @@
-﻿<nav class="navbar-top">
-    <div class="navbar-container">
-        <a class="navbar-brand" href="">
-            <span class="brand-icon">🩺</span> DermaUH
+﻿@using Microsoft.AspNetCore.Components.Authorization
+@using Web.DermaImage.Services
+@inject AuthService Auth
+@inject NavigationManager Nav
+@rendermode InteractiveServer
+
+<nav class="nav-ethereal">
+    <div class="nav-shell">
+        <a class="nav-brand" href="">
+            <span class="nav-brand-mark" aria-hidden="true"></span>
+            <span class="nav-brand-text">DermaUH Images</span>
         </a>
 
-        <input type="checkbox" id="nav-toggle" class="navbar-toggler" title="Navigation menu" />
-        <label for="nav-toggle" class="toggler-label">
+        <input type="checkbox" id="nav-toggle" class="nav-toggle" title="Navigation menu" />
+        <label for="nav-toggle" class="nav-toggle-label">
             <span></span>
             <span></span>
             <span></span>
         </label>
 
         <div class="nav-links">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+            <NavLink class="nav-link" href="" Match="NavLinkMatch.All" @onclick="CloseMenu">
                 Inicio
             </NavLink>
-            <NavLink class="nav-link" href="images">
+            <NavLink class="nav-link" href="images" @onclick="CloseMenu">
                 Imágenes
             </NavLink>
-            <NavLink class="nav-link" href="institutions">
+            <NavLink class="nav-link" href="institutions" @onclick="CloseMenu">
                 Instituciones
             </NavLink>
-            <NavLink class="nav-link" href="users">
-                Usuarios
+            <NavLink class="nav-link" href="analytics" @onclick="CloseMenu">
+                Análisis
             </NavLink>
+
+            <AuthorizeView Roles="Admin">
+                <Authorized>
+                    <NavLink class="nav-link" href="users" @onclick="CloseMenu">
+                        Usuarios
+                    </NavLink>
+                </Authorized>
+            </AuthorizeView>
+
+            <AuthorizeView>
+                <Authorized>
+                    <div class="nav-user-menu">
+                        <button class="nav-user-btn" @onclick="ToggleUserMenu">
+                            <span class="nav-avatar">@GetInitials(context)</span>
+                            <span class="nav-user-name">@GetDisplayName(context)</span>
+                            <span class="nav-chevron">▾</span>
+                        </button>
+                        @if (_menuOpen)
+                        {
+                            <div class="nav-dropdown">
+                                <button type="button" class="nav-dropdown-item" @onclick="GoToProfile">
+                                    👤 Mi perfil
+                                </button>
+                                <hr class="nav-dropdown-divider" />
+                                <button type="button" class="nav-dropdown-item nav-dropdown-danger"
+                                        @onclick="LogoutAsync">
+                                    🚪 Cerrar sesión
+                                </button>
+                            </div>
+                        }
+                    </div>
+                </Authorized>
+                <NotAuthorized>
+                    <NavLink class="nav-link" href="/account/login" @onclick="CloseMenu">
+                        Iniciar sesión
+                    </NavLink>
+                    <a class="btn btn-primary btn-sm nav-register-btn" href="/account/register">
+                        Registrarse
+                    </a>
+                </NotAuthorized>
+            </AuthorizeView>
         </div>
     </div>
 </nav>
+
+@if (_menuOpen)
+{
+    <div class="nav-overlay" @onclick="CloseMenu"></div>
+}
+
+@code {
+    private bool _menuOpen;
+
+    private void ToggleUserMenu() => _menuOpen = !_menuOpen;
+    private void CloseMenu() => _menuOpen = false;
+
+    private void GoToProfile()
+    {
+        _menuOpen = false;
+        Nav.NavigateTo("/account/profile", forceLoad: false);
+    }
+
+    private async Task LogoutAsync()
+    {
+        _menuOpen = false;
+        await Auth.LogoutAsync();
+        Nav.NavigateTo("/account/login", forceLoad: false);
+    }
+
+    private static string GetInitials(AuthenticationState ctx)
+    {
+        var given  = ctx.User.FindFirst("given_name")?.Value
+                  ?? ctx.User.Identity?.Name ?? "?";
+        var family = ctx.User.FindFirst("family_name")?.Value ?? string.Empty;
+        return $"{(given.Length > 0 ? given[0] : '?')}{(family.Length > 0 ? family[0] : ' ')}"
+               .Trim().ToUpper();
+    }
+
+    private static string GetDisplayName(AuthenticationState ctx)
+    {
+        var given = ctx.User.FindFirst("given_name")?.Value
+                 ?? ctx.User.Identity?.Name ?? "Usuario";
+        return given;
+    }
+}
 
