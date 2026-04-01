@@ -6,4 +6,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
+  <Target Name="BuildTailwind" BeforeTargets="Build" Condition="Exists('package.json')">
+    <Exec Command="npm run css:build" />
+  </Target>
+
 </Project>
