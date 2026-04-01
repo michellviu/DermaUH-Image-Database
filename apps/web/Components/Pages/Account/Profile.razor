@@ -1,0 +1,236 @@
+@page "/account/profile"
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using Web.DermaImage.Services
+@using Web.DermaImage.Shared.Models
+@attribute [Authorize]
+@inject AuthService Auth
+@inject NavigationManager Nav
+@rendermode InteractiveServer
+
+<PageTitle>Mi perfil – DermaUH</PageTitle>
+
+<PageHeader Title="Mi perfil" Subtitle="Actualice su información personal y credenciales de acceso." />
+
+@if (_profile is null)
+{
+    <div class="d-flex justify-content-center my-5">
+        <div class="spinner-border text-primary" role="status"></div>
+    </div>
+}
+else
+{
+    <div class="profile-layout">
+
+        <!-- Left: Avatar + Summary -->
+        <div class="profile-sidebar">
+            <div class="profile-avatar">
+                <span>@(_profile.FirstName.Length > 0 ? _profile.FirstName[0].ToString().ToUpper() : "?")@(_profile.LastName.Length > 0 ? _profile.LastName[0].ToString().ToUpper() : "")</span>
+            </div>
+            <p class="profile-name">@_profile.FullName</p>
+            <p class="profile-email">@_profile.Email</p>
+
+            @if (_profile.EmailConfirmed)
+            {
+                <span class="badge badge-success">✓ Correo verificado</span>
+            }
+            else
+            {
+                <span class="badge badge-warning">⚠ Correo no verificado</span>
+            }
+
+            <div class="profile-roles mt-3">
+                @foreach (var role in _profile.Roles)
+                {
+                    <span class="badge badge-role">@role</span>
+                }
+            </div>
+
+            <p class="profile-since mt-3">
+                <small class="text-muted">Miembro desde @_profile.CreatedAt.ToString("MMMM yyyy")</small>
+            </p>
+        </div>
+
+        <!-- Right: Edit forms -->
+        <div class="profile-content">
+
+            <!-- Profile info -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h2 class="card-title">Información personal</h2>
+                </div>
+                <div class="card-body">
+
+                    @if (!string.IsNullOrEmpty(_profileSuccess))
+                    {
+                        <div class="alert alert-success">@_profileSuccess</div>
+                    }
+                    @if (!string.IsNullOrEmpty(_profileError))
+                    {
+                        <div class="alert alert-danger">@_profileError</div>
+                    }
+
+                    <EditForm Model="_profileForm" OnValidSubmit="SaveProfileAsync" FormName="ProfileForm">
+                        <DataAnnotationsValidator />
+
+                        <div class="form-row-2">
+                            <div class="form-group">
+                                <label class="form-label">Nombre</label>
+                                <InputText class="form-control" @bind-Value="_profileForm.FirstName" />
+                                <ValidationMessage For="@(() => _profileForm.FirstName)" class="text-danger small" />
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Apellido</label>
+                                <InputText class="form-control" @bind-Value="_profileForm.LastName" />
+                                <ValidationMessage For="@(() => _profileForm.LastName)" class="text-danger small" />
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Correo electrónico</label>
+                            <input class="form-control" value="@_profile.Email" disabled />
+                            <small class="form-hint">El correo no se puede cambiar.</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Teléfono (opcional)</label>
+                            <InputText class="form-control" @bind-Value="_profileForm.PhoneNumber"
+                                       placeholder="+53 5 000 0000" type="tel" />
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary" disabled="@_savingProfile">
+                                @(_savingProfile ? "Guardando..." : "Guardar cambios")
+                            </button>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+
+            <!-- Change password -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Cambiar contraseña</h2>
+                </div>
+                <div class="card-body">
+
+                    @if (!string.IsNullOrEmpty(_pwdSuccess))
+                    {
+                        <div class="alert alert-success">@_pwdSuccess</div>
+                    }
+                    @if (!string.IsNullOrEmpty(_pwdError))
+                    {
+                        <div class="alert alert-danger">@_pwdError</div>
+                    }
+
+                    <EditForm Model="_pwdForm" OnValidSubmit="ChangePasswordAsync" FormName="PasswordForm">
+                        <div class="form-group">
+                            <label class="form-label">Contraseña actual</label>
+                            <InputText class="form-control" @bind-Value="_pwdForm.CurrentPassword"
+                                       type="password" autocomplete="current-password" />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Nueva contraseña</label>
+                            <InputText class="form-control" @bind-Value="_pwdForm.NewPassword"
+                                       type="password" autocomplete="new-password" />
+                            <small class="form-hint">Mínimo 8 caracteres, mayúscula, minúscula y número.</small>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Confirmar nueva contraseña</label>
+                            <InputText class="form-control" @bind-Value="_pwdForm.ConfirmPassword"
+                                       type="password" autocomplete="new-password" />
+                            @if (_pwdMismatch)
+                            {
+                                <span class="text-danger small">Las contraseñas no coinciden.</span>
+                            }
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary" disabled="@_savingPwd">
+                                @(_savingPwd ? "Guardando..." : "Cambiar contraseña")
+                            </button>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+
+        </div>
+    </div>
+}
+
+@code {
+    private UserProfile? _profile;
+    private UpdateProfileRequest _profileForm = new();
+    private ChangePasswordRequest _pwdForm = new();
+
+    private bool _savingProfile;
+    private bool _savingPwd;
+    private bool _pwdMismatch;
+
+    private string? _profileSuccess;
+    private string? _profileError;
+    private string? _pwdSuccess;
+    private string? _pwdError;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _profile = await Auth.FetchProfileAsync();
+
+        if (_profile is not null)
+        {
+            _profileForm = new UpdateProfileRequest
+            {
+                FirstName   = _profile.FirstName,
+                LastName    = _profile.LastName,
+                PhoneNumber = _profile.PhoneNumber,
+                InstitutionId = _profile.InstitutionId,
+            };
+        }
+    }
+
+    private async Task SaveProfileAsync()
+    {
+        _savingProfile = true;
+        _profileSuccess = null;
+        _profileError = null;
+
+        var (success, error) = await Auth.UpdateProfileAsync(_profileForm);
+
+        _savingProfile = false;
+
+        if (!success)
+        {
+            _profileError = error;
+            return;
+        }
+
+        _profileSuccess = "Perfil actualizado correctamente.";
+        _profile = await Auth.FetchProfileAsync();
+    }
+
+    private async Task ChangePasswordAsync()
+    {
+        _pwdMismatch = false;
+        _pwdSuccess = null;
+        _pwdError = null;
+
+        if (_pwdForm.NewPassword != _pwdForm.ConfirmPassword)
+        {
+            _pwdMismatch = true;
+            return;
+        }
+
+        _savingPwd = true;
+        var (success, error) = await Auth.ChangePasswordAsync(_pwdForm);
+        _savingPwd = false;
+
+        if (!success)
+        {
+            _pwdError = error;
+            return;
+        }
+
+        _pwdSuccess = "Contraseña actualizada correctamente.";
+        _pwdForm = new ChangePasswordRequest();
+    }
+}

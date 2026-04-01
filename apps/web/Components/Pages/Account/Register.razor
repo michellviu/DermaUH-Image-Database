@@ -1,0 +1,157 @@
+@page "/account/register"
+@using Web.DermaImage.Services
+@using Web.DermaImage.Shared.Models
+@inject AuthService Auth
+@inject NavigationManager Nav
+@rendermode InteractiveServer
+
+<PageTitle>Registrarse – DermaUH</PageTitle>
+
+<div class="auth-shell">
+    <section class="auth-editorial-panel">
+        <span class="auth-kicker">Clinical Ethereal Network</span>
+        <h1>Registro de profesionales clínicos</h1>
+        <p>
+            Cree su cuenta para contribuir imágenes, colaborar con instituciones y acceder
+            a herramientas de análisis estadístico dermatológico.
+        </p>
+
+        <div class="auth-trust-grid">
+            <article>
+                <span class="material-symbols-outlined" aria-hidden="true">science</span>
+                <div>
+                    <strong>Repositorio curado</strong>
+                    <p>Contenido clínico estructurado para investigación.</p>
+                </div>
+            </article>
+            <article>
+                <span class="material-symbols-outlined" aria-hidden="true">database</span>
+                <div>
+                    <strong>Datos trazables</strong>
+                    <p>Metadatos completos para estudios epidemiológicos.</p>
+                </div>
+            </article>
+        </div>
+    </section>
+
+    <section class="auth-panel-card">
+        <div class="auth-header compact">
+            <div class="auth-logo">
+                <span class="auth-logo-text">DermaUH Images</span>
+            </div>
+            <h1 class="auth-title">Crear cuenta</h1>
+            <p class="auth-subtitle">Únete a la base de datos dermatológica</p>
+        </div>
+
+        @if (_success)
+        {
+            <div class="alert alert-success">
+                <strong>¡Registro exitoso!</strong><br />
+                Hemos enviado un correo de confirmación a <strong>@_model.Email</strong>.
+                Revisa tu bandeja de entrada y confirma tu correo para iniciar sesión.
+            </div>
+            <div class="text-center mt-3">
+                <a href="/account/login" class="btn btn-primary">Ir al inicio de sesión</a>
+            </div>
+        }
+        else
+        {
+            @if (!string.IsNullOrEmpty(_errorMessage))
+            {
+                <div class="alert alert-danger">@_errorMessage</div>
+            }
+
+            <EditForm Model="_model" OnValidSubmit="HandleRegisterAsync" FormName="RegisterForm">
+                <DataAnnotationsValidator />
+
+                <div class="form-row-2">
+                    <div class="form-group">
+                        <label class="form-label">Nombre</label>
+                        <InputText class="form-control" @bind-Value="_model.FirstName"
+                                   placeholder="María" autocomplete="given-name" />
+                        <ValidationMessage For="@(() => _model.FirstName)" class="text-danger small" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Apellido</label>
+                        <InputText class="form-control" @bind-Value="_model.LastName"
+                                   placeholder="García" autocomplete="family-name" />
+                        <ValidationMessage For="@(() => _model.LastName)" class="text-danger small" />
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Correo electrónico</label>
+                    <InputText class="form-control" @bind-Value="_model.Email"
+                               placeholder="correo@ejemplo.com" type="email" autocomplete="email" />
+                    <ValidationMessage For="@(() => _model.Email)" class="text-danger small" />
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Contraseña</label>
+                    <InputText class="form-control" @bind-Value="_model.Password"
+                               type="password" autocomplete="new-password" />
+                    <ValidationMessage For="@(() => _model.Password)" class="text-danger small" />
+                    <small class="form-hint">Mínimo 8 caracteres, mayúscula, minúscula y número.</small>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Confirmar contraseña</label>
+                    <InputText class="form-control" @bind-Value="_model.ConfirmPassword"
+                               type="password" autocomplete="new-password" />
+                    @if (_passwordMismatch)
+                    {
+                        <span class="text-danger small">Las contraseñas no coinciden.</span>
+                    }
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-full" disabled="@_loading">
+                    @if (_loading)
+                    {
+                        <span class="spinner-sm"></span> <span>Registrando...</span>
+                    }
+                    else
+                    {
+                        <span>Crear cuenta</span>
+                    }
+                </button>
+            </EditForm>
+
+            <p class="auth-footer-text">
+                ¿Ya tienes cuenta?
+                <a href="/account/login">Inicia sesión aquí</a>
+            </p>
+        }
+    </section>
+</div>
+
+@code {
+    private RegisterRequest _model = new();
+    private bool _loading;
+    private bool _success;
+    private bool _passwordMismatch;
+    private string? _errorMessage;
+
+    private async Task HandleRegisterAsync()
+    {
+        _passwordMismatch = false;
+        _errorMessage = null;
+
+        if (_model.Password != _model.ConfirmPassword)
+        {
+            _passwordMismatch = true;
+            return;
+        }
+
+        _loading = true;
+        var (success, error) = await Auth.RegisterAsync(_model);
+        _loading = false;
+
+        if (!success)
+        {
+            _errorMessage = error;
+            return;
+        }
+
+        _success = true;
+    }
+}

@@ -1,0 +1,162 @@
+@page "/account/login"
+@using Web.DermaImage.Services
+@using Web.DermaImage.Shared.Models
+@using Microsoft.AspNetCore.Components.Authorization
+@inject AuthService Auth
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+@inject IConfiguration Config
+@rendermode InteractiveServer
+
+<PageTitle>Iniciar sesión – DermaUH</PageTitle>
+
+<div class="auth-shell">
+    <section class="auth-editorial-panel">
+        <span class="auth-kicker">Clinical Ethereal Network</span>
+        <h1>Inicio de sesión institucional</h1>
+        <p>
+            Acceda al repositorio de imágenes dermatológicas verificadas y a las herramientas
+            de análisis para investigación y soporte clínico.
+        </p>
+
+        <div class="auth-trust-grid">
+            <article>
+                <span class="material-symbols-outlined" aria-hidden="true">verified_user</span>
+                <div>
+                    <strong>Verificación profesional</strong>
+                    <p>Cuentas validadas por equipo administrativo.</p>
+                </div>
+            </article>
+            <article>
+                <span class="material-symbols-outlined" aria-hidden="true">encrypted</span>
+                <div>
+                    <strong>Seguridad de acceso</strong>
+                    <p>Autenticación segura y trazabilidad por rol.</p>
+                </div>
+            </article>
+        </div>
+    </section>
+
+    <section class="auth-panel-card">
+        <div class="auth-header compact">
+            <div class="auth-logo">
+                <span class="auth-logo-text">DermaUH Images</span>
+            </div>
+            <h1 class="auth-title">Iniciar sesión</h1>
+            <p class="auth-subtitle">Bienvenido de vuelta</p>
+        </div>
+
+        @if (!string.IsNullOrEmpty(_errorMessage))
+        {
+            <div class="alert alert-danger">@_errorMessage</div>
+        }
+
+        <EditForm Model="_model" OnValidSubmit="HandleLoginAsync" FormName="LoginForm">
+            <DataAnnotationsValidator />
+
+            <div class="form-group">
+                <label class="form-label">Correo electrónico</label>
+                <InputText class="form-control" @bind-Value="_model.Email"
+                           placeholder="correo@ejemplo.com" type="email" autocomplete="email" />
+                <ValidationMessage For="@(() => _model.Email)" class="text-danger small" />
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">
+                    Contraseña
+                    <a href="/account/forgot-password" class="form-label-link">¿Olvidaste tu contraseña?</a>
+                </label>
+                <InputText class="form-control" @bind-Value="_model.Password"
+                           type="password" autocomplete="current-password" />
+                <ValidationMessage For="@(() => _model.Password)" class="text-danger small" />
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-full" disabled="@_loading">
+                @if (_loading)
+                {
+                    <span class="spinner-sm"></span> <span>Iniciando sesión...</span>
+                }
+                else
+                {
+                    <span>Iniciar sesión</span>
+                }
+            </button>
+        </EditForm>
+
+        <div class="auth-divider"><span>o</span></div>
+
+        <div id="google-signin-btn" class="google-btn-container"></div>
+
+        @if (!string.IsNullOrEmpty(_googleError))
+        {
+            <p class="text-danger small mt-2 text-center">@_googleError</p>
+        }
+
+        <p class="auth-footer-text">
+            ¿No tienes cuenta?
+            <a href="/account/register">Regístrate aquí</a>
+        </p>
+    </section>
+</div>
+
+@code {
+    private LoginRequest _model = new();
+    private bool _loading;
+    private string? _errorMessage;
+    private string? _googleError;
+
+    private DotNetObjectReference<Login>? _dotNetRef;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var clientId = Config["Google:ClientId"] ?? string.Empty;
+            if (!string.IsNullOrWhiteSpace(clientId))
+            {
+                _dotNetRef = DotNetObjectReference.Create(this);
+                try
+                {
+                    await JS.InvokeVoidAsync("initGoogleSignIn", clientId, _dotNetRef);
+                }
+                catch { /* Google script not loaded */ }
+            }
+        }
+    }
+
+    private async Task HandleLoginAsync()
+    {
+        _loading = true;
+        _errorMessage = null;
+
+        var (success, error) = await Auth.LoginAsync(_model);
+
+        _loading = false;
+
+        if (!success)
+        {
+            _errorMessage = error;
+            return;
+        }
+
+        Nav.NavigateTo("/", forceLoad: false);
+    }
+
+    [JSInvokable]
+    public async Task OnGoogleCredentialReceived(string idToken)
+    {
+        _googleError = null;
+        var (success, error) = await Auth.GoogleLoginAsync(idToken);
+
+        if (!success)
+        {
+            _googleError = error ?? "Error al iniciar sesión con Google.";
+            StateHasChanged();
+            return;
+        }
+
+        Nav.NavigateTo("/", forceLoad: false);
+    }
+
+    public void Dispose() => _dotNetRef?.Dispose();
+}

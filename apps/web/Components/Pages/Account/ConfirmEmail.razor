@@ -1,0 +1,65 @@
+@page "/account/confirm-email"
+@using Microsoft.AspNetCore.Authorization
+@using Web.DermaImage.Services
+@attribute [AllowAnonymous]
+@inject AuthService Auth
+@inject NavigationManager Nav
+@rendermode InteractiveServer
+
+<PageTitle>Confirmar correo – DermaUH</PageTitle>
+
+<div class="auth-container">
+    <div class="auth-card text-center">
+        <div class="auth-header">
+            <div class="auth-logo">
+                <span class="auth-logo-icon">🔬</span>
+                <span class="auth-logo-text">DermaUH</span>
+            </div>
+            <h1 class="auth-title">Confirmación de correo</h1>
+        </div>
+
+        @if (_loading)
+        {
+            <div class="d-flex justify-content-center my-4">
+                <div class="spinner-border text-primary" role="status"></div>
+            </div>
+            <p class="text-muted">Confirmando tu correo…</p>
+        }
+        else
+        {
+            <div class="confirm-icon">❌</div>
+            <h2 class="auth-subtitle">Error de confirmación</h2>
+            <p class="text-danger">@_errorMessage</p>
+            <a href="/account/register" class="btn btn-outline-primary mt-3">Volver al registro</a>
+        }
+    </div>
+</div>
+
+@code {
+    [SupplyParameterFromQuery] public string? UserId { get; set; }
+    [SupplyParameterFromQuery] public string? Token { get; set; }
+
+    private bool _loading = true;
+    private string? _errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (string.IsNullOrWhiteSpace(UserId) || string.IsNullOrWhiteSpace(Token))
+        {
+            _loading = false;
+            _errorMessage = "Enlace de confirmación inválido o incompleto.";
+            return;
+        }
+
+        var (success, error) = await Auth.ConfirmEmailAsync(UserId, Token);
+
+        if (success)
+        {
+            Nav.NavigateTo("/account/confirm-email/success", replace: true);
+            return;
+        }
+
+        _loading = false;
+        _errorMessage = error ?? "No fue posible confirmar el correo.";
+    }
+}
