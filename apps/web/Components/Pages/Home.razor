@@ -1,74 +1,99 @@
 ﻿@page "/"
+@rendermode InteractiveServer
+@inject HttpClient Http
 
 <PageTitle>DermaUH - Base de Datos de Imágenes Dermatológicas</PageTitle>
 
-<div class="hero-section">
-    <h1>DermaUH</h1>
-    <p class="hero-subtitle">Base de Datos de Imágenes Dermatológicas</p>
-</div>
-
-<div class="row g-4 mt-2">
-    <div class="col-md-4">
-        <div class="card h-100">
-            <div class="card-body d-flex flex-column">
-                <div class="card-icon">&#128248;</div>
-                <h5 class="card-title">Imágenes</h5>
-                <p class="card-text flex-grow-1">
-                    Explore la colección de imágenes dermatológicas con metadatos clínicos,
-                    diagnósticos e histológicos detallados.
-                </p>
-                <a href="images" class="btn btn-primary mt-auto">Ver Imágenes</a>
-            </div>
+<section class="home-hero-panel">
+    <div class="home-hero-text">
+        <span class="home-kicker">Clinical Ethereal Systems</span>
+        <h1>Visualizando el futuro de la dermatología clínica</h1>
+        <p>
+            Plataforma especializada para instituciones médicas que necesitan imágenes dermatológicas de alta fidelidad,
+            metadatos clínicos consistentes y análisis estadístico accionable.
+        </p>
+        <div class="home-hero-actions">
+            <a href="images" class="btn btn-primary">Explorar galería</a>
+            <a href="analytics" class="btn btn-outline-primary">Ver análisis estadístico</a>
         </div>
     </div>
-    <div class="col-md-4">
-        <div class="card h-100">
-            <div class="card-body d-flex flex-column">
-                <div class="card-icon">&#127963;</div>
-                <h5 class="card-title">Instituciones</h5>
-                <p class="card-text flex-grow-1">
-                    Gestione las instituciones médicas que contribuyen imágenes a la base de datos.
-                </p>
-                <a href="institutions" class="btn btn-primary mt-auto">Ver Instituciones</a>
-            </div>
-        </div>
+
+    <div class="home-hero-metrics">
+        <article>
+            <span class="value">@FormatMetricValue(overview?.TotalImages)</span>
+            <span class="label">Imágenes totales</span>
+        </article>
+        <article>
+            <span class="value">@FormatMetricValue(overview?.InstitutionsCount)</span>
+            <span class="label">Instituciones activas</span>
+        </article>
+        <article>
+            <span class="value">@FormatMetricValue(overview?.ContributorsCount)</span>
+            <span class="label">Contribuidores activos</span>
+        </article>
     </div>
-    <div class="col-md-4">
-        <div class="card h-100">
-            <div class="card-body d-flex flex-column">
-                <div class="card-icon">&#128100;</div>
-                <h5 class="card-title">Usuarios</h5>
-                <p class="card-text flex-grow-1">
-                    Administre los usuarios y contribuidores del sistema.
-                </p>
-                <a href="users" class="btn btn-primary mt-auto">Ver Usuarios</a>
-            </div>
-        </div>
-    </div>
-</div>
+</section>
 
-<style>
-    .hero-section {
-        text-align: center;
-        padding: 3rem 1rem 1.5rem;
+@if (!string.IsNullOrWhiteSpace(loadError))
+{
+    <div class="alert alert-secondary mb-4">@loadError</div>
+}
+
+<section class="home-feature-grid">
+    <SectionCard Class="home-feature-card">
+        <h3>Galería diagnóstica</h3>
+        <p>Explore imágenes curadas por tipo de lesión, sitio anatómico y categoría diagnóstica.</p>
+        <a href="images" class="btn btn-outline-primary mt-auto">Abrir galería</a>
+    </SectionCard>
+
+    <SectionCard Class="home-feature-card">
+        <h3>Instituciones</h3>
+        <p>Gestione redes académicas y centros clínicos que alimentan el repositorio dermatológico.</p>
+        <a href="institutions" class="btn btn-outline-primary mt-auto">Ver instituciones</a>
+    </SectionCard>
+
+    <SectionCard Class="home-feature-card">
+        <h3>Análisis estadístico</h3>
+        <p>Visualice distribución por diagnóstico, sexo, localización anatómica y tendencia mensual.</p>
+        <a href="analytics" class="btn btn-outline-primary mt-auto">Ir a análisis</a>
+    </SectionCard>
+
+    <AuthorizeView Roles="Admin">
+        <Authorized>
+            <SectionCard Class="home-feature-card">
+                <h3>Usuarios</h3>
+                <p>Administre cuentas, roles y permisos institucionales desde un flujo centralizado.</p>
+                <a href="users" class="btn btn-primary mt-auto">Gestionar usuarios</a>
+            </SectionCard>
+        </Authorized>
+        <NotAuthorized>
+            <SectionCard Class="home-feature-card">
+                <h3>Perfil</h3>
+                <p>Actualice su información profesional y mantenga sus credenciales al día.</p>
+                <a href="account/profile" class="btn btn-outline-primary mt-auto">Ver mi perfil</a>
+            </SectionCard>
+        </NotAuthorized>
+    </AuthorizeView>
+</section>
+
+@code {
+    private StatisticsOverviewDto? overview;
+    private string? loadError;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            overview = await Http.GetFromJsonAsync<StatisticsOverviewDto>("api/statistics/overview");
+        }
+        catch
+        {
+            loadError = "No fue posible sincronizar las métricas en este momento.";
+        }
     }
 
-    .hero-section h1 {
-        font-size: 2.5rem;
-        font-weight: 700;
-        color: #880e4f;
-        margin-bottom: 0.25rem;
+    private static string FormatMetricValue(int? value)
+    {
+        return value.HasValue ? value.Value.ToString("N0") : "-";
     }
-
-    .hero-subtitle {
-        font-size: 1.1rem;
-        color: #9a7088 !important;
-        font-weight: 300;
-        letter-spacing: 0.02em;
-    }
-
-    .card-icon {
-        font-size: 2rem;
-        margin-bottom: 0.75rem;
-    }
-</style>
+}

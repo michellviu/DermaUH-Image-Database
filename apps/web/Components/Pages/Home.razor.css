@@ -1,0 +1,137 @@
+.home-hero-panel {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 320px;
+    gap: 1.5rem;
+    padding: clamp(1.3rem, 2.2vw, 2rem);
+    border-radius: 1.8rem;
+    background:
+        radial-gradient(circle at 78% 18%, color-mix(in srgb, var(--secondary-container) 35%, transparent), transparent 42%),
+        radial-gradient(circle at 15% 82%, color-mix(in srgb, var(--primary-fixed) 58%, transparent), transparent 40%),
+        linear-gradient(130deg, color-mix(in srgb, var(--surface-container-lowest) 90%, transparent), color-mix(in srgb, var(--surface-container-low) 76%, transparent));
+    border: 1px solid color-mix(in srgb, var(--outline-variant) 38%, transparent);
+    margin-bottom: 1.5rem;
+}
+
+.home-kicker {
+    display: inline-block;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    font-size: 0.7rem;
+    color: var(--on-surface-variant);
+    font-weight: 700;
+    margin-bottom: 0.8rem;
+}
+
+.home-hero-text h1 {
+    margin: 0;
+    font-size: clamp(2rem, 4vw, 3.2rem);
+    line-height: 1.06;
+    letter-spacing: -0.02em;
+    color: var(--primary);
+}
+
+.home-hero-text p {
+    margin: 0.95rem 0 0;
+    max-width: 60ch;
+    color: var(--on-surface-variant);
+    line-height: 1.7;
+}
+
+.home-hero-actions {
+    display: flex;
+    gap: 0.7rem;
+    flex-wrap: wrap;
+    margin-top: 1.2rem;
+}
+
+.home-hero-metrics {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.home-hero-metrics article {
+    border-radius: 1.1rem;
+    background: color-mix(in srgb, var(--surface-container-lowest) 82%, transparent);
+    border: 1px solid color-mix(in srgb, var(--outline-variant) 26%, transparent);
+    padding: 1rem;
+}
+
+.home-hero-metrics .value {
+    display: block;
+    font-family: var(--font-display);
+    color: var(--primary-container);
+    font-size: 1.35rem;
+    font-weight: 800;
+}
+
+.home-hero-metrics .label {
+    color: var(--on-surface-variant);
+    font-size: 0.78rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.home-feature-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.home-feature-card {
+    height: 100%;
+}
+
+.home-feature-card::deep .content-card__body {
+    display: flex;
+    flex-direction: column;
+    min-height: 220px;
+    gap: 0.8rem;
+}
+
+.home-feature-card h3 {
+    margin: 0;
+    color: var(--on-surface);
+    font-size: 1.2rem;
+}
+
+.home-feature-card p {
+    margin: 0;
+    color: var(--on-surface-variant);
+    line-height: 1.6;
+}
+
+.home-feature-card--primary {
+    background: linear-gradient(130deg, var(--primary), var(--primary-container));
+}
+
+.home-feature-card--primary h3,
+.home-feature-card--primary p {
+    color: var(--on-primary);
+}
+
+.home-feature-card--primary .btn-primary {
+    background: var(--surface-container-lowest);
+    color: var(--primary);
+    border-color: transparent;
+    box-shadow: none;
+}
+
+@media (max-width: 960px) {
+    .home-hero-panel {
+        grid-template-columns: 1fr;
+    }
+
+    .home-hero-metrics {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 860px) {
+    .home-feature-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .home-hero-metrics {
+        grid-template-columns: 1fr;
+    }
+}
