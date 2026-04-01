@@ -4,19 +4,34 @@
 
 <PageTitle>Instituciones - DermaUH</PageTitle>
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h2>Instituciones</h2>
-    <button class="btn btn-success" @onclick="() => showForm = !showForm">
-        @(showForm ? "Cancelar" : "+ Nueva Institución")
-    </button>
-</div>
+<section class="institutions-hero">
+    <div>
+        <span class="institutions-kicker">Red colaborativa</span>
+        <h1>Instituciones médicas</h1>
+        <p>Conecte hospitales, universidades y centros de investigación en una red dermatológica interoperable.</p>
+    </div>
+
+    <AuthorizeView Roles="Admin">
+        <Authorized>
+            <button class="btn btn-primary" @onclick="() => showForm = !showForm">
+                @(showForm ? "Cerrar formulario" : "Nueva institución")
+            </button>
+        </Authorized>
+    </AuthorizeView>
+</section>
+
+<AuthorizeView Roles="Admin">
+    <NotAuthorized>
+        <div class="alert alert-secondary institutions-note">
+            Tu rol tiene acceso de solo lectura para instituciones.
+        </div>
+    </NotAuthorized>
+</AuthorizeView>
 
 @if (showForm)
 {
-    <div class="card mb-4">
-        <div class="card-body">
-            <h5 class="card-title">Registrar Institución</h5>
-            <EditForm Model="newInstitution" OnValidSubmit="HandleCreate" FormName="createInstitution">
+    <SectionCard Title="Registrar institución" Class="mb-4 institutions-form-card">
+        <EditForm Model="newInstitution" OnValidSubmit="HandleCreate" FormName="createInstitution">
                 <div class="row">
                     <div class="col-md-6">
                         <div class="mb-3">
@@ -54,9 +69,8 @@
                 <button type="submit" class="btn btn-primary" disabled="@submitting">
                     @(submitting ? "Guardando..." : "Guardar")
                 </button>
-            </EditForm>
-        </div>
-    </div>
+        </EditForm>
+    </SectionCard>
 }
 
 @if (!string.IsNullOrEmpty(errorMessage))
@@ -74,42 +88,40 @@ else if (response is null || !response.Items.Any())
 }
 else
 {
-    <div class="table-responsive">
-        <table class="table table-striped table-hover">
-            <thead class="table-dark">
-                <tr>
-                    <th>Nombre</th>
-                    <th>País</th>
-                    <th>Ciudad</th>
-                    <th>Email</th>
-                    <th>Website</th>
-                    <th>Fecha de Registro</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var inst in response.Items)
-                {
-                    <tr>
-                        <td><strong>@inst.Name</strong></td>
-                        <td>@(inst.Country ?? "—")</td>
-                        <td>@(inst.City ?? "—")</td>
-                        <td>@(inst.ContactEmail ?? "—")</td>
-                        <td>
-                            @if (!string.IsNullOrEmpty(inst.Website))
-                            {
-                                <a href="@inst.Website" target="_blank">@inst.Website</a>
-                            }
-                            else
-                            {
-                                <span>—</span>
-                            }
-                        </td>
-                        <td>@inst.CreatedAt.ToString("yyyy-MM-dd")</td>
-                    </tr>
-                }
-            </tbody>
-        </table>
+    <div class="institutions-stats">
+        <article>
+            <span class="value">@response.TotalCount</span>
+            <span class="label">Instituciones registradas</span>
+        </article>
+        <article>
+            <span class="value">@response.Items.Count(i => !string.IsNullOrWhiteSpace(i.ContactEmail))</span>
+            <span class="label">Con contacto definido</span>
+        </article>
     </div>
+
+    <section class="institutions-grid">
+        @foreach (var inst in response.Items)
+        {
+            <article class="institution-card">
+                <h3>@inst.Name</h3>
+                <p>@(inst.Description ?? "Sin descripción institucional.")</p>
+
+                <div class="institution-meta">
+                    <span>@(inst.Country ?? "País no definido")</span>
+                    <span>@(inst.City ?? "Ciudad no definida")</span>
+                    <span>@(inst.ContactEmail ?? "Sin correo")</span>
+                </div>
+
+                <div class="institution-actions">
+                    @if (!string.IsNullOrWhiteSpace(inst.Website))
+                    {
+                        <a href="@inst.Website" target="_blank" rel="noopener noreferrer" class="btn btn-outline-primary">Sitio web</a>
+                    }
+                    <span class="institution-date">Alta: @inst.CreatedAt.ToString("yyyy-MM-dd")</span>
+                </div>
+            </article>
+        }
+    </section>
 }
 
 @code {
