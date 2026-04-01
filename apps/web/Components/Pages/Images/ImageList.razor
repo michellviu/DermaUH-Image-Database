@@ -1,85 +1,92 @@
 @page "/images"
 @rendermode InteractiveServer
 @inject HttpClient Http
-@inject IConfiguration Configuration
 
 <PageTitle>Imágenes - DermaUH</PageTitle>
 
-<div class="images-page-fullbleed">
-<div class="images-layout">
-    <aside class="filters-panel-left">
-        <h5 class="mb-3">Filtros</h5>
+<section class="gallery-header">
+    <div>
+        <span class="gallery-kicker">Repositorio clínico</span>
+        <h1>Galería diagnóstica</h1>
+        <p>Filtre casos por metadatos clínicos y navegue la colección de imágenes dermatológicas verificadas.</p>
+    </div>
 
-        <div class="mb-3">
+    <AuthorizeView Roles="Admin,Contributor">
+        <Authorized>
+            <a href="images/create" class="btn btn-primary">Subir imagen</a>
+        </Authorized>
+    </AuthorizeView>
+</section>
+
+<div class="gallery-layout">
+    <aside class="gallery-filters">
+        <header>
+            <h2>Filtros</h2>
+            <button class="btn btn-outline-secondary" @onclick="ClearFiltersAsync">Restablecer</button>
+        </header>
+
+        <section>
             <label class="form-label">Diagnóstico</label>
-            <input @ref="diagnosisInputRef" type="text" value="@diagnosisContains" @oninput="OnDiagnosisInputChangedAsync" class="form-control" placeholder="Buscar por texto" />
-        </div>
+            <input @ref="diagnosisInputRef" type="text" value="@diagnosisContains" @oninput="OnDiagnosisInputChangedAsync" class="form-control" placeholder="Buscar por término clínico" />
+        </section>
 
-        <div class="mb-3">
+        <section>
             <label class="form-label">Visibilidad</label>
             <InputSelect @bind-Value="publicFilter" @bind-Value:after="ApplyFiltersAsync" class="form-select">
                 <option value="all">Todas</option>
                 <option value="public">Públicas</option>
                 <option value="private">Privadas</option>
             </InputSelect>
-        </div>
+        </section>
 
-        <div class="mb-3">
-            <label class="form-label">Tipo de imagen</label>
+        <section>
+            <h3>Tipo de imagen</h3>
             @foreach (var option in imageTypeOptions)
             {
-                <div class="form-check">
+                <label class="filter-check" for="@($"type-{option.Value}")">
                     <input class="form-check-input" type="checkbox" checked="@selectedImageTypes.Contains(option.Value)" @onchange="(e) => ToggleSelection(e, option.Value, selectedImageTypes)" id="@($"type-{option.Value}")" />
-                    <label class="form-check-label" for="@($"type-{option.Value}")">@option.Label</label>
-                </div>
+                    <span>@option.Label</span>
+                </label>
             }
-        </div>
+        </section>
 
-        <div class="mb-3">
-            <label class="form-label">Categoría</label>
+        <section>
+            <h3>Categoría</h3>
             @foreach (var option in diagnosisCategoryOptions)
             {
-                <div class="form-check">
+                <label class="filter-check" for="@($"cat-{option.Value}")">
                     <input class="form-check-input" type="checkbox" checked="@selectedDiagnosisCategories.Contains(option.Value)" @onchange="(e) => ToggleSelection(e, option.Value, selectedDiagnosisCategories)" id="@($"cat-{option.Value}")" />
-                    <label class="form-check-label" for="@($"cat-{option.Value}")">@option.Label</label>
-                </div>
+                    <span>@option.Label</span>
+                </label>
             }
-        </div>
+        </section>
 
-        <div class="mb-3">
-            <label class="form-label">Sexo</label>
+        <section>
+            <h3>Sexo</h3>
             @foreach (var option in sexOptions)
             {
-                <div class="form-check">
+                <label class="filter-check" for="@($"sex-{option.Value}")">
                     <input class="form-check-input" type="checkbox" checked="@selectedSexes.Contains(option.Value)" @onchange="(e) => ToggleSelection(e, option.Value, selectedSexes)" id="@($"sex-{option.Value}")" />
-                    <label class="form-check-label" for="@($"sex-{option.Value}")">@option.Label</label>
-                </div>
+                    <span>@option.Label</span>
+                </label>
             }
-        </div>
+        </section>
 
-        <div class="mb-3">
-            <label class="form-label">Sitio anatómico</label>
+        <section>
+            <h3>Sitio anatómico</h3>
             @foreach (var option in anatomSiteOptions)
             {
-                <div class="form-check">
+                <label class="filter-check" for="@($"site-{option.Value}")">
                     <input class="form-check-input" type="checkbox" checked="@selectedAnatomSites.Contains(option.Value)" @onchange="(e) => ToggleSelection(e, option.Value, selectedAnatomSites)" id="@($"site-{option.Value}")" />
-                    <label class="form-check-label" for="@($"site-{option.Value}")">@option.Label</label>
-                </div>
+                    <span>@option.Label</span>
+                </label>
             }
-        </div>
-
-        <div class="d-grid gap-2">
-            <button class="btn btn-outline-secondary" @onclick="ClearFiltersAsync">Limpiar</button>
-        </div>
+        </section>
     </aside>
 
-    <section class="images-content">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <div>
-                <h2 class="mb-0">Imágenes Dermatológicas</h2>
-                <small class="text-muted">Total: @totalCount</small>
-            </div>
-            <a href="images/create" class="btn btn-success">+ Nueva Imagen</a>
+    <section class="gallery-results">
+        <div class="gallery-results-head">
+            <span>@totalCount casos encontrados</span>
         </div>
 
         @if (loadingError is not null)
@@ -90,25 +97,28 @@
         @if (hasLoaded && totalCount == 0)
         {
             <div class="alert alert-info">
-                No se encontraron imágenes con los filtros actuales. <a href="images/create">Agregar nueva imagen</a>.
+                No se encontraron imágenes con los filtros actuales.
             </div>
         }
 
         <div class="images-grid">
             <Virtualize @ref="virtualizeRef" Context="img" ItemsProvider="LoadImagesAsync" ItemSize="300" OverscanCount="2">
                 <a href="images/@img.Id" class="image-card" title="Ver detalle">
-                    <div class="image-preview-wrapper">
-                        <img src="@GetPreviewUrl(img.Id)" alt="@img.FileName" class="image-preview" loading="lazy" />
-                    </div>
+                    <ImagePreview ImageId="@img.Id" Alt="@img.FileName" />
                     <div class="image-card-footer">
-                        <div class="image-name" title="@img.FileName">@img.FileName</div>
+                        <div class="image-name" title="@img.FileName">
+                            <span class="image-name-text">@img.FileName</span>
+                            @if (!img.IsPublic)
+                            {
+                                <span class="private-chip">Privada</span>
+                            }
+                        </div>
                         <div class="image-meta">@(img.DiagnosisCategory ?? "—") · @(img.ImageType ?? "—")</div>
                     </div>
                 </a>
             </Virtualize>
         </div>
     </section>
-</div>
 </div>
 
 @code {
@@ -310,122 +320,5 @@
         await ApplyFiltersAsync();
     }
 
-    private string GetPreviewUrl(Guid imageId)
-    {
-        var apiBase = (Configuration["ApiBaseUrl"] ?? string.Empty).TrimEnd('/');
-        return string.IsNullOrWhiteSpace(apiBase)
-            ? $"api/images/{imageId}/preview"
-            : $"{apiBase}/api/images/{imageId}/preview";
-    }
-
     private sealed record FilterOption(string Value, string Label);
 }
-
-<style>
-    .images-page-fullbleed {
-        width: 100vw;
-        margin-left: calc(50% - 50vw);
-    }
-
-    .images-layout {
-        display: grid;
-        grid-template-columns: 320px minmax(0, 1fr);
-        gap: 0;
-        align-items: start;
-    }
-
-    .filters-panel-left {
-        position: sticky;
-        top: 3.5rem;
-        max-height: calc(100vh - 3.5rem);
-        overflow-y: auto;
-        padding: 1rem 0.75rem 1rem 1rem;
-        border-right: 1px solid #f2e6ec;
-        background: #fff;
-        margin: 0;
-    }
-
-    .images-content {
-        min-height: 70vh;
-        padding: 1rem 1.5rem 1rem 0.35rem;
-    }
-
-    .images-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-        gap: 1rem;
-    }
-
-    .image-card {
-        display: block;
-        text-decoration: none;
-        background: #fff;
-        border: 1px solid #f2e6ec;
-        border-radius: 12px;
-        overflow: hidden;
-        transition: transform .18s ease, box-shadow .18s ease;
-    }
-
-    .image-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 22px rgba(233, 30, 99, 0.12);
-    }
-
-    .image-preview-wrapper {
-        width: 100%;
-        aspect-ratio: 4 / 3;
-        background: #fdf2f6;
-        overflow: hidden;
-    }
-
-    .image-preview {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        display: block;
-    }
-
-    .image-card-footer {
-        padding: 0.75rem;
-    }
-
-    .image-name {
-        font-size: 0.9rem;
-        font-weight: 600;
-        color: #4a2040;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        margin-bottom: 0.25rem;
-    }
-
-    .image-meta {
-        font-size: 0.78rem;
-        color: #8e6f7f;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
-    @@media (max-width: 992px) {
-        .images-page-fullbleed {
-            width: 100%;
-            margin-left: 0;
-        }
-
-        .images-layout {
-            grid-template-columns: 1fr;
-        }
-
-        .filters-panel-left {
-            position: static;
-            max-height: none;
-            border-right: none;
-            border-bottom: 1px solid #f2e6ec;
-        }
-
-        .images-content {
-            padding: 1rem;
-        }
-    }
-</style>
