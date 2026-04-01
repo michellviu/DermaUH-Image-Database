@@ -1,4 +1,6 @@
+using Microsoft.AspNetCore.Components.Authorization;
 using Web.DermaImage.Components;
+using Web.DermaImage.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -6,10 +8,22 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-// Register HttpClient for API communication
-builder.Services.AddScoped(sp => new HttpClient
+// Auth state provider
+builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<AuthenticatedHttpClientHandler>();
+builder.Services.AddScoped<AuthenticationStateProvider, JwtAuthStateProvider>();
+builder.Services.AddAuthorizationCore();
+builder.Services.AddCascadingAuthenticationState();
+
+// Register HttpClient with the auth handler
+builder.Services.AddScoped<HttpClient>(sp =>
 {
-    BaseAddress = new Uri(builder.Configuration["ApiBaseUrl"] ?? "http://localhost:5131")
+    var handler = sp.GetRequiredService<AuthenticatedHttpClientHandler>();
+    handler.InnerHandler = new HttpClientHandler();
+    return new HttpClient(handler)
+    {
+        BaseAddress = new Uri(builder.Configuration["ApiBaseUrl"] ?? "http://localhost:5131")
+    };
 });
 
 var app = builder.Build();
@@ -19,9 +33,8 @@ if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
     app.UseHsts();
+    app.UseHttpsRedirection();
 }
-
-app.UseHttpsRedirection();
 
 app.UseAntiforgery();
 
