@@ -1,0 +1,170 @@
+@page "/analytics"
+@rendermode InteractiveServer
+@inject HttpClient Http
+
+<PageTitle>Análisis Estadístico - DermaUH</PageTitle>
+
+<section class="analytics-hero">
+    <div>
+        <span class="analytics-kicker">Clinical Intelligence</span>
+        <h1>Análisis estadístico</h1>
+        <p>Panel de distribución clínica para diagnóstico, localización anatómica y comportamiento mensual del repositorio.</p>
+    </div>
+</section>
+
+@if (loading)
+{
+    <div class="alert alert-info">Cargando datos estadísticos...</div>
+}
+else if (!string.IsNullOrWhiteSpace(loadError))
+{
+    <div class="alert alert-danger">@loadError</div>
+}
+else if (overview is null)
+{
+    <div class="alert alert-info">No hay datos disponibles para análisis.</div>
+}
+else
+{
+    <section class="analytics-kpi-grid">
+        <article>
+            <span class="label">Imágenes totales</span>
+            <span class="value">@overview.TotalImages</span>
+        </article>
+        <article>
+            <span class="label">Imágenes públicas</span>
+            <span class="value">@overview.PublicImages</span>
+        </article>
+        <article>
+            <span class="label">Instituciones</span>
+            <span class="value">@overview.InstitutionsCount</span>
+        </article>
+        <article>
+            <span class="label">Contribuidores</span>
+            <span class="value">@overview.ContributorsCount</span>
+        </article>
+    </section>
+
+    <section class="analytics-grid">
+        <article class="analytics-card">
+            <h2>Categoría diagnóstica</h2>
+            @foreach (var item in overview.DiagnosisDistribution)
+            {
+                <div class="analytics-bar-row">
+                    <div class="analytics-bar-label">
+                        <span>@item.Label</span>
+                        <span>@item.Count (@item.Percentage.ToString("F1")%)</span>
+                    </div>
+                    <div class="analytics-bar-track">
+                        <span class="analytics-bar-fill" style="width: @GetWidth(item.Percentage);"></span>
+                    </div>
+                </div>
+            }
+        </article>
+
+        <article class="analytics-card">
+            <h2>Distribución por sexo</h2>
+            @foreach (var item in overview.SexDistribution)
+            {
+                <div class="analytics-bar-row">
+                    <div class="analytics-bar-label">
+                        <span>@item.Label</span>
+                        <span>@item.Count (@item.Percentage.ToString("F1")%)</span>
+                    </div>
+                    <div class="analytics-bar-track">
+                        <span class="analytics-bar-fill analytics-bar-fill--soft" style="width: @GetWidth(item.Percentage);"></span>
+                    </div>
+                </div>
+            }
+        </article>
+
+        <article class="analytics-card analytics-card--wide">
+            <h2>Sitios anatómicos más frecuentes</h2>
+            @foreach (var item in overview.AnatomicalSiteDistribution.Take(6))
+            {
+                <div class="analytics-bar-row">
+                    <div class="analytics-bar-label">
+                        <span>@item.Label</span>
+                        <span>@item.Count (@item.Percentage.ToString("F1")%)</span>
+                    </div>
+                    <div class="analytics-bar-track">
+                        <span class="analytics-bar-fill" style="width: @GetWidth(item.Percentage);"></span>
+                    </div>
+                </div>
+            }
+        </article>
+
+        <article class="analytics-card analytics-card--wide">
+            <h2>Tendencia mensual de cargas</h2>
+            <div class="monthly-grid">
+                @foreach (var month in overview.MonthlyUploads)
+                {
+                    <div class="monthly-col">
+                        <span class="monthly-value">@month.Count</span>
+                        <div class="monthly-bar-track">
+                            <span class="monthly-bar-fill" style="height: @GetMonthlyHeight(month.Count);" aria-hidden="true"></span>
+                        </div>
+                        <span class="monthly-label">@month.Label</span>
+                    </div>
+                }
+            </div>
+        </article>
+
+        <article class="analytics-card analytics-card--wide">
+            <h2>Instituciones con mayor volumen</h2>
+            <ul class="top-inst-list">
+                @foreach (var inst in overview.TopInstitutions)
+                {
+                    <li>
+                        <span>@inst.InstitutionName</span>
+                        <strong>@inst.ImageCount imágenes</strong>
+                    </li>
+                }
+            </ul>
+        </article>
+    </section>
+}
+
+@code {
+    private StatisticsOverviewDto? overview;
+    private bool loading = true;
+    private string? loadError;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var response = await Http.GetAsync("api/statistics/overview");
+            if (response.IsSuccessStatusCode)
+            {
+                overview = await response.Content.ReadFromJsonAsync<StatisticsOverviewDto>();
+            }
+            else
+            {
+                loadError = $"No fue posible cargar los datos estadísticos (HTTP {(int)response.StatusCode}).";
+            }
+        }
+        catch (Exception ex)
+        {
+            loadError = $"No fue posible cargar los datos estadísticos: {ex.Message}";
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+
+    private static string GetWidth(double percentage)
+    {
+        var normalized = Math.Clamp(percentage, 0d, 100d);
+        return $"{normalized:F1}%";
+    }
+
+    private string GetMonthlyHeight(int count)
+    {
+        var max = overview?.MonthlyUploads.MaxBy(m => m.Count)?.Count ?? 1;
+        var height = max == 0 ? 0d : (count / (double)max) * 100;
+        height = Math.Clamp(height, 12d, 100d);
+        return $"{height:F1}%";
+    }
+}
