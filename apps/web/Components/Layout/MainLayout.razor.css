@@ -6,34 +6,58 @@
 
 main {
     flex: 1;
-    padding: 2rem 3rem;
-    max-width: 1200px;
+    padding: 2rem clamp(1rem, 3vw, 3rem) 3rem;
+    max-width: 1440px;
     width: 100%;
     margin: 0 auto;
 }
 
 .content {
-    padding-top: 0.5rem;
+    padding-top: 0.75rem;
 }
 
 .app-footer {
-    text-align: center;
-    padding: 1.5rem 1rem;
+    border-top: 1px solid color-mix(in srgb, var(--outline-variant) 35%, transparent);
+    background: linear-gradient(120deg, color-mix(in srgb, var(--surface-container-lowest) 70%, transparent), color-mix(in srgb, var(--surface-container-low) 80%, transparent));
+}
+
+.app-footer__inner {
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 1.5rem clamp(1rem, 3vw, 3rem);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+}
+
+.app-footer__brand {
+    font-family: var(--font-display);
+    color: var(--primary);
+    font-weight: 800;
+    letter-spacing: -0.01em;
+}
+
+.app-footer__meta {
+    color: var(--on-surface-variant);
     font-size: 0.8rem;
-    color: #b0a0a8;
-    letter-spacing: 0.03em;
-    border-top: 1px solid #f2e6ec;
+    letter-spacing: 0.04em;
 }
 
 @media (max-width: 768px) {
     main {
         padding: 1.25rem 1rem;
     }
+
+    .app-footer__inner {
+        flex-direction: column;
+        align-items: flex-start;
+    }
 }
 
 #blazor-error-ui {
     color-scheme: light only;
-    background: #fff0f3;
+    background: #fff4f2;
     bottom: 0;
     box-shadow: 0 -1px 6px rgba(0, 0, 0, 0.08);
     box-sizing: border-box;
@@ -43,7 +67,7 @@ main {
     position: fixed;
     width: 100%;
     z-index: 1000;
-    color: #c2185b;
+    color: #9a3412;
 }
 
     #blazor-error-ui .dismiss {
