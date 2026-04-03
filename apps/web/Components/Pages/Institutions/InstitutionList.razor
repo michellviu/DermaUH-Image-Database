@@ -279,8 +279,26 @@ else
     {
         try
         {
-            var userResponse = await Http.GetFromJsonAsync<PagedResponse<UserDto>>("api/users?page=1&pageSize=200");
-            allUsers = userResponse?.Items?.ToList() ?? [];
+            allUsers = [];
+            var page = 1;
+            const int pageSize = 100;
+
+            while (true)
+            {
+                var userResponse = await Http.GetFromJsonAsync<PagedResponse<UserDto>>($"api/users?page={page}&pageSize={pageSize}");
+                if (userResponse is null || !userResponse.Items.Any())
+                {
+                    break;
+                }
+
+                allUsers.AddRange(userResponse.Items);
+                if (allUsers.Count >= userResponse.TotalCount)
+                {
+                    break;
+                }
+
+                page++;
+            }
         }
         catch
         {
@@ -357,7 +375,11 @@ else
                 return;
             }
 
-            var usersById = allUsers.ToDictionary(u => u.Id);
+            var usersById = new Dictionary<Guid, UserDto>();
+            foreach (var user in allUsers)
+            {
+                usersById[user.Id] = user;
+            }
             var previouslyAssigned = allUsers
                 .Where(u => u.InstitutionId == institutionId)
                 .Select(u => u.Id)
@@ -383,7 +405,7 @@ else
 
                 if (!updateUserResult.IsSuccessStatusCode)
                 {
-                    errorMessage = $"Error al asignar responsable: {updateUserResult.StatusCode}";
+                    errorMessage = $"Error al asignar responsable ({user.Email}): {updateUserResult.StatusCode}";
                     return;
                 }
             }
@@ -405,7 +427,7 @@ else
 
                 if (!updateUserResult.IsSuccessStatusCode)
                 {
-                    errorMessage = $"Error al remover responsable: {updateUserResult.StatusCode}";
+                    errorMessage = $"Error al remover responsable ({user.Email}): {updateUserResult.StatusCode}";
                     return;
                 }
             }

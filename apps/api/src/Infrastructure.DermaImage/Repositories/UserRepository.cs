@@ -31,7 +31,7 @@ public class UserRepository : IUserRepository
 
     public async Task<User?> GetByEmailAsync(string email, CancellationToken cancellationToken = default)
     {
-        _logger.LogInformation("Fetching user by email: {UserEmail}", email);
+        _logger.LogInformation("Fetching user by email");
         return await _context.Users
             .Include(u => u.Institution)
             .Include(u => u.ContributedImages)
