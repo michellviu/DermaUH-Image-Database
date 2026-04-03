@@ -35,6 +35,8 @@ public class StatisticsManager : IStatisticsManager
         var contributorsCount = await _images.CountDistinctContributorsAsync(includePrivate, cancellationToken);
 
         var diagnosis = await _images.GetDiagnosisCategoryCountsAsync(includePrivate, cancellationToken);
+        var injuryType = await _images.GetInjuryTypeCountsAsync(includePrivate, cancellationToken);
+        var photoType = await _images.GetPhotoTypeCountsAsync(includePrivate, cancellationToken);
         var sex = await _images.GetSexCountsAsync(includePrivate, cancellationToken);
         var site = await _images.GetAnatomicalSiteCountsAsync(includePrivate, cancellationToken);
         var monthly = await _images.GetMonthlyUploadCountsAsync(recentMonths, includePrivate, cancellationToken);
@@ -48,6 +50,8 @@ public class StatisticsManager : IStatisticsManager
             InstitutionsCount = institutionsCount,
             ContributorsCount = contributorsCount,
             DiagnosisDistribution = MapBuckets(diagnosis, MapDiagnosisLabel),
+            InjuryTypeDistribution = MapBuckets(injuryType, MapInjuryTypeLabel),
+            PhotoTypeDistribution = MapBuckets(photoType, MapPhotoTypeLabel),
             SexDistribution = MapBuckets(sex, MapSexLabel),
             AnatomicalSiteDistribution = MapBuckets(site, MapAnatomicalSiteLabel),
             MonthlyUploads = BuildMonthlySeries(monthly, recentMonths),
@@ -120,6 +124,16 @@ public class StatisticsManager : IStatisticsManager
     {
         "Male" => "Masculino",
         "Female" => "Femenino",
+        _ => key
+    };
+
+    private static string MapPhotoTypeLabel(string key) => key;
+
+    private static string MapInjuryTypeLabel(string key) => key switch
+    {
+        "BasalCellCarcinoma" => "Carcinoma basocelular",
+        "SquamousCellCarcinoma" => "Carcinoma escamocelular",
+        "Others" => "Otros",
         _ => key
     };
 
