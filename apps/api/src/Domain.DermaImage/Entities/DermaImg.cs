@@ -1,10 +1,8 @@
 using Domain.DermaImage.Entities.Enums;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Domain.DermaImage.Entities;
 
-/// <summary>
-/// Represents a dermatological image record in the database.
-/// </summary>
 public class DermaImg : BaseEntity
 {
     // ── Identification & Housekeeping ──────────────────────────────────
@@ -23,12 +21,6 @@ public class DermaImg : BaseEntity
     /// <summary>File size in bytes.</summary>
     public long FileSize { get; set; }
 
-    /// <summary>Creative Commons license subtype.</summary>
-    public CopyrightLicense? CopyrightLicense { get; set; }
-
-    /// <summary>Attribution text for Creative Commons compliance.</summary>
-    public string? Attribution { get; set; }
-
     /// <summary>Whether the image is visible to anonymous/public users.</summary>
     public bool IsPublic { get; set; } = false;
 
@@ -42,15 +34,15 @@ public class DermaImg : BaseEntity
     /// <summary>Modality of dermoscopic imaging (only when ImageType is Dermoscopic).</summary>
     public DermoscopicType? DermoscopicType { get; set; }
 
-    /// <summary>Relative date of image capture compared to other images of the same patient.</summary>
-    public int? AcquisitionDay { get; set; }
-
     // ── Patient Demographics ───────────────────────────────────────────
     /// <summary>Approximate age of the patient at time of capture (binned to 5-year intervals).</summary>
     public int? AgeApprox { get; set; }
 
     /// <summary>Biologic sex of the imaged person.</summary>
     public Sex? Sex { get; set; }
+
+    /// <summary>Skin type.</summary>
+    public PhotoType? FotoType { get; set; }
 
     /// <summary>Personal history of melanoma.</summary>
     public bool? PersonalHxMm { get; set; }
@@ -75,26 +67,11 @@ public class DermaImg : BaseEntity
     /// <summary>Malignancy super-category (benign/indeterminate/malignant).</summary>
     public DiagnosisCategory? DiagnosisCategory { get; set; }
 
-    /// <summary>Second-level diagnosis classification.</summary>
-    public string? DiagnosisLevel2 { get; set; }
-
-    /// <summary>Third-level diagnosis term.</summary>
-    public string? DiagnosisLevel3 { get; set; }
-
-    /// <summary>Fourth-level diagnosis subterm.</summary>
-    public string? DiagnosisLevel4 { get; set; }
-
-    /// <summary>Fifth-level diagnosis subterm.</summary>
-    public string? DiagnosisLevel5 { get; set; }
-
-    /// <summary>Whether the image was captured at/just prior to biopsy.</summary>
-    public bool? ConcomitantBiopsy { get; set; }
+    /// <summary>Type of skin lesion (Melanoma, BasalCellCarcinoma, etc.).</summary>
+    public InjuryType? InjuryType { get; set; }
 
     /// <summary>Method by which the diagnosis was confirmed.</summary>
     public DiagnosisConfirmType? DiagnosisConfirmType { get; set; }
-
-    /// <summary>Whether the lesion is melanocytic.</summary>
-    public bool? Melanocytic { get; set; }
 
     // ── Lesion Histologic ──────────────────────────────────────────────
     /// <summary>Melanoma thickness (Breslow depth) in mm.</summary>
@@ -113,9 +90,13 @@ public class DermaImg : BaseEntity
     // ── Relationships ──────────────────────────────────────────────────
     /// <summary>User who contributed this image.</summary>
     public Guid ContributorId { get; set; }
-    public User Contributor { get; set; }
+    
+    [ForeignKey("ContributorId")]
+    public User Contributor { get; set; } = null!;
 
     /// <summary>Institution that provided this image.</summary>
     public Guid? InstitutionId { get; set; }
-    public Institution Institution { get; set; }
+
+    [ForeignKey("InstitutionId")]
+    public Institution? Institution { get; set; }
 }
