@@ -1,5 +1,6 @@
 using Application.DermaImage.DTOs;
 using Application.DermaImage.Managers;
+using Application.DermaImage.Validation;
 using Domain.DermaImage.Entities;
 using Domain.DermaImage.Entities.Enums;
 using Microsoft.AspNetCore.Authorization;
@@ -15,13 +16,16 @@ namespace WebApi.DermaImage.Controllers;
 public class ImagesController : ControllerBase
 {
     private readonly IDermaImgManager _manager;
+    private readonly IUserManager _userManager;
     private readonly IImageUploadManager _imageUploadManager;
 
     public ImagesController(
         IDermaImgManager manager,
+        IUserManager userManager,
         IImageUploadManager imageUploadManager)
     {
         _manager = manager;
+        _userManager = userManager;
         _imageUploadManager = imageUploadManager;
     }
 
@@ -36,21 +40,20 @@ public class ImagesController : ControllerBase
         [FromQuery] List<PhotoType>? fotoTypes = null,
         [FromQuery] List<Sex>? sexes = null,
         [FromQuery] List<AnatomSiteGeneral>? anatomSites = null,
-        [FromQuery] bool? isPublic = null,
+        [FromQuery] Guid? contributorId = null,
         [FromQuery] string? diagnosisContains = null,
         CancellationToken cancellationToken = default)
     {
-        var canReadPrivate = CanReadPrivateImages();
-
         var filter = new DermaImgFilter
         {
             ImageTypes = imageTypes,
             DiagnosisCategories = diagnosisCategories,
             InjuryTypes = injuryTypes,
             FotoTypes = fotoTypes,
+            ContributorId = contributorId,
             Sexes = sexes,
             AnatomSites = anatomSites,
-            IsPublic = canReadPrivate ? isPublic : true,
+            IsPublic = true,
             DiagnosisContains = diagnosisContains
         };
 
@@ -157,6 +160,16 @@ public class ImagesController : ControllerBase
             return BadRequest("InstitutionId es obligatorio.");
         }
 
+        var businessValidationErrors = DermaImgValidationRules.Validate(dto);
+        if (businessValidationErrors.Count > 0)
+        {
+            return ValidationProblem(new ValidationProblemDetails(businessValidationErrors)
+            {
+                Title = "Reglas de validacion de imagen incumplidas.",
+                Status = StatusCodes.Status400BadRequest
+            });
+        }
+
         var created = await _manager.CreateAsync(dto, cancellationToken);
         return CreatedAtAction(nameof(GetById), new { id = created.Id }, MapToResponseDto(created));
     }
@@ -183,9 +196,23 @@ public class ImagesController : ControllerBase
             return Forbid();
         }
 
-        if (!isAdmin)
+        dto.ContributorId = existing.ContributorId;
+        dto.FileName = existing.FileName;
+        dto.FilePath = existing.FilePath;
+        dto.ContentType = existing.ContentType;
+        dto.FileSize = existing.FileSize;
+
+        var contributor = await _userManager.GetByIdAsync(existing.ContributorId, cancellationToken);
+        dto.InstitutionId = contributor?.InstitutionId;
+
+        var businessValidationErrors = DermaImgValidationRules.Validate(dto);
+        if (businessValidationErrors.Count > 0)
         {
-            dto.ContributorId = existing.ContributorId;
+            return ValidationProblem(new ValidationProblemDetails(businessValidationErrors)
+            {
+                Title = "Reglas de validacion de imagen incumplidas.",
+                Status = StatusCodes.Status400BadRequest
+            });
         }
 
         await _manager.UpdateAsync(id, dto, cancellationToken);
