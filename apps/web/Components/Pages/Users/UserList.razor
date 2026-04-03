@@ -143,6 +143,16 @@ else
         try
         {
             response = await Http.GetFromJsonAsync<PagedResponse<UserDto>>("api/users?page=1&pageSize=50");
+            if (response?.Items is not null)
+            {
+                foreach (var user in response.Items)
+                {
+                    if (!string.IsNullOrWhiteSpace(user.Role))
+                    {
+                        selectedRoles[user.Id] = user.Role;
+                    }
+                }
+            }
         }
         catch
         {
@@ -211,7 +221,7 @@ else
 
         try
         {
-            var result = await Http.PostAsJsonAsync($"api/users/{userId}/roles", new { Role = role });
+            var result = await Http.PostAsJsonAsync($"api/users/{userId}/roles", new RoleRequest { Role = role });
             if (!result.IsSuccessStatusCode)
             {
                 errorMessage = $"Error al asignar rol: {result.StatusCode}";
@@ -235,7 +245,7 @@ else
         {
             var request = new HttpRequestMessage(HttpMethod.Delete, $"api/users/{userId}/roles")
             {
-                Content = JsonContent.Create(new { Role = role })
+                Content = JsonContent.Create(new RoleRequest { Role = role })
             };
 
             var result = await Http.SendAsync(request);
@@ -259,5 +269,10 @@ else
         public string LastName { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
         public string Password { get; set; } = string.Empty;
+    }
+
+    private class RoleRequest
+    {
+        public string Role { get; set; } = string.Empty;
     }
 }
