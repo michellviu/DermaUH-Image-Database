@@ -55,7 +55,7 @@
             <h5 class="mt-4">Tipo de Imagen</h5>
             <div class="mb-3">
                 <label class="form-label">Tipo de Imagen</label>
-                <InputSelect @bind-Value="model.ImageType" class="form-select">
+                <InputSelect @bind-Value="model.ImageType" @bind-Value:after="OnDependencySourceChanged" class="form-select">
                     <option value="">— Seleccionar —</option>
                     <option value="Dermoscopic">Dermoscópica</option>
                     <option value="ClinicalOverview">Clínica: Vista General</option>
@@ -79,12 +79,16 @@
             </div>
             <div class="mb-3">
                 <label class="form-label">Tipo Dermatoscópico</label>
-                <InputSelect @bind-Value="model.DermoscopicType" class="form-select">
+                <InputSelect @bind-Value="model.DermoscopicType" class="form-select" disabled="@(!dermoscopicEnabled)">
                     <option value="">— Seleccionar —</option>
                     <option value="ContactPolarized">Contacto Polarizado</option>
                     <option value="ContactNonPolarized">Contacto No Polarizado</option>
                     <option value="NonContactPolarized">Sin Contacto Polarizado</option>
                 </InputSelect>
+                @if (!dermoscopicEnabled)
+                {
+                    <div class="dependency-note">Disponible solo cuando "Tipo de Imagen" es Dermoscópica.</div>
+                }
             </div>
 
             <h5 class="mt-4">Datos del Paciente</h5>
@@ -125,6 +129,20 @@
         <div class="col-md-6">
             <h5>Localización de la Lesión</h5>
             <div class="mb-3">
+                <label class="form-label">Institución *</label>
+                <InputSelect @bind-Value="model.InstitutionId" class="form-select">
+                    <option value="">— Seleccionar —</option>
+                    @foreach (var institution in institutions)
+                    {
+                        <option value="@institution.Id">@institution.Name</option>
+                    }
+                </InputSelect>
+                @if (institutions.Count == 0)
+                {
+                    <div class="dependency-note dependency-note--warning">No se pudieron cargar instituciones. Refresque la página.</div>
+                }
+            </div>
+            <div class="mb-3">
                 <label class="form-label">Sitio Anatómico General</label>
                 <InputSelect @bind-Value="model.AnatomSiteGeneral" class="form-select">
                     <option value="">— Seleccionar —</option>
@@ -150,7 +168,7 @@
             </div>
             <div class="mb-3">
                 <label class="form-label">Categoría</label>
-                <InputSelect @bind-Value="model.DiagnosisCategory" class="form-select">
+                <InputSelect @bind-Value="model.DiagnosisCategory" @bind-Value:after="OnDependencySourceChanged" class="form-select">
                     <option value="">— Seleccionar —</option>
                     <option value="Benign">Benigno</option>
                     <option value="Indeterminate">Indeterminado</option>
@@ -159,13 +177,17 @@
             </div>
             <div class="mb-3">
                 <label class="form-label">Tipo de Lesión</label>
-                <InputSelect @bind-Value="model.InjuryType" class="form-select">
+                <InputSelect @bind-Value="model.InjuryType" @bind-Value:after="OnDependencySourceChanged" class="form-select" disabled="@(!injuryTypeEnabled)">
                     <option value="">— Seleccionar —</option>
                     <option value="Melanoma">Melanoma</option>
                     <option value="BasalCellCarcinoma">Carcinoma Basocelular</option>
                     <option value="SquamousCellCarcinoma">Carcinoma Escamocelular</option>
                     <option value="Others">Otros</option>
                 </InputSelect>
+                @if (!injuryTypeEnabled)
+                {
+                    <div class="dependency-note">Solo se habilita cuando la categoría es "Maligno".</div>
+                }
             </div>
             <div class="mb-3">
                 <label class="form-label">Método de Confirmación</label>
@@ -182,11 +204,11 @@
             <h5 class="mt-4">Histología (Melanoma)</h5>
             <div class="mb-3">
                 <label class="form-label">Espesor de Melanoma (mm)</label>
-                <InputNumber @bind-Value="model.MelThickMm" class="form-control" />
+                <InputNumber @bind-Value="model.MelThickMm" class="form-control" disabled="@(!melanomaHistologyEnabled)" />
             </div>
             <div class="mb-3">
                 <label class="form-label">Índice Mitótico</label>
-                <InputSelect @bind-Value="model.MelMitoticIndex" class="form-select">
+                <InputSelect @bind-Value="model.MelMitoticIndex" class="form-select" disabled="@(!melanomaHistologyEnabled)">
                     <option value="">— Seleccionar —</option>
                     <option value="Zero">0/mm²</option>
                     <option value="LessThanOne">&lt;1/mm²</option>
@@ -198,9 +220,13 @@
                 </InputSelect>
             </div>
             <div class="mb-3 form-check">
-                <InputCheckbox @bind-Value="melUlcer" class="form-check-input" id="melUlcer" />
+                <InputCheckbox @bind-Value="melUlcer" class="form-check-input" id="melUlcer" disabled="@(!melanomaHistologyEnabled)" />
                 <label class="form-check-label" for="melUlcer">Ulceración Histopatológica</label>
             </div>
+            @if (!melanomaHistologyEnabled)
+            {
+                <div class="dependency-note">Los campos histológicos solo aplican cuando el tipo de lesión es "Melanoma".</div>
+            }
 
             <h5 class="mt-4">Notas</h5>
             <div class="mb-3">
@@ -227,14 +253,43 @@
 @code {
     private const long MaxUploadSizeBytes = 20 * 1024 * 1024;
 
-    private CreateImageModel model = new();
+    private CreateImageFormModel model = new();
     private bool submitting = false;
     private string? errorMessage;
     private IBrowserFile? selectedFile;
+    private List<InstitutionDto> institutions = [];
 
     private bool personalHxMm;
     private bool familyHxMm;
     private bool melUlcer;
+
+    private bool dermoscopicEnabled => ImageCreateValidationRules.RequiresDermoscopicType(model.ImageType);
+    private bool injuryTypeEnabled => ImageCreateValidationRules.AllowsInjuryType(model.DiagnosisCategory);
+    private bool melanomaHistologyEnabled => ImageCreateValidationRules.AllowsMelanomaHistology(model.InjuryType);
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadInstitutionsAsync();
+    }
+
+    private async Task LoadInstitutionsAsync()
+    {
+        try
+        {
+            var response = await Http.GetFromJsonAsync<PagedResponse<InstitutionDto>>("api/institutions?page=1&pageSize=200");
+            institutions = response?.Items.OrderBy(x => x.Name).ToList() ?? [];
+        }
+        catch
+        {
+            institutions = [];
+        }
+    }
+
+    private Task OnDependencySourceChanged()
+    {
+        ImageCreateValidationRules.Normalize(model, ref melUlcer);
+        return Task.CompletedTask;
+    }
 
     private void OnFileSelected(InputFileChangeEventArgs e)
     {
@@ -244,6 +299,7 @@
         model.ContentType = string.IsNullOrWhiteSpace(selectedFile.ContentType)
             ? "application/octet-stream"
             : selectedFile.ContentType;
+        model.FileSize = selectedFile.Size;
 
         var storageRoot = Configuration["ServerImageStoragePath"] ?? "ImageStorage";
         model.FilePath = Path.Combine(storageRoot, model.FileName);
@@ -259,6 +315,15 @@
             if (selectedFile is null)
             {
                 errorMessage = "Debe seleccionar una imagen.";
+                return;
+            }
+
+            ImageCreateValidationRules.Normalize(model, ref melUlcer);
+
+            var businessValidationErrors = ImageCreateValidationRules.Validate(model, melUlcer);
+            if (businessValidationErrors.Count > 0)
+            {
+                errorMessage = string.Join(Environment.NewLine, businessValidationErrors);
                 return;
             }
 
@@ -284,6 +349,7 @@
             AddIfNotEmpty(formData, "DiagnosisConfirmType", model.DiagnosisConfirmType);
             AddIfNotEmpty(formData, "MelMitoticIndex", model.MelMitoticIndex);
             AddIfNotEmpty(formData, "ClinicalNotes", model.ClinicalNotes);
+            AddIfNotEmpty(formData, "InstitutionId", model.InstitutionId);
 
             AddIfValue(formData, "AgeApprox", model.AgeApprox);
             AddIfValue(formData, "ClinSizeLongDiamMm", model.ClinSizeLongDiamMm);
@@ -302,10 +368,7 @@
             }
             else
             {
-                var details = await response.Content.ReadAsStringAsync();
-                errorMessage = string.IsNullOrWhiteSpace(details)
-                    ? $"Error al guardar: {response.StatusCode}"
-                    : $"Error al guardar: {details}";
+                errorMessage = await ApiValidationMessageParser.BuildFriendlyErrorMessageAsync(response);
             }
         }
         catch (Exception ex)
@@ -352,28 +415,5 @@
         {
             formData.Add(new StringContent("true"), key);
         }
-    }
-
-    private class CreateImageModel
-    {
-        public string FileName { get; set; } = string.Empty;
-        public string FilePath { get; set; } = string.Empty;
-        public string ContentType { get; set; } = "image/jpeg";
-        public bool IsPublic { get; set; }
-        public string? ImageType { get; set; }
-        public string? ImageManipulation { get; set; }
-        public string? DermoscopicType { get; set; }
-        public int? AgeApprox { get; set; }
-        public string? Sex { get; set; }
-        public string? FotoType { get; set; }
-        public string? AnatomSiteGeneral { get; set; }
-        public double? ClinSizeLongDiamMm { get; set; }
-        public string? Diagnosis { get; set; }
-        public string? DiagnosisCategory { get; set; }
-        public string? InjuryType { get; set; }
-        public string? DiagnosisConfirmType { get; set; }
-        public double? MelThickMm { get; set; }
-        public string? MelMitoticIndex { get; set; }
-        public string? ClinicalNotes { get; set; }
     }
 }

@@ -1,0 +1,15 @@
+.dependency-note {
+    margin-top: 0.4rem;
+    font-size: 0.76rem;
+    color: var(--primary-container);
+    border: 1px solid color-mix(in srgb, var(--primary-fixed) 65%, transparent);
+    background: color-mix(in srgb, var(--primary-fixed) 28%, transparent);
+    border-radius: 0.7rem;
+    padding: 0.45rem 0.6rem;
+}
+
+.dependency-note--warning {
+    color: #9f1239;
+    border-color: #f3bac8;
+    background: #fff1f5;
+}
