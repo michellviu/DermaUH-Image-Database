@@ -1,0 +1,61 @@
+.chart-empty {
+    border: 1px dashed color-mix(in srgb, var(--outline-variant) 45%, transparent);
+    border-radius: 0.8rem;
+    padding: 0.8rem;
+    color: var(--on-surface-variant);
+    font-size: 0.82rem;
+    background: color-mix(in srgb, var(--surface-container-low) 60%, transparent);
+}
+
+.histogram-grid {
+    min-height: 220px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(72px, 1fr));
+    gap: 0.7rem;
+    align-items: end;
+}
+
+.histogram-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.28rem;
+}
+
+.histogram-value {
+    color: var(--on-surface-variant);
+    font-size: 0.72rem;
+    font-weight: 700;
+}
+
+.histogram-track {
+    width: 100%;
+    height: 150px;
+    border-radius: 0.65rem;
+    border: 1px solid color-mix(in srgb, var(--outline-variant) 26%, transparent);
+    background: color-mix(in srgb, var(--surface-container-high) 85%, transparent);
+    display: flex;
+    align-items: flex-end;
+    overflow: hidden;
+}
+
+.histogram-fill {
+    width: 100%;
+    border-radius: 0.55rem;
+}
+
+.histogram-fill--primary {
+    background: linear-gradient(180deg, var(--primary-container), var(--primary));
+}
+
+.histogram-fill--secondary {
+    background: linear-gradient(180deg, var(--secondary-container), var(--secondary));
+}
+
+.histogram-label {
+    color: var(--on-surface-variant);
+    font-size: 0.7rem;
+    text-align: center;
+    line-height: 1.2;
+    max-width: 72px;
+}

@@ -1,0 +1,95 @@
+@using Web.DermaImage.Shared.Models
+
+@if (total <= 0)
+{
+    <div class="chart-empty">@EmptyMessage</div>
+}
+else
+{
+    <div class="pie-layout">
+        <div class="pie-donut" style="background: @gradientCss;" role="img" aria-label="Grafico de pastel">
+            <div class="pie-center">
+                <strong>@total.ToString("0")</strong>
+                <span>Total</span>
+            </div>
+        </div>
+
+        <ul class="pie-legend">
+            @for (var i = 0; i < points.Count; i++)
+            {
+                var item = points[i];
+                <li>
+                    <span class="pie-dot" style="background: @colors[i];"></span>
+                    <span class="pie-label">@item.Label</span>
+                    <span class="pie-value">@item.Value.ToString("0") (@item.Percentage.ToString("0.0")%)</span>
+                </li>
+            }
+        </ul>
+    </div>
+}
+
+@code {
+    [Parameter] public IReadOnlyList<ChartPoint> Data { get; set; } = [];
+    [Parameter] public string EmptyMessage { get; set; } = "Sin datos disponibles.";
+
+    private readonly string[] palette =
+    [
+        "#530c73",
+        "#894c5a",
+        "#291d8f",
+        "#8d2b5b",
+        "#3c5d7a",
+        "#95710f",
+        "#2a7f62",
+        "#7060b3"
+    ];
+
+    private List<ChartPointView> points = [];
+    private List<string> colors = [];
+    private double total;
+    private string gradientCss = "conic-gradient(#ddd 0% 100%)";
+
+    protected override void OnParametersSet()
+    {
+        total = Data.Sum(x => x.Value);
+        points = [];
+        colors = [];
+
+        if (total <= 0)
+        {
+            gradientCss = "conic-gradient(#ddd 0% 100%)";
+            return;
+        }
+
+        var start = 0d;
+        var gradientParts = new List<string>();
+
+        for (var i = 0; i < Data.Count; i++)
+        {
+            var source = Data[i];
+            var percentage = (source.Value / total) * 100d;
+            var end = start + percentage;
+            var color = palette[i % palette.Length];
+
+            gradientParts.Add($"{color} {start:F2}% {end:F2}%");
+            points.Add(new ChartPointView
+            {
+                Label = source.Label,
+                Value = source.Value,
+                Percentage = percentage
+            });
+            colors.Add(color);
+
+            start = end;
+        }
+
+        gradientCss = $"conic-gradient({string.Join(", ", gradientParts)})";
+    }
+
+    private sealed class ChartPointView
+    {
+        public string Label { get; set; } = string.Empty;
+        public double Value { get; set; }
+        public double Percentage { get; set; }
+    }
+}

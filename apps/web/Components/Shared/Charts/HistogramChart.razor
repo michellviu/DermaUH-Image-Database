@@ -1,0 +1,40 @@
+@using Web.DermaImage.Shared.Models
+
+@if (Data.Count == 0 || maxValue <= 0)
+{
+    <div class="chart-empty">@EmptyMessage</div>
+}
+else
+{
+    <div class="histogram-grid">
+        @foreach (var item in Data)
+        {
+            var barHeight = Math.Max(10d, (item.Value / maxValue) * 100d);
+            <div class="histogram-col" title="@($"{item.Label}: {FormatValue(item.Value)}")">
+                <span class="histogram-value">@FormatValue(item.Value)</span>
+                <div class="histogram-track">
+                    <span class="histogram-fill @ColorClass" style="height: @($"{barHeight:F1}%")"></span>
+                </div>
+                <span class="histogram-label">@item.Label</span>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    [Parameter] public IReadOnlyList<ChartPoint> Data { get; set; } = [];
+    [Parameter] public string EmptyMessage { get; set; } = "Sin datos disponibles.";
+    [Parameter] public string ColorClass { get; set; } = "histogram-fill--primary";
+
+    private double maxValue => Data.Count == 0 ? 0 : Data.Max(x => x.Value);
+
+    private static string FormatValue(double value)
+    {
+        if (Math.Abs(value % 1) < 0.0001)
+        {
+            return value.ToString("0");
+        }
+
+        return value.ToString("0.0");
+    }
+}
