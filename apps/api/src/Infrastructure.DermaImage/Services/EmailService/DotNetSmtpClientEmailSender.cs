@@ -116,8 +116,8 @@ public class DotNetSmtpClientEmailSender : IEmailService
         if (string.IsNullOrWhiteSpace(emailSettings.SmtpServerAddress))
         {
             logger.LogInformation(
-                "[DEV EMAIL] To: {To} | Subject: {Subject} (set EmailSettings__SmtpServerAddress to enable real SMTP)",
-                string.Join(",", receivers),
+                "[DEV EMAIL] Receivers: {ReceiverCount} | Subject: {Subject} (set EmailSettings__SmtpServerAddress to enable real SMTP)",
+                receivers.Count,
                 subject);
             return;
         }
@@ -166,8 +166,8 @@ public class DotNetSmtpClientEmailSender : IEmailService
         {
             logger.LogError(ex, "Email server -> An error occurred while sending the email\n");
             logger.LogWarning(
-                "Email delivery failed for {Receivers}. Registration flow will continue; verify SMTP settings.",
-                string.Join(",", receivers));
+                "Email delivery failed for {ReceiverCount} receiver(s). Registration flow will continue; verify SMTP settings.",
+                receivers.Count);
         }
     }
 
