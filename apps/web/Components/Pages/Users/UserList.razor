@@ -230,6 +230,7 @@ else
 
         if (string.Equals(currentRole, role, StringComparison.OrdinalIgnoreCase))
         {
+            errorMessage = "El usuario ya tiene este rol asignado.";
             return;
         }
 
@@ -238,7 +239,10 @@ else
             var result = await Http.PostAsJsonAsync($"api/users/{userId}/roles", new AssignRoleRequest { Role = role });
             if (!result.IsSuccessStatusCode)
             {
-                errorMessage = $"Error al asignar rol: {result.StatusCode}";
+                var detail = await result.Content.ReadAsStringAsync();
+                errorMessage = string.IsNullOrWhiteSpace(detail)
+                    ? $"Error al asignar rol: {result.StatusCode}"
+                    : $"Error al asignar rol: {detail}";
                 return;
             }
 
@@ -271,7 +275,10 @@ else
             var result = await Http.SendAsync(request);
             if (!result.IsSuccessStatusCode)
             {
-                errorMessage = $"Error al quitar rol: {result.StatusCode}";
+                var detail = await result.Content.ReadAsStringAsync();
+                errorMessage = string.IsNullOrWhiteSpace(detail)
+                    ? $"Error al quitar rol: {result.StatusCode}"
+                    : $"Error al quitar rol: {detail}";
                 return;
             }
 
