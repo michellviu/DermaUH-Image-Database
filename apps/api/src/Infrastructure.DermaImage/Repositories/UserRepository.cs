@@ -83,8 +83,18 @@ public class UserRepository : IUserRepository
     public async Task UpdateAsync(User user, CancellationToken cancellationToken = default)
     {
         _logger.LogInformation("Updating user: {@User}", user);
-        user.UpdatedAt = DateTime.UtcNow;
-        var result = await _userManager.UpdateAsync(user);
+        var managedUser = await GetManagedIdentityUserAsync(user.Id);
+        managedUser.FirstName = user.FirstName;
+        managedUser.LastName = user.LastName;
+        managedUser.Email = user.Email;
+        managedUser.UserName = user.UserName;
+        managedUser.PhoneNumber = user.PhoneNumber;
+        managedUser.IsActive = user.IsActive;
+        managedUser.IsDeleted = user.IsDeleted;
+        managedUser.InstitutionId = user.InstitutionId;
+        managedUser.UpdatedAt = DateTime.UtcNow;
+
+        var result = await _userManager.UpdateAsync(managedUser);
         if (!result.Succeeded)
         {
             var errors = string.Join(", ", result.Errors.Select(e => e.Description));
@@ -142,10 +152,11 @@ public class UserRepository : IUserRepository
         return _userManager.GenerateEmailConfirmationTokenAsync(user);
     }
 
-    public Task<IdentityResult> ConfirmEmailAsync(User user, string token)
+    public async Task<IdentityResult> ConfirmEmailAsync(User user, string token)
     {
         _logger.LogInformation("Confirming email for user: {@User}", user);
-        return _userManager.ConfirmEmailAsync(user, token);
+        var managedUser = await GetManagedIdentityUserAsync(user.Id);
+        return await _userManager.ConfirmEmailAsync(managedUser, token);
     }
 
     public Task<string> GeneratePasswordResetTokenAsync(User user)
@@ -154,10 +165,11 @@ public class UserRepository : IUserRepository
         return _userManager.GeneratePasswordResetTokenAsync(user);
     }
 
-    public Task<IdentityResult> ResetPasswordAsync(User user, string token, string newPassword)
+    public async Task<IdentityResult> ResetPasswordAsync(User user, string token, string newPassword)
     {
         _logger.LogInformation("Resetting password for user: {@User}", user);
-        return _userManager.ResetPasswordAsync(user, token, newPassword);
+        var managedUser = await GetManagedIdentityUserAsync(user.Id);
+        return await _userManager.ResetPasswordAsync(managedUser, token, newPassword);
     }
 
     public Task<bool> HasPasswordAsync(User user)
@@ -166,16 +178,18 @@ public class UserRepository : IUserRepository
         return _userManager.HasPasswordAsync(user);
     }
 
-    public Task<IdentityResult> AddPasswordAsync(User user, string newPassword)
+    public async Task<IdentityResult> AddPasswordAsync(User user, string newPassword)
     {
         _logger.LogInformation("Adding password for user: {@User}", user);
-        return _userManager.AddPasswordAsync(user, newPassword);
+        var managedUser = await GetManagedIdentityUserAsync(user.Id);
+        return await _userManager.AddPasswordAsync(managedUser, newPassword);
     }
 
-    public Task<IdentityResult> ChangePasswordAsync(User user, string currentPassword, string newPassword)
+    public async Task<IdentityResult> ChangePasswordAsync(User user, string currentPassword, string newPassword)
     {
         _logger.LogInformation("Changing password for user: {@User}", user);
-        return _userManager.ChangePasswordAsync(user, currentPassword, newPassword);
+        var managedUser = await GetManagedIdentityUserAsync(user.Id);
+        return await _userManager.ChangePasswordAsync(managedUser, currentPassword, newPassword);
     }
 
     public Task<User?> FindByLoginAsync(string loginProvider, string providerKey)
@@ -188,5 +202,26 @@ public class UserRepository : IUserRepository
     {
         _logger.LogInformation("Adding external login for user: {@User}. Provider: {LoginProvider}", user, loginInfo.LoginProvider);
         return _userManager.AddLoginAsync(user, loginInfo);
+    }
+
+    private async Task<User> GetManagedIdentityUserAsync(Guid userId)
+    {
+        var trackedUser = _context.ChangeTracker
+            .Entries<User>()
+            .FirstOrDefault(e => e.Entity.Id == userId)
+            ?.Entity;
+
+        if (trackedUser is not null)
+        {
+            return trackedUser;
+        }
+
+        var managedUser = await _userManager.FindByIdAsync(userId.ToString());
+        if (managedUser is null)
+        {
+            throw new KeyNotFoundException($"User with id '{userId}' was not found.");
+        }
+
+        return managedUser;
     }
 }
