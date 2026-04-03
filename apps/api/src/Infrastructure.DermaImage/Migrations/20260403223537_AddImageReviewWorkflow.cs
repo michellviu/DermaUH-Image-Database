@@ -29,7 +29,7 @@ namespace Infrastructure.DermaImage.Migrations
                 type: "character varying(20)",
                 maxLength: 20,
                 nullable: false,
-                defaultValue: "");
+                defaultValue: "Pending");
         }
 
         /// <inheritdoc />
