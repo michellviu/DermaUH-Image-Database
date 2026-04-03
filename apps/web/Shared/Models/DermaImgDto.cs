@@ -42,5 +42,7 @@ public class DermaImgDto
     public DateTime CreatedAt { get; set; }
 
     public Guid? ContributorId { get; set; }
+    public string? ContributorFullName { get; set; }
     public Guid? InstitutionId { get; set; }
+    public string? InstitutionName { get; set; }
 }
