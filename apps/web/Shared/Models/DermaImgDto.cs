@@ -8,19 +8,17 @@ public class DermaImgDto
     public string FilePath { get; set; } = string.Empty;
     public string ContentType { get; set; } = string.Empty;
     public long FileSize { get; set; }
-    public string? CopyrightLicense { get; set; }
-    public string? Attribution { get; set; }
     public bool IsPublic { get; set; }
 
     // Acquisition
     public string? ImageType { get; set; }
     public string? ImageManipulation { get; set; }
     public string? DermoscopicType { get; set; }
-    public int? AcquisitionDay { get; set; }
 
     // Patient
     public int? AgeApprox { get; set; }
     public string? Sex { get; set; }
+    public string? FotoType { get; set; }
     public bool? PersonalHxMm { get; set; }
     public bool? FamilyHxMm { get; set; }
 
@@ -32,13 +30,8 @@ public class DermaImgDto
     // Diagnostic
     public string? Diagnosis { get; set; }
     public string? DiagnosisCategory { get; set; }
-    public string? DiagnosisLevel2 { get; set; }
-    public string? DiagnosisLevel3 { get; set; }
-    public string? DiagnosisLevel4 { get; set; }
-    public string? DiagnosisLevel5 { get; set; }
-    public bool? ConcomitantBiopsy { get; set; }
+    public string? InjuryType { get; set; }
     public string? DiagnosisConfirmType { get; set; }
-    public bool? Melanocytic { get; set; }
 
     // Histologic
     public double? MelThickMm { get; set; }
