@@ -83,10 +83,6 @@ public class DermaImgManager : IDermaImgManager
 
     private static void MapToExistingEntity(CreateDermaImgDto dto, DermaImg entity)
     {
-        entity.FileName = dto.FileName;
-        entity.FilePath = dto.FilePath;
-        entity.ContentType = dto.ContentType;
-        entity.FileSize = dto.FileSize;
         entity.IsPublic = dto.IsPublic;
         entity.ImageType = dto.ImageType;
         entity.ImageManipulation = dto.ImageManipulation;
@@ -107,7 +103,5 @@ public class DermaImgManager : IDermaImgManager
         entity.MelMitoticIndex = dto.MelMitoticIndex;
         entity.MelUlcer = dto.MelUlcer;
         entity.ClinicalNotes = dto.ClinicalNotes;
-        entity.ContributorId = dto.ContributorId;
-        entity.InstitutionId = dto.InstitutionId;
     }
 }
