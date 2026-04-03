@@ -1,5 +1,7 @@
 @page "/images/{Id:guid}"
 @rendermode InteractiveServer
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
 @inject HttpClient Http
 
 <PageTitle>Detalle de Imagen - DermaUH</PageTitle>
@@ -17,37 +19,58 @@ else
     <PageHeader Title="Detalle de imagen" Subtitle="@($"ID público: {image.PublicId}")">
         <Actions>
             <a href="images" class="btn btn-outline-primary">Volver al listado</a>
+            @if (canEdit)
+            {
+                <a href="images/@image.Id/edit" class="btn btn-primary">Editar</a>
+            }
         </Actions>
     </PageHeader>
+
+    <section class="detail-summary-strip">
+        <span class="summary-chip @(image.IsPublic ? "summary-chip--public" : "summary-chip--private")">@(image.IsPublic ? "Pública" : "Privada")</span>
+        @if (!string.IsNullOrWhiteSpace(image.DiagnosisCategory))
+        {
+            <span class="summary-chip">@LocalizeCategory(image.DiagnosisCategory)</span>
+        }
+        @if (!string.IsNullOrWhiteSpace(image.InjuryType))
+        {
+            <span class="summary-chip">@image.InjuryType</span>
+        }
+        @if (!string.IsNullOrWhiteSpace(image.InstitutionName))
+        {
+            <span class="summary-chip">@image.InstitutionName</span>
+        }
+    </section>
 
     <div class="detail-grid">
         <section class="content-card detail-image-panel">
             <div class="content-card__body">
                 <ImagePreview ImageId="@image.Id" Alt="@image.FileName" ContainerClass="detail-preview-wrapper" ImageClass="detail-preview-image" />
                 <div class="detail-image-meta">
-                    <span class="badge @(image.IsPublic ? "bg-success" : "bg-warning")">@(image.IsPublic ? "Pública" : "Privada")</span>
-                    <span class="text-muted">@image.ContentType</span>
-                    <span class="text-muted">@FormatFileSize(image.FileSize)</span>
+                    <span class="detail-meta-item">Formato: @image.ContentType</span>
+                    <span class="detail-meta-item">Peso: @FormatFileSize(image.FileSize)</span>
+                    <span class="detail-meta-item">Creada: @image.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</span>
                 </div>
             </div>
         </section>
 
-        <section class="space-y-3">
+        <section class="detail-sections">
             <SectionCard Title="Información General">
-                <div class="kv-grid">
+                <div class="detail-list">
                     @KeyValue("ID Público", image.PublicId)
                     @KeyValue("Archivo", image.FileName)
                     @KeyValue("Tipo de Imagen", image.ImageType)
                     @KeyValue("Manipulación", image.ImageManipulation)
                     @KeyValue("Tipo Dermatoscópico", image.DermoscopicType)
-                    @KeyValue("Institución", image.InstitutionId?.ToString())
+                    @KeyValue("Contribuidor", image.ContributorFullName)
+                    @KeyValue("Institución", image.InstitutionName)
                 </div>
             </SectionCard>
 
             <SectionCard Title="Datos del Paciente">
-                <div class="kv-grid">
+                <div class="detail-list">
                     @KeyValue("Edad Aproximada", image.AgeApprox?.ToString())
-                    @KeyValue("Sexo", image.Sex)
+                    @KeyValue("Sexo", LocalizeSex(image.Sex))
                     @KeyValue("Fototipo", image.FotoType)
                     @KeyValue("Historial Personal MM", FormatBool(image.PersonalHxMm))
                     @KeyValue("Historial Familiar MM", FormatBool(image.FamilyHxMm))
@@ -55,15 +78,15 @@ else
             </SectionCard>
 
             <SectionCard Title="Información Clínica de la Lesión">
-                <div class="kv-grid">
-                    @KeyValue("Sitio Anatómico", image.AnatomSiteGeneral)
+                <div class="detail-list">
+                    @KeyValue("Sitio Anatómico", LocalizeAnatomSite(image.AnatomSiteGeneral))
                     @KeyValue("Sitio Especial", image.AnatomSiteSpecial)
                     @KeyValue("Diámetro Mayor (mm)", image.ClinSizeLongDiamMm?.ToString("F1"))
                 </div>
             </SectionCard>
 
             <SectionCard Title="Diagnóstico">
-                <div class="kv-grid">
+                <div class="detail-list">
                     @KeyValue("Diagnóstico", image.Diagnosis)
                     @KeyValue("Categoría", image.DiagnosisCategory)
                     @KeyValue("Tipo de lesión", image.InjuryType)
@@ -72,7 +95,7 @@ else
             </SectionCard>
 
             <SectionCard Title="Histología (Melanoma)">
-                <div class="kv-grid">
+                <div class="detail-list">
                     @KeyValue("Espesor (mm)", image.MelThickMm?.ToString("F2"))
                     @KeyValue("Índice Mitótico", image.MelMitoticIndex)
                     @KeyValue("Ulceración", FormatBool(image.MelUlcer))
@@ -91,15 +114,21 @@ else
 
 @code {
     [Parameter] public Guid Id { get; set; }
+    [CascadingParameter] private Task<AuthenticationState>? AuthenticationStateTask { get; set; }
 
     private DermaImgDto? image;
     private bool loading = true;
+    private bool canEdit;
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
             image = await Http.GetFromJsonAsync<DermaImgDto>($"api/images/{Id}");
+            if (image is not null)
+            {
+                canEdit = await ResolveCanEditAsync(image);
+            }
         }
         catch
         {
@@ -123,6 +152,35 @@ else
         _ => "bg-secondary"
     };
 
+    private async Task<bool> ResolveCanEditAsync(DermaImgDto currentImage)
+    {
+        if (AuthenticationStateTask is null)
+        {
+            return false;
+        }
+
+        var authState = await AuthenticationStateTask;
+        var user = authState.User;
+
+        if (!(user.Identity?.IsAuthenticated ?? false))
+        {
+            return false;
+        }
+
+        if (user.IsInRole("Admin"))
+        {
+            return true;
+        }
+
+        var userIdText = user.FindFirst(ClaimTypes.NameIdentifier)?.Value
+            ?? user.FindFirst("sub")?.Value
+            ?? user.FindFirst(ClaimTypes.Name)?.Value;
+
+        return Guid.TryParse(userIdText, out var userId)
+            && currentImage.ContributorId.HasValue
+            && currentImage.ContributorId.Value == userId;
+    }
+
     private string FormatFileSize(long bytes)
     {
         if (bytes < 1024)
@@ -140,24 +198,52 @@ else
         return $"{mb:F1} MB";
     }
 
+    private static string LocalizeCategory(string? category) => category switch
+    {
+        "Benign" => "Benigno",
+        "Indeterminate" => "Indeterminado",
+        "Malignant" => "Maligno",
+        _ => category ?? "—"
+    };
+
+    private static string LocalizeSex(string? sex) => sex switch
+    {
+        "Male" => "Masculino",
+        "Female" => "Femenino",
+        _ => sex ?? "—"
+    };
+
+    private static string LocalizeAnatomSite(string? value) => value switch
+    {
+        "HeadNeck" => "Cabeza/Cuello",
+        "UpperExtremity" => "Extremidad Superior",
+        "LowerExtremity" => "Extremidad Inferior",
+        "AnteriorTorso" => "Torso Anterior",
+        "LateralTorso" => "Torso Lateral",
+        "PosteriorTorso" => "Torso Posterior",
+        "PalmsSoles" => "Palmas/Plantas",
+        "OralGenital" => "Oral/Genital",
+        _ => value ?? "—"
+    };
+
     private RenderFragment KeyValue(string label, string? value) => builder =>
     {
         builder.OpenElement(0, "div");
-        builder.AddAttribute(1, "class", "kv-item");
+        builder.AddAttribute(1, "class", "detail-row");
 
         builder.OpenElement(2, "span");
-        builder.AddAttribute(3, "class", "kv-label");
-        builder.AddContent(4, label);
+        builder.AddAttribute(3, "class", "detail-label");
+        builder.AddContent(4, $"{label}:");
         builder.CloseElement();
 
         builder.OpenElement(5, "span");
-        builder.AddAttribute(6, "class", "kv-value");
+        builder.AddAttribute(6, "class", "detail-value");
 
-        if (label == "Categoría" && !string.IsNullOrWhiteSpace(value))
+        if (label == "Categoría" && !string.IsNullOrWhiteSpace(value) && value != "—")
         {
             builder.OpenElement(7, "span");
             builder.AddAttribute(8, "class", $"badge {GetBadgeClass(value)}");
-            builder.AddContent(9, value);
+            builder.AddContent(9, LocalizeCategory(value));
             builder.CloseElement();
         }
         else
