@@ -313,7 +313,8 @@ public class ImagesController : ControllerBase
         };
 
         await _manager.UpdateAsync(id, updateDto, cancellationToken);
-        return Ok(MapToResponseDto(existing));
+        var updated = await _manager.GetByIdAsync(id, cancellationToken);
+        return updated is null ? NotFound() : Ok(MapToResponseDto(updated));
     }
 
     [Authorize(Roles = "Admin,Contributor")]

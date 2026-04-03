@@ -72,7 +72,7 @@
         errorMessage = null;
         try
         {
-            var response = await Http.GetFromJsonAsync<PagedResponse<DermaImgDto>>("api/images/review/inbox?page=1&pageSize=200");
+            var response = await Http.GetFromJsonAsync<PagedResponse<DermaImgDto>>("api/images/review/inbox?page=1&pageSize=50");
             items = response?.Items.ToList() ?? [];
         }
         catch
@@ -89,7 +89,7 @@
     private async Task ReviewAsync(Guid imageId, bool approve)
     {
         errorMessage = null;
-        var response = await Http.PostAsJsonAsync($"api/images/{imageId}/review", new { approve });
+        var response = await Http.PostAsJsonAsync($"api/images/{imageId}/review", new ImageReviewDecisionRequest { Approve = approve });
         if (!response.IsSuccessStatusCode)
         {
             errorMessage = await ApiValidationMessageParser.BuildFriendlyErrorMessageAsync(response);
@@ -97,5 +97,10 @@
         }
 
         items.RemoveAll(x => x.Id == imageId);
+    }
+
+    private sealed class ImageReviewDecisionRequest
+    {
+        public bool Approve { get; set; }
     }
 }
