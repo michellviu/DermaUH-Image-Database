@@ -113,10 +113,17 @@ else
                 </div>
 
                 <div class="institution-actions">
-                    @if (!string.IsNullOrWhiteSpace(inst.Website))
-                    {
-                        <a href="@inst.Website" target="_blank" rel="noopener noreferrer" class="btn btn-outline-primary">Sitio web</a>
-                    }
+                    <div class="institution-action-buttons">
+                        @if (!string.IsNullOrWhiteSpace(inst.Website))
+                        {
+                            <a href="@inst.Website" target="_blank" rel="noopener noreferrer" class="btn btn-outline-primary">Sitio web</a>
+                        }
+                        <AuthorizeView Roles="Admin">
+                            <Authorized>
+                                <button class="btn btn-outline-secondary" @onclick="() => StartEdit(inst)">Editar</button>
+                            </Authorized>
+                        </AuthorizeView>
+                    </div>
                     <span class="institution-date">Alta: @inst.CreatedAt.ToString("yyyy-MM-dd")</span>
                 </div>
             </article>
@@ -124,17 +131,96 @@ else
     </section>
 }
 
+@if (editingInstitutionId is not null)
+{
+    <SectionCard Title="Editar institución" Class="mt-4 institutions-form-card">
+        <EditForm Model="editInstitution" OnValidSubmit="HandleUpdate" FormName="updateInstitution">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label">Nombre *</label>
+                        <InputText @bind-Value="editInstitution.Name" class="form-control" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">País</label>
+                        <InputText @bind-Value="editInstitution.Country" class="form-control" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Ciudad</label>
+                        <InputText @bind-Value="editInstitution.City" class="form-control" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Dirección</label>
+                        <InputText @bind-Value="editInstitution.Address" class="form-control" />
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label">Descripción</label>
+                        <InputTextArea @bind-Value="editInstitution.Description" class="form-control" rows="3" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Website</label>
+                        <InputText @bind-Value="editInstitution.Website" class="form-control" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Email de Contacto</label>
+                        <InputText @bind-Value="editInstitution.ContactEmail" class="form-control" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Usuarios responsables</label>
+                @if (allUsers.Count == 0)
+                {
+                    <div class="form-text">No hay usuarios disponibles para asignar.</div>
+                }
+                else
+                {
+                    <div class="responsible-users-list">
+                        @foreach (var user in allUsers)
+                        {
+                            <label class="responsible-user-option">
+                                <input type="checkbox"
+                                       checked="@editResponsibleUserIds.Contains(user.Id)"
+                                       @onchange="e => ToggleResponsibleUser(user.Id, e)" />
+                                <span>@user.FirstName @user.LastName (@user.Email)</span>
+                            </label>
+                        }
+                    </div>
+                }
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary" disabled="@submittingEdit">
+                    @(submittingEdit ? "Guardando..." : "Guardar cambios")
+                </button>
+                <button type="button" class="btn btn-outline-secondary" @onclick="CancelEdit" disabled="@submittingEdit">
+                    Cancelar
+                </button>
+            </div>
+        </EditForm>
+    </SectionCard>
+}
+
 @code {
     private PagedResponse<InstitutionDto>? response;
+    private List<UserDto> allUsers = [];
     private bool loading = true;
     private bool showForm = false;
     private bool submitting = false;
+    private bool submittingEdit = false;
+    private Guid? editingInstitutionId;
+    private InstitutionFormModel editInstitution = new();
+    private HashSet<Guid> editResponsibleUserIds = [];
     private string? errorMessage;
     private InstitutionFormModel newInstitution = new();
 
     protected override async Task OnInitializedAsync()
     {
         await LoadData();
+        await LoadUsers();
     }
 
     private async Task LoadData()
@@ -186,6 +272,155 @@ else
         finally
         {
             submitting = false;
+        }
+    }
+
+    private async Task LoadUsers()
+    {
+        try
+        {
+            var userResponse = await Http.GetFromJsonAsync<PagedResponse<UserDto>>("api/users?page=1&pageSize=200");
+            allUsers = userResponse?.Items?.ToList() ?? [];
+        }
+        catch
+        {
+            allUsers = [];
+        }
+    }
+
+    private void StartEdit(InstitutionDto institution)
+    {
+        editingInstitutionId = institution.Id;
+        editInstitution = new InstitutionFormModel
+        {
+            Name = institution.Name,
+            Description = institution.Description,
+            Country = institution.Country,
+            City = institution.City,
+            Address = institution.Address,
+            Website = institution.Website,
+            ContactEmail = institution.ContactEmail
+        };
+
+        editResponsibleUserIds = allUsers
+            .Where(u => u.InstitutionId == institution.Id)
+            .Select(u => u.Id)
+            .ToHashSet();
+    }
+
+    private void CancelEdit()
+    {
+        editingInstitutionId = null;
+        editInstitution = new();
+        editResponsibleUserIds.Clear();
+    }
+
+    private void ToggleResponsibleUser(Guid userId, ChangeEventArgs e)
+    {
+        var isChecked = e.Value is bool b && b;
+        if (isChecked)
+        {
+            editResponsibleUserIds.Add(userId);
+        }
+        else
+        {
+            editResponsibleUserIds.Remove(userId);
+        }
+    }
+
+    private async Task HandleUpdate()
+    {
+        if (editingInstitutionId is null)
+        {
+            return;
+        }
+
+        submittingEdit = true;
+        errorMessage = null;
+        try
+        {
+            var institutionId = editingInstitutionId.Value;
+            var updateInstitutionResult = await Http.PutAsJsonAsync($"api/institutions/{institutionId}", new
+            {
+                editInstitution.Name,
+                editInstitution.Description,
+                editInstitution.Country,
+                editInstitution.City,
+                editInstitution.Address,
+                editInstitution.Website,
+                editInstitution.ContactEmail
+            });
+
+            if (!updateInstitutionResult.IsSuccessStatusCode)
+            {
+                errorMessage = $"Error al actualizar institución: {updateInstitutionResult.StatusCode}";
+                return;
+            }
+
+            var usersById = allUsers.ToDictionary(u => u.Id);
+            var previouslyAssigned = allUsers
+                .Where(u => u.InstitutionId == institutionId)
+                .Select(u => u.Id)
+                .ToHashSet();
+
+            var toAssign = editResponsibleUserIds.Except(previouslyAssigned).ToList();
+            var toUnassign = previouslyAssigned.Except(editResponsibleUserIds).ToList();
+
+            foreach (var userId in toAssign)
+            {
+                if (!usersById.TryGetValue(userId, out var user))
+                {
+                    continue;
+                }
+
+                var updateUserResult = await Http.PutAsJsonAsync($"api/users/{userId}", new
+                {
+                    user.FirstName,
+                    user.LastName,
+                    user.Email,
+                    InstitutionId = institutionId
+                });
+
+                if (!updateUserResult.IsSuccessStatusCode)
+                {
+                    errorMessage = $"Error al asignar responsable: {updateUserResult.StatusCode}";
+                    return;
+                }
+            }
+
+            foreach (var userId in toUnassign)
+            {
+                if (!usersById.TryGetValue(userId, out var user))
+                {
+                    continue;
+                }
+
+                var updateUserResult = await Http.PutAsJsonAsync($"api/users/{userId}", new
+                {
+                    user.FirstName,
+                    user.LastName,
+                    user.Email,
+                    InstitutionId = (Guid?)null
+                });
+
+                if (!updateUserResult.IsSuccessStatusCode)
+                {
+                    errorMessage = $"Error al remover responsable: {updateUserResult.StatusCode}";
+                    return;
+                }
+            }
+
+            await LoadData();
+            await LoadUsers();
+            CancelEdit();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+        finally
+        {
+            submittingEdit = false;
         }
     }
 

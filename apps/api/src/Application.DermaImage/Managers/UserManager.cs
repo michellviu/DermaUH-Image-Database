@@ -43,6 +43,19 @@ public class UserManager : IUserManager
         return created;
     }
 
+    public async Task UpdateAsync(Guid id, UpdateUserDto dto, CancellationToken cancellationToken = default)
+    {
+        var existing = await _service.GetByIdAsync(id, cancellationToken)
+            ?? throw new KeyNotFoundException($"User with id '{id}' was not found.");
+
+        existing.FirstName = dto.FirstName;
+        existing.LastName = dto.LastName;
+        existing.Email = dto.Email;
+        existing.InstitutionId = dto.InstitutionId;
+
+        await _service.UpdateAsync(existing, cancellationToken);
+    }
+
     public async Task<IList<string>> GetRolesAsync(Guid userId, CancellationToken cancellationToken = default)
     {
         var user = await _service.GetByIdAsync(userId, cancellationToken)
