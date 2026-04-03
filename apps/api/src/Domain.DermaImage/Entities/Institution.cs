@@ -1,8 +1,5 @@
 namespace Domain.DermaImage.Entities;
 
-/// <summary>
-/// Represents a medical institution that contributes images.
-/// </summary>
 public class Institution : BaseEntity
 {
     public string Name { get; set; } = string.Empty;
