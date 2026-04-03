@@ -99,6 +99,7 @@ else
                                             style="min-width: 140px;"
                                             value="@GetSelectedRole(user.Id)"
                                             @onchange="e => OnRoleSelectionChanged(user.Id, e)">
+                                        <option value="">Seleccione</option>
                                         @foreach (var role in assignableRoles)
                                         {
                                             <option value="@role">@role</option>
@@ -143,6 +144,7 @@ else
         try
         {
             response = await Http.GetFromJsonAsync<PagedResponse<UserDto>>("api/users?page=1&pageSize=50");
+            selectedRoles.Clear();
             if (response?.Items is not null)
             {
                 foreach (var user in response.Items)
@@ -200,7 +202,7 @@ else
     {
         return selectedRoles.TryGetValue(userId, out var role)
             ? role
-            : "Viewer";
+            : string.Empty;
     }
 
     private void OnRoleSelectionChanged(Guid userId, ChangeEventArgs e)
@@ -218,10 +220,22 @@ else
     {
         errorMessage = null;
         var role = GetSelectedRole(userId);
+        var currentRole = response?.Items.FirstOrDefault(x => x.Id == userId)?.Role ?? string.Empty;
+
+        if (string.IsNullOrWhiteSpace(role))
+        {
+            errorMessage = "Seleccione un rol para asignar.";
+            return;
+        }
+
+        if (string.Equals(currentRole, role, StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
 
         try
         {
-            var result = await Http.PostAsJsonAsync($"api/users/{userId}/roles", new RoleRequest { Role = role });
+            var result = await Http.PostAsJsonAsync($"api/users/{userId}/roles", new AssignRoleRequest { Role = role });
             if (!result.IsSuccessStatusCode)
             {
                 errorMessage = $"Error al asignar rol: {result.StatusCode}";
@@ -241,11 +255,17 @@ else
         errorMessage = null;
         var role = GetSelectedRole(userId);
 
+        if (string.IsNullOrWhiteSpace(role))
+        {
+            errorMessage = "Seleccione un rol para quitar.";
+            return;
+        }
+
         try
         {
             var request = new HttpRequestMessage(HttpMethod.Delete, $"api/users/{userId}/roles")
             {
-                Content = JsonContent.Create(new RoleRequest { Role = role })
+                Content = JsonContent.Create(new AssignRoleRequest { Role = role })
             };
 
             var result = await Http.SendAsync(request);
@@ -271,8 +291,4 @@ else
         public string Password { get; set; } = string.Empty;
     }
 
-    private class RoleRequest
-    {
-        public string Role { get; set; } = string.Empty;
-    }
 }
