@@ -72,6 +72,7 @@ else
                         <th>Rol</th>
                         <th>Estado</th>
                         <th>Fecha de registro</th>
+                        <th>Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -92,6 +93,27 @@ else
                                 }
                             </td>
                             <td>@user.CreatedAt.ToString("yyyy-MM-dd")</td>
+                            <td>
+                                <div class="d-flex gap-2">
+                                    <select class="form-select form-select-sm"
+                                            style="min-width: 140px;"
+                                            value="@GetSelectedRole(user.Id)"
+                                            @onchange="e => OnRoleSelectionChanged(user.Id, e)">
+                                        @foreach (var role in assignableRoles)
+                                        {
+                                            <option value="@role">@role</option>
+                                        }
+                                    </select>
+                                    <button class="btn btn-sm btn-outline-primary"
+                                            @onclick="() => HandleAssignRole(user.Id)">
+                                        Asignar
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger"
+                                            @onclick="() => HandleRemoveRole(user.Id)">
+                                        Quitar
+                                    </button>
+                                </div>
+                            </td>
                         </tr>
                     }
                 </tbody>
@@ -107,6 +129,8 @@ else
     private bool submitting = false;
     private string? errorMessage;
     private UserFormModel newUser = new();
+    private readonly Dictionary<Guid, string> selectedRoles = new();
+    private readonly string[] assignableRoles = ["Viewer", "Contributor", "Reviewer", "Admin"];
 
     protected override async Task OnInitializedAsync()
     {
@@ -159,6 +183,73 @@ else
         finally
         {
             submitting = false;
+        }
+    }
+
+    private string GetSelectedRole(Guid userId)
+    {
+        return selectedRoles.TryGetValue(userId, out var role)
+            ? role
+            : "Viewer";
+    }
+
+    private void OnRoleSelectionChanged(Guid userId, ChangeEventArgs e)
+    {
+        var role = e.Value?.ToString();
+        if (string.IsNullOrWhiteSpace(role))
+        {
+            return;
+        }
+
+        selectedRoles[userId] = role;
+    }
+
+    private async Task HandleAssignRole(Guid userId)
+    {
+        errorMessage = null;
+        var role = GetSelectedRole(userId);
+
+        try
+        {
+            var result = await Http.PostAsJsonAsync($"api/users/{userId}/roles", new { Role = role });
+            if (!result.IsSuccessStatusCode)
+            {
+                errorMessage = $"Error al asignar rol: {result.StatusCode}";
+                return;
+            }
+
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+    }
+
+    private async Task HandleRemoveRole(Guid userId)
+    {
+        errorMessage = null;
+        var role = GetSelectedRole(userId);
+
+        try
+        {
+            var request = new HttpRequestMessage(HttpMethod.Delete, $"api/users/{userId}/roles")
+            {
+                Content = JsonContent.Create(new { Role = role })
+            };
+
+            var result = await Http.SendAsync(request);
+            if (!result.IsSuccessStatusCode)
+            {
+                errorMessage = $"Error al quitar rol: {result.StatusCode}";
+                return;
+            }
+
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
         }
     }
 

@@ -121,6 +121,12 @@ public class UserRepository : IUserRepository
         await _userManager.AddToRoleAsync(user, role);
     }
 
+    public async Task RemoveFromRoleAsync(User user, string role)
+    {
+        _logger.LogInformation("Removing user from role: {@User}, {Role}", user, role);
+        await _userManager.RemoveFromRoleAsync(user, role);
+    }
+
     public async Task<IList<string>> GetRolesAsync(User user)
     {
         _logger.LogInformation("Fetching roles for user: {@User}", user);

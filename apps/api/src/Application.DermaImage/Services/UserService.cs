@@ -48,6 +48,11 @@ public class UserService : IUserService
         await _repository.AddToRoleAsync(user, role);
     }
 
+    public async Task RemoveFromRoleAsync(User user, string role)
+    {
+        await _repository.RemoveFromRoleAsync(user, role);
+    }
+
     public async Task<IList<string>> GetRolesAsync(User user)
     {
         return await _repository.GetRolesAsync(user);

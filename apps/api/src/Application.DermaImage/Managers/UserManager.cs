@@ -59,6 +59,14 @@ public class UserManager : IUserManager
         await _service.AddToRoleAsync(user, role.ToString());
     }
 
+    public async Task RemoveRoleAsync(Guid userId, UserRole role, CancellationToken cancellationToken = default)
+    {
+        var user = await _service.GetByIdAsync(userId, cancellationToken)
+            ?? throw new KeyNotFoundException($"User with id '{userId}' was not found.");
+
+        await _service.RemoveFromRoleAsync(user, role.ToString());
+    }
+
     public async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)
     {
         await _service.DeleteAsync(id, cancellationToken);

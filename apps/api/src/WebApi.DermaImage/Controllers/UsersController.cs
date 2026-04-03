@@ -77,6 +77,13 @@ public class UsersController : ControllerBase
         return Ok();
     }
 
+    [HttpDelete("{id:guid}/roles")]
+    public async Task<IActionResult> RemoveRole(Guid id, [FromBody] AssignRoleDto dto, CancellationToken cancellationToken)
+    {
+        await _manager.RemoveRoleAsync(id, dto.Role, cancellationToken);
+        return Ok();
+    }
+
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
