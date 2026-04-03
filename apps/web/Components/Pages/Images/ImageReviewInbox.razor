@@ -1,0 +1,101 @@
+@page "/images/review-inbox"
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Reviewer")]
+@inject HttpClient Http
+
+<PageTitle>Inbox de revisión - DermaUH</PageTitle>
+
+<PageHeader Title="Inbox de revisión" Subtitle="Imágenes pendientes de aprobación por especialistas." />
+
+<SectionCard>
+    @if (!string.IsNullOrWhiteSpace(errorMessage))
+    {
+        <div class="alert alert-danger">@errorMessage</div>
+    }
+
+    @if (loading)
+    {
+        <div class="text-muted">Cargando solicitudes...</div>
+    }
+    else if (items.Count == 0)
+    {
+        <div class="alert alert-info mb-0">No hay imágenes pendientes de revisión.</div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-striped align-middle">
+                <thead>
+                    <tr>
+                        <th>Imagen</th>
+                        <th>Contribuidor</th>
+                        <th>Diagnóstico</th>
+                        <th>Solicitada</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var image in items)
+                    {
+                        <tr>
+                            <td>@image.FileName</td>
+                            <td>@(image.ContributorFullName ?? "—")</td>
+                            <td>@(image.Diagnosis ?? "—")</td>
+                            <td>@image.CreatedAt.ToLocalTime().ToString("g")</td>
+                            <td class="d-flex gap-2">
+                                <button class="btn btn-success btn-sm" @onclick="() => ReviewAsync(image.Id, true)">Aprobar</button>
+                                <button class="btn btn-outline-secondary btn-sm" @onclick="() => ReviewAsync(image.Id, false)">Rechazar</button>
+                                <a class="btn btn-outline-primary btn-sm" href="@($"images/{image.Id}")">Ver</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</SectionCard>
+
+@code {
+    private bool loading = true;
+    private string? errorMessage;
+    private List<DermaImgDto> items = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        loading = true;
+        errorMessage = null;
+        try
+        {
+            var response = await Http.GetFromJsonAsync<PagedResponse<DermaImgDto>>("api/images/review/inbox?page=1&pageSize=200");
+            items = response?.Items.ToList() ?? [];
+        }
+        catch
+        {
+            errorMessage = "No fue posible cargar el inbox de revisión.";
+            items = [];
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+
+    private async Task ReviewAsync(Guid imageId, bool approve)
+    {
+        errorMessage = null;
+        var response = await Http.PostAsJsonAsync($"api/images/{imageId}/review", new { approve });
+        if (!response.IsSuccessStatusCode)
+        {
+            errorMessage = await ApiValidationMessageParser.BuildFriendlyErrorMessageAsync(response);
+            return;
+        }
+
+        items.RemoveAll(x => x.Id == imageId);
+    }
+}

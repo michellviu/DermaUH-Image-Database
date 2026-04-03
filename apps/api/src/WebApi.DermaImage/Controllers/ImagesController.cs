@@ -41,6 +41,7 @@ public class ImagesController : ControllerBase
         [FromQuery] List<Sex>? sexes = null,
         [FromQuery] List<AnatomSiteGeneral>? anatomSites = null,
         [FromQuery] Guid? contributorId = null,
+        [FromQuery] ImageReviewStatus? reviewStatus = null,
         [FromQuery] string? diagnosisContains = null,
         CancellationToken cancellationToken = default)
     {
@@ -54,6 +55,7 @@ public class ImagesController : ControllerBase
             Sexes = sexes,
             AnatomSites = anatomSites,
             IsPublic = true,
+            ReviewStatus = reviewStatus,
             DiagnosisContains = diagnosisContains
         };
 
@@ -131,6 +133,12 @@ public class ImagesController : ControllerBase
             return BadRequest("Debe seleccionar una imagen para subir.");
         }
 
+        var reviewers = await _userManager.GetReviewersAsync(cancellationToken);
+        if (reviewers.Count == 0)
+        {
+            return BadRequest("No hay especialistas REVIEWER asignados para revisar la subida.");
+        }
+
         var savedFile = await _imageUploadManager.SaveUploadedFileAsync(file, cancellationToken);
 
         dto.FileName = savedFile.StoredFileName;
@@ -170,6 +178,7 @@ public class ImagesController : ControllerBase
             });
         }
 
+        dto.IsPublic = false;
         var created = await _manager.CreateAsync(dto, cancellationToken);
         return CreatedAtAction(nameof(GetById), new { id = created.Id }, MapToResponseDto(created));
     }
@@ -201,6 +210,9 @@ public class ImagesController : ControllerBase
         dto.FilePath = existing.FilePath;
         dto.ContentType = existing.ContentType;
         dto.FileSize = existing.FileSize;
+        dto.ReviewStatus = existing.ReviewStatus;
+        dto.ReviewDecisionByUserId = existing.ReviewDecisionByUserId;
+        dto.ReviewDecisionAt = existing.ReviewDecisionAt;
 
         var contributor = await _userManager.GetByIdAsync(existing.ContributorId, cancellationToken);
         dto.InstitutionId = contributor?.InstitutionId;
@@ -217,6 +229,91 @@ public class ImagesController : ControllerBase
 
         await _manager.UpdateAsync(id, dto, cancellationToken);
         return NoContent();
+    }
+
+    [Authorize(Roles = "Reviewer")]
+    [HttpGet("review/inbox")]
+    public async Task<ActionResult<PagedResponse<DermaImgResponseDto>>> GetReviewInbox(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20,
+        CancellationToken cancellationToken = default)
+    {
+        var filter = new DermaImgFilter
+        {
+            ReviewStatus = ImageReviewStatus.Pending
+        };
+
+        var (items, totalCount) = await _manager.GetPagedAsync(page, pageSize, filter, cancellationToken);
+        return Ok(new PagedResponse<DermaImgResponseDto>
+        {
+            Items = items.Select(MapToResponseDto),
+            TotalCount = totalCount,
+            Page = page,
+            PageSize = pageSize
+        });
+    }
+
+    [Authorize(Roles = "Reviewer")]
+    [HttpPost("{id:guid}/review")]
+    public async Task<ActionResult<DermaImgResponseDto>> Review(Guid id, [FromBody] ImageReviewDecisionDto dto, CancellationToken cancellationToken)
+    {
+        var existing = await _manager.GetByIdAsync(id, cancellationToken);
+        if (existing is null)
+        {
+            return NotFound();
+        }
+
+        if (existing.ReviewStatus != ImageReviewStatus.Pending)
+        {
+            return BadRequest("La imagen ya fue revisada previamente.");
+        }
+
+        var reviewerId = GetCurrentUserId();
+        if (reviewerId is null)
+        {
+            return Unauthorized();
+        }
+
+        existing.ReviewStatus = dto.Approve ? ImageReviewStatus.Approved : ImageReviewStatus.Rejected;
+        existing.IsPublic = dto.Approve;
+        existing.ReviewDecisionByUserId = reviewerId.Value;
+        existing.ReviewDecisionAt = DateTime.UtcNow;
+
+        var updateDto = new CreateDermaImgDto
+        {
+            FileName = existing.FileName,
+            FilePath = existing.FilePath,
+            ContentType = existing.ContentType,
+            FileSize = existing.FileSize,
+            IsPublic = existing.IsPublic,
+            ReviewStatus = existing.ReviewStatus,
+            ReviewDecisionByUserId = existing.ReviewDecisionByUserId,
+            ReviewDecisionAt = existing.ReviewDecisionAt,
+            ImageType = existing.ImageType,
+            ImageManipulation = existing.ImageManipulation,
+            DermoscopicType = existing.DermoscopicType,
+            AgeApprox = existing.AgeApprox,
+            Sex = existing.Sex,
+            FotoType = existing.FotoType,
+            PersonalHxMm = existing.PersonalHxMm,
+            FamilyHxMm = existing.FamilyHxMm,
+            AnatomSiteGeneral = existing.AnatomSiteGeneral,
+            AnatomSiteSpecial = existing.AnatomSiteSpecial,
+            ClinSizeLongDiamMm = existing.ClinSizeLongDiamMm,
+            Diagnosis = existing.Diagnosis,
+            DiagnosisCategory = existing.DiagnosisCategory,
+            InjuryType = existing.InjuryType,
+            DiagnosisConfirmType = existing.DiagnosisConfirmType,
+            MelThickMm = existing.MelThickMm,
+            MelMitoticIndex = existing.MelMitoticIndex,
+            MelUlcer = existing.MelUlcer,
+            ClinicalNotes = existing.ClinicalNotes,
+            ContributorId = existing.ContributorId,
+            InstitutionId = existing.InstitutionId
+        };
+
+        await _manager.UpdateAsync(id, updateDto, cancellationToken);
+        return Ok(MapToResponseDto(existing));
     }
 
     [Authorize(Roles = "Admin,Contributor")]
@@ -275,6 +372,9 @@ public class ImagesController : ControllerBase
             ContentType = image.ContentType,
             FileSize = image.FileSize,
             IsPublic = image.IsPublic,
+            ReviewStatus = image.ReviewStatus,
+            ReviewDecisionByUserId = image.ReviewDecisionByUserId,
+            ReviewDecisionAt = image.ReviewDecisionAt,
             ImageType = image.ImageType,
             ImageManipulation = image.ImageManipulation,
             DermoscopicType = image.DermoscopicType,

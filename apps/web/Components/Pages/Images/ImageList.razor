@@ -2,7 +2,9 @@
 @rendermode InteractiveServer
 @using System.Security.Claims
 @using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components
 @inject HttpClient Http
+@inject NavigationManager Navigation
 
 <PageTitle>Imágenes - DermaUH</PageTitle>
 
@@ -19,6 +21,13 @@
         </Authorized>
     </AuthorizeView>
 </section>
+
+@if (showUploadPendingReviewNotice)
+{
+    <div class="alert alert-info">
+        Tu imagen fue enviada y será revisada por especialistas antes de ser publicada.
+    </div>
+}
 
 <div class="gallery-layout">
     <aside class="gallery-filters">
@@ -145,6 +154,8 @@
 
 @code {
     [CascadingParameter] private Task<AuthenticationState>? AuthenticationStateTask { get; set; }
+    [SupplyParameterFromQuery(Name = "uploadPendingReview")]
+    public bool? UploadPendingReview { get; set; }
 
     private List<DermaImgDto> images = [];
     private bool hasLoaded;
@@ -159,6 +170,7 @@
     private bool onlyMyContributions;
     private bool isAuthenticated;
     private Guid? currentUserId;
+    private bool showUploadPendingReviewNotice;
 
     private readonly HashSet<string> selectedImageTypes = [];
     private readonly HashSet<string> selectedDiagnosisCategories = [];
@@ -224,6 +236,7 @@
 
     protected override async Task OnInitializedAsync()
     {
+        showUploadPendingReviewNotice = UploadPendingReview == true;
         await ResolveUserContextAsync();
         await LoadImagesAsync();
     }

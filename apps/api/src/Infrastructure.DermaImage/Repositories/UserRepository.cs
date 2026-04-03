@@ -115,6 +115,13 @@ public class UserRepository : IUserRepository
         }
     }
 
+    public async Task<IReadOnlyList<User>> GetUsersInRoleAsync(string role, CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation("Fetching users in role: {Role}", role);
+        var users = await _userManager.GetUsersInRoleAsync(role);
+        return users.ToList();
+    }
+
     public async Task AddToRoleAsync(User user, string role)
     {
         _logger.LogInformation("Adding user to role: {@User}, {Role}", user, role);

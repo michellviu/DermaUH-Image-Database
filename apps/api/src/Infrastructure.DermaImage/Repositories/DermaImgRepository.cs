@@ -106,6 +106,11 @@ public class DermaImgRepository : Repository<DermaImg>, IDermaImgRepository
                 query = query.Where(i => i.IsPublic == filter.IsPublic.Value);
             }
 
+            if (filter.ReviewStatus.HasValue)
+            {
+                query = query.Where(i => i.ReviewStatus == filter.ReviewStatus.Value);
+            }
+
             if (!string.IsNullOrWhiteSpace(filter.DiagnosisContains))
             {
                 var diagnosis = filter.DiagnosisContains.Trim().ToLower();

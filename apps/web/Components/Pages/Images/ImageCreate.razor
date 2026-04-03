@@ -25,6 +25,9 @@
     {
         <div class="alert alert-danger">@errorMessage</div>
     }
+    <div class="alert alert-info">
+        Al completar el registro, la imagen quedará pendiente de revisión por especialistas (rol REVIEWER) antes de publicarse.
+    </div>
 
     <div class="row">
         <div class="col-md-6">
@@ -364,7 +367,7 @@
             var response = await Http.PostAsync("api/images", formData);
             if (response.IsSuccessStatusCode)
             {
-                Navigation.NavigateTo("images");
+                Navigation.NavigateTo("images?uploadPendingReview=true");
             }
             else
             {
