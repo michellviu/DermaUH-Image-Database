@@ -86,6 +86,11 @@ public class DermaImgRepository : Repository<DermaImg>, IDermaImgRepository
                 query = query.Where(i => i.FotoType.HasValue && filter.FotoTypes.Contains(i.FotoType.Value));
             }
 
+            if (filter.ContributorId.HasValue)
+            {
+                query = query.Where(i => i.ContributorId == filter.ContributorId.Value);
+            }
+
             if (filter.Sexes is { Count: > 0 })
             {
                 query = query.Where(i => i.Sex.HasValue && filter.Sexes.Contains(i.Sex.Value));
