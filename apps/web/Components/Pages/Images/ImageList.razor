@@ -1,5 +1,7 @@
 @page "/images"
 @rendermode InteractiveServer
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Components.Authorization
 @inject HttpClient Http
 
 <PageTitle>Imágenes - DermaUH</PageTitle>
@@ -30,14 +32,15 @@
             <input @ref="diagnosisInputRef" type="text" value="@diagnosisContains" @oninput="OnDiagnosisInputChangedAsync" class="form-control" placeholder="Buscar por término clínico" />
         </section>
 
-        <section>
-            <label class="form-label">Visibilidad</label>
-            <InputSelect @bind-Value="publicFilter" @bind-Value:after="ApplyFiltersAsync" class="form-select">
-                <option value="all">Todas</option>
-                <option value="public">Públicas</option>
-                <option value="private">Privadas</option>
-            </InputSelect>
-        </section>
+        @if (isAuthenticated)
+        {
+            <section>
+                <label class="filter-check" for="mine-only">
+                    <input class="form-check-input" type="checkbox" checked="@onlyMyContributions" @onchange="ToggleOnlyMyContributionsAsync" id="mine-only" />
+                    <span>Solo mis contribuciones</span>
+                </label>
+            </section>
+        }
 
         <section>
             <h3>Tipo de imagen</h3>
@@ -56,6 +59,28 @@
             {
                 <label class="filter-check" for="@($"cat-{option.Value}")">
                     <input class="form-check-input" type="checkbox" checked="@selectedDiagnosisCategories.Contains(option.Value)" @onchange="(e) => ToggleSelection(e, option.Value, selectedDiagnosisCategories)" id="@($"cat-{option.Value}")" />
+                    <span>@option.Label</span>
+                </label>
+            }
+        </section>
+
+        <section>
+            <h3>Tipo de lesión</h3>
+            @foreach (var option in injuryTypeOptions)
+            {
+                <label class="filter-check" for="@($"injury-{option.Value}")">
+                    <input class="form-check-input" type="checkbox" checked="@selectedInjuryTypes.Contains(option.Value)" @onchange="(e) => ToggleSelection(e, option.Value, selectedInjuryTypes)" id="@($"injury-{option.Value}")" />
+                    <span>@option.Label</span>
+                </label>
+            }
+        </section>
+
+        <section>
+            <h3>Fototipo</h3>
+            @foreach (var option in photoTypeOptions)
+            {
+                <label class="filter-check" for="@($"photo-{option.Value}")">
+                    <input class="form-check-input" type="checkbox" checked="@selectedFotoTypes.Contains(option.Value)" @onchange="(e) => ToggleSelection(e, option.Value, selectedFotoTypes)" id="@($"photo-{option.Value}")" />
                     <span>@option.Label</span>
                 </label>
             }
@@ -102,41 +127,43 @@
         }
 
         <div class="images-grid">
-            <Virtualize @ref="virtualizeRef" Context="img" ItemsProvider="LoadImagesAsync" ItemSize="300" OverscanCount="2">
+            @foreach (var img in images)
+            {
                 <a href="images/@img.Id" class="image-card" title="Ver detalle">
                     <ImagePreview ImageId="@img.Id" Alt="@img.FileName" />
                     <div class="image-card-footer">
                         <div class="image-name" title="@img.FileName">
                             <span class="image-name-text">@img.FileName</span>
-                            @if (!img.IsPublic)
-                            {
-                                <span class="private-chip">Privada</span>
-                            }
                         </div>
                         <div class="image-meta">@(img.DiagnosisCategory ?? "—") · @(img.ImageType ?? "—")</div>
                     </div>
                 </a>
-            </Virtualize>
+            }
         </div>
     </section>
 </div>
 
 @code {
-    private Virtualize<DermaImgDto>? virtualizeRef;
+    [CascadingParameter] private Task<AuthenticationState>? AuthenticationStateTask { get; set; }
 
+    private List<DermaImgDto> images = [];
     private bool hasLoaded;
     private int totalCount;
     private string? loadingError;
     private int diagnosisInputVersion;
     private ElementReference diagnosisInputRef;
 
-    private const int DefaultPageSize = 24;
+    private const int DefaultPageSize = 200;
 
     private string? diagnosisContains;
-    private string publicFilter = "all";
+    private bool onlyMyContributions;
+    private bool isAuthenticated;
+    private Guid? currentUserId;
 
     private readonly HashSet<string> selectedImageTypes = [];
     private readonly HashSet<string> selectedDiagnosisCategories = [];
+    private readonly HashSet<string> selectedInjuryTypes = [];
+    private readonly HashSet<string> selectedFotoTypes = [];
     private readonly HashSet<string> selectedSexes = [];
     private readonly HashSet<string> selectedAnatomSites = [];
 
@@ -159,6 +186,24 @@
         new("Malignant", "Maligno")
     ];
 
+    private static readonly IReadOnlyList<FilterOption> injuryTypeOptions =
+    [
+        new("Melanoma", "Melanoma"),
+        new("BasalCellCarcinoma", "Carcinoma Basocelular"),
+        new("SquamousCellCarcinoma", "Carcinoma Escamocelular"),
+        new("Others", "Otros")
+    ];
+
+    private static readonly IReadOnlyList<FilterOption> photoTypeOptions =
+    [
+        new("I", "I"),
+        new("II", "II"),
+        new("III", "III"),
+        new("IV", "IV"),
+        new("V", "V"),
+        new("VI", "VI")
+    ];
+
     private static readonly IReadOnlyList<FilterOption> sexOptions =
     [
         new("Male", "Masculino"),
@@ -179,12 +224,13 @@
 
     protected override async Task OnInitializedAsync()
     {
-        await RefreshVirtualizedListAsync();
+        await ResolveUserContextAsync();
+        await LoadImagesAsync();
     }
 
     private async Task ApplyFiltersAsync()
     {
-        await RefreshVirtualizedListAsync();
+        await LoadImagesAsync();
     }
 
     private async Task OnDiagnosisInputChangedAsync(ChangeEventArgs args)
@@ -205,58 +251,74 @@
     {
         diagnosisContains = null;
         diagnosisInputVersion++;
-        publicFilter = "all";
+        onlyMyContributions = false;
         selectedImageTypes.Clear();
         selectedDiagnosisCategories.Clear();
+        selectedInjuryTypes.Clear();
+        selectedFotoTypes.Clear();
         selectedSexes.Clear();
         selectedAnatomSites.Clear();
 
-        await RefreshVirtualizedListAsync();
+        await LoadImagesAsync();
         await diagnosisInputRef.FocusAsync();
     }
 
-    private async Task RefreshVirtualizedListAsync()
+    private async Task ToggleOnlyMyContributionsAsync(ChangeEventArgs args)
+    {
+        onlyMyContributions = args.Value as bool? ?? false;
+        await ApplyFiltersAsync();
+    }
+
+    private async Task ResolveUserContextAsync()
+    {
+        if (AuthenticationStateTask is null)
+        {
+            return;
+        }
+
+        var authState = await AuthenticationStateTask;
+        var user = authState.User;
+        isAuthenticated = user.Identity?.IsAuthenticated ?? false;
+
+        var idValue = user.FindFirst(ClaimTypes.NameIdentifier)?.Value
+            ?? user.FindFirst("sub")?.Value
+            ?? user.FindFirst(ClaimTypes.Name)?.Value;
+
+        if (Guid.TryParse(idValue, out var parsedId))
+        {
+            currentUserId = parsedId;
+        }
+    }
+
+    private async Task LoadImagesAsync()
     {
         hasLoaded = false;
         loadingError = null;
 
-        if (virtualizeRef is not null)
-        {
-            await virtualizeRef.RefreshDataAsync();
-        }
-
-        await InvokeAsync(StateHasChanged);
-    }
-
-    private async ValueTask<ItemsProviderResult<DermaImgDto>> LoadImagesAsync(ItemsProviderRequest request)
-    {
-        var pageSize = request.Count <= 0 ? DefaultPageSize : request.Count;
-        var page = (request.StartIndex / pageSize) + 1;
-
         try
         {
-            var query = BuildQuery(page, pageSize);
+            var query = BuildQuery(1, DefaultPageSize);
             var response = await Http.GetFromJsonAsync<PagedResponse<DermaImgDto>>(query);
             if (response is null)
             {
                 totalCount = 0;
+                images = [];
                 hasLoaded = true;
                 loadingError = "No se pudo obtener la respuesta del servidor.";
-                return new ItemsProviderResult<DermaImgDto>([], 0);
+                return;
             }
 
             totalCount = response.TotalCount;
+            images = response.Items.ToList();
             hasLoaded = true;
             loadingError = null;
-
-            return new ItemsProviderResult<DermaImgDto>(response.Items, response.TotalCount);
         }
         catch
         {
             totalCount = 0;
+            images = [];
             hasLoaded = true;
             loadingError = "Error al cargar imágenes.";
-            return new ItemsProviderResult<DermaImgDto>([], 0);
         }
     }
 
@@ -278,6 +340,16 @@
             queryParams.Add($"diagnosisCategories={Uri.EscapeDataString(value)}");
         }
 
+        foreach (var value in selectedInjuryTypes)
+        {
+            queryParams.Add($"injuryTypes={Uri.EscapeDataString(value)}");
+        }
+
+        foreach (var value in selectedFotoTypes)
+        {
+            queryParams.Add($"fotoTypes={Uri.EscapeDataString(value)}");
+        }
+
         foreach (var value in selectedSexes)
         {
             queryParams.Add($"sexes={Uri.EscapeDataString(value)}");
@@ -293,14 +365,12 @@
             queryParams.Add($"diagnosisContains={Uri.EscapeDataString(diagnosisContains.Trim())}");
         }
 
-        if (publicFilter == "public")
+        if (onlyMyContributions && currentUserId.HasValue)
         {
-            queryParams.Add("isPublic=true");
+            queryParams.Add($"contributorId={currentUserId.Value}");
         }
-        else if (publicFilter == "private")
-        {
-            queryParams.Add("isPublic=false");
-        }
+
+        queryParams.Add("isPublic=true");
 
         return $"api/images?{string.Join("&", queryParams)}";
     }
