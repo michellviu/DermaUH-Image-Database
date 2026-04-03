@@ -24,6 +24,7 @@ public class UserRepository : IUserRepository
         _logger.LogInformation("Fetching user by ID: {UserId}", id);
         return await _context.Users
             .Include(u => u.Institution)
+            .Include(u => u.ResponsibleInstitution)
             .Include(u => u.ContributedImages)
             .AsNoTracking()
             .FirstOrDefaultAsync(u => u.Id == id, cancellationToken);
@@ -34,6 +35,7 @@ public class UserRepository : IUserRepository
         _logger.LogInformation("Fetching user by email: {UserEmail}", email);
         return await _context.Users
             .Include(u => u.Institution)
+            .Include(u => u.ResponsibleInstitution)
             .Include(u => u.ContributedImages)
             .AsNoTracking()
             .FirstOrDefaultAsync(u => u.Email == email, cancellationToken);
@@ -44,6 +46,7 @@ public class UserRepository : IUserRepository
         _logger.LogInformation("Fetching all users");
         return await _context.Users
             .Include(u => u.Institution)
+            .Include(u => u.ResponsibleInstitution)
             .Include(u => u.ContributedImages)
             .AsNoTracking()
             .ToListAsync(cancellationToken);
@@ -56,6 +59,7 @@ public class UserRepository : IUserRepository
         var totalCount = await query.CountAsync(cancellationToken);
         var items = await query
             .Include(u => u.Institution)
+            .Include(u => u.ResponsibleInstitution)
             .Include(u => u.ContributedImages)
             .AsNoTracking()
             .OrderBy(u => u.LastName)
@@ -89,9 +93,12 @@ public class UserRepository : IUserRepository
         managedUser.Email = user.Email;
         managedUser.UserName = user.UserName;
         managedUser.PhoneNumber = user.PhoneNumber;
+        managedUser.PhoneNumberConfirmed = user.PhoneNumberConfirmed;
         managedUser.IsActive = user.IsActive;
         managedUser.IsDeleted = user.IsDeleted;
         managedUser.InstitutionId = user.InstitutionId;
+        managedUser.IsInstitutionResponsible = user.IsInstitutionResponsible;
+        managedUser.ResponsibleInstitutionId = user.ResponsibleInstitutionId;
         managedUser.UpdatedAt = DateTime.UtcNow;
 
         var result = await _userManager.UpdateAsync(managedUser);
@@ -202,6 +209,26 @@ public class UserRepository : IUserRepository
     {
         _logger.LogInformation("Adding external login for user: {@User}. Provider: {LoginProvider}", user, loginInfo.LoginProvider);
         return _userManager.AddLoginAsync(user, loginInfo);
+    }
+
+    public async Task<bool> IsInstitutionResponsibleAsync(Guid userId, Guid institutionId, CancellationToken cancellationToken = default)
+    {
+        return await _context.Users
+            .AsNoTracking()
+            .AnyAsync(u => u.Id == userId
+                && u.IsActive
+                && u.IsInstitutionResponsible
+                && u.ResponsibleInstitutionId == institutionId, cancellationToken);
+    }
+
+    public async Task<IEnumerable<User>> GetInstitutionResponsiblesAsync(Guid institutionId, CancellationToken cancellationToken = default)
+    {
+        return await _context.Users
+            .AsNoTracking()
+            .Where(u => u.IsActive
+                && u.IsInstitutionResponsible
+                && u.ResponsibleInstitutionId == institutionId)
+            .ToListAsync(cancellationToken);
     }
 
     private async Task<User> GetManagedIdentityUserAsync(Guid userId)

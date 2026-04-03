@@ -15,9 +15,14 @@ public class User : IdentityUser<Guid>
     // Institution relationship
     public Guid? InstitutionId { get; set; }
     public Institution? Institution { get; set; }
+    public bool IsInstitutionResponsible { get; set; } = false;
+    public Guid? ResponsibleInstitutionId { get; set; }
+    public Institution? ResponsibleInstitution { get; set; }
 
     // Navigation
     public ICollection<DermaImg> ContributedImages { get; set; } = new List<DermaImg>();
+    public ICollection<InstitutionMembershipRequest> MembershipRequestsAsApplicant { get; set; } = new List<InstitutionMembershipRequest>();
+    public ICollection<InstitutionMembershipRequest> MembershipRequestsReviewed { get; set; } = new List<InstitutionMembershipRequest>();
 
     public string FullName => $"{FirstName} {LastName}";
 }

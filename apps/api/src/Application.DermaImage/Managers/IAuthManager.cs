@@ -12,5 +12,10 @@ public interface IAuthManager
     Task<(bool Success, string? Error)> ResetPasswordAsync(ResetPasswordDto dto, CancellationToken ct = default);
     Task<UserProfileDto?> GetProfileAsync(Guid userId, CancellationToken ct = default);
     Task<(bool Success, string? Error)> UpdateProfileAsync(Guid userId, UpdateProfileDto dto, CancellationToken ct = default);
+    Task<(bool Success, string? Error)> ConfirmPhoneAsync(Guid userId, ConfirmPhoneDto dto, CancellationToken ct = default);
     Task<(bool Success, string? Error)> ChangePasswordAsync(Guid userId, ChangePasswordDto dto, CancellationToken ct = default);
+    Task<(InstitutionMembershipRequestDto? Request, string? Error)> CreateInstitutionMembershipRequestAsync(Guid userId, CreateInstitutionMembershipRequestDto dto, CancellationToken ct = default);
+    Task<IEnumerable<InstitutionMembershipRequestDto>> GetMyInstitutionMembershipRequestsAsync(Guid userId, CancellationToken ct = default);
+    Task<(IEnumerable<InstitutionMembershipRequestDto>? Requests, string? Error)> GetInstitutionInboxAsync(Guid responsibleUserId, CancellationToken ct = default);
+    Task<(InstitutionMembershipRequestDto? Request, string? Error)> ReviewInstitutionMembershipRequestAsync(Guid responsibleUserId, Guid requestId, ReviewInstitutionMembershipRequestDto dto, CancellationToken ct = default);
 }

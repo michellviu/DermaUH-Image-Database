@@ -9,5 +9,9 @@ public class UserDto
     public string Role { get; set; } = string.Empty;
     public bool IsActive { get; set; }
     public Guid? InstitutionId { get; set; }
+    public string? InstitutionName { get; set; }
+    public bool IsInstitutionResponsible { get; set; }
+    public Guid? ResponsibleInstitutionId { get; set; }
+    public string? ResponsibleInstitutionName { get; set; }
     public DateTime CreatedAt { get; set; }
 }

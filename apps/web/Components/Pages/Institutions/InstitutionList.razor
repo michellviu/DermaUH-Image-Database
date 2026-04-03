@@ -1,6 +1,7 @@
 @page "/institutions"
 @rendermode InteractiveServer
 @inject HttpClient Http
+@inject AuthService Auth
 
 <PageTitle>Instituciones - DermaUH</PageTitle>
 
@@ -77,6 +78,10 @@
 {
     <div class="alert alert-danger">@errorMessage</div>
 }
+@if (!string.IsNullOrEmpty(successMessage))
+{
+    <div class="alert alert-success">@successMessage</div>
+}
 
 @if (loading)
 {
@@ -112,14 +117,22 @@ else
                     <span>@(inst.ContactEmail ?? "Sin correo")</span>
                 </div>
 
-                <div class="institution-actions">
-                    @if (!string.IsNullOrWhiteSpace(inst.Website))
-                    {
-                        <a href="@inst.Website" target="_blank" rel="noopener noreferrer" class="btn btn-outline-primary">Sitio web</a>
-                    }
-                    <span class="institution-date">Alta: @inst.CreatedAt.ToString("yyyy-MM-dd")</span>
-                </div>
-            </article>
+                    <div class="institution-actions">
+                        @if (!string.IsNullOrWhiteSpace(inst.Website))
+                        {
+                            <a href="@inst.Website" target="_blank" rel="noopener noreferrer" class="btn btn-outline-primary">Sitio web</a>
+                        }
+                        @if (_currentUser is not null)
+                        {
+                            <button class="btn btn-primary btn-sm"
+                                    disabled="@isRequesting"
+                                    @onclick="() => RequestMembershipAsync(inst.Id)">
+                                Solicitar pertenencia
+                            </button>
+                        }
+                        <span class="institution-date">Alta: @inst.CreatedAt.ToString("yyyy-MM-dd")</span>
+                    </div>
+                </article>
         }
     </section>
 }
@@ -129,11 +142,15 @@ else
     private bool loading = true;
     private bool showForm = false;
     private bool submitting = false;
+    private bool isRequesting = false;
     private string? errorMessage;
+    private string? successMessage;
+    private UserProfile? _currentUser;
     private InstitutionFormModel newInstitution = new();
 
     protected override async Task OnInitializedAsync()
     {
+        _currentUser = await Auth.GetCurrentUserAsync();
         await LoadData();
     }
 
@@ -187,6 +204,27 @@ else
         {
             submitting = false;
         }
+    }
+
+    private async Task RequestMembershipAsync(Guid institutionId)
+    {
+        successMessage = null;
+        errorMessage = null;
+        isRequesting = true;
+        var (request, error) = await Auth.CreateInstitutionMembershipRequestAsync(new CreateInstitutionMembershipRequest
+        {
+            InstitutionId = institutionId
+        });
+
+        if (request is null)
+        {
+            errorMessage = error;
+        }
+        else
+        {
+            successMessage = "Solicitud enviada correctamente. Será revisada por un responsable de la institución.";
+        }
+        isRequesting = false;
     }
 
     private class InstitutionFormModel

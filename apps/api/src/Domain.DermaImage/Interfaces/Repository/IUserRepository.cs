@@ -31,4 +31,6 @@ public interface IUserRepository
     Task<IdentityResult> ChangePasswordAsync(User user, string currentPassword, string newPassword);
     Task<User?> FindByLoginAsync(string loginProvider, string providerKey);
     Task<IdentityResult> AddLoginAsync(User user, UserLoginInfo loginInfo);
+    Task<bool> IsInstitutionResponsibleAsync(Guid userId, Guid institutionId, CancellationToken cancellationToken = default);
+    Task<IEnumerable<User>> GetInstitutionResponsiblesAsync(Guid institutionId, CancellationToken cancellationToken = default);
 }

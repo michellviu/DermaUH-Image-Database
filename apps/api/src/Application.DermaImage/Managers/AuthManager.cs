@@ -12,12 +12,21 @@ public class AuthManager : IAuthManager
     private readonly IUserRepository _users;
     private readonly IJwtService _jwt;
     private readonly IEmailService _email;
+    private readonly IInstitutionService _institutions;
+    private readonly IInstitutionMembershipRequestService _membershipRequests;
 
-    public AuthManager(IUserRepository users, IJwtService jwt, IEmailService email)
+    public AuthManager(
+        IUserRepository users,
+        IJwtService jwt,
+        IEmailService email,
+        IInstitutionService institutions,
+        IInstitutionMembershipRequestService membershipRequests)
     {
         _users = users;
         _jwt = jwt;
         _email = email;
+        _institutions = institutions;
+        _membershipRequests = membershipRequests;
     }
 
     // ── Register ────────────────────────────────────────────────────────
@@ -219,7 +228,11 @@ public class AuthManager : IAuthManager
             LastName        = user.LastName,
             Email           = user.Email ?? string.Empty,
             PhoneNumber     = user.PhoneNumber,
+            PhoneNumberConfirmed = user.PhoneNumberConfirmed,
             EmailConfirmed  = user.EmailConfirmed,
+            IsInstitutionResponsible = user.IsInstitutionResponsible,
+            ResponsibleInstitutionId = user.ResponsibleInstitutionId,
+            ResponsibleInstitutionName = user.ResponsibleInstitution?.Name,
             InstitutionId   = user.InstitutionId,
             InstitutionName = user.Institution?.Name,
             Roles           = roles,
@@ -238,6 +251,23 @@ public class AuthManager : IAuthManager
         user.LastName      = dto.LastName;
         user.PhoneNumber   = dto.PhoneNumber;
         user.InstitutionId = dto.InstitutionId;
+
+        await _users.UpdateAsync(user, ct);
+        return (true, null);
+    }
+
+    public async Task<(bool Success, string? Error)> ConfirmPhoneAsync(
+        Guid userId, ConfirmPhoneDto dto, CancellationToken ct = default)
+    {
+        var user = await _users.GetByIdAsync(userId, ct);
+        if (user is null)
+            return (false, "Usuario no encontrado.");
+
+        if (string.IsNullOrWhiteSpace(dto.PhoneNumber))
+            return (false, "El número de teléfono es obligatorio.");
+
+        user.PhoneNumber = dto.PhoneNumber.Trim();
+        user.PhoneNumberConfirmed = true;
 
         await _users.UpdateAsync(user, ct);
         return (true, null);
@@ -267,6 +297,115 @@ public class AuthManager : IAuthManager
         return (true, null);
     }
 
+    public async Task<(InstitutionMembershipRequestDto? Request, string? Error)> CreateInstitutionMembershipRequestAsync(
+        Guid userId, CreateInstitutionMembershipRequestDto dto, CancellationToken ct = default)
+    {
+        var user = await _users.GetByIdAsync(userId, ct);
+        if (user is null)
+            return (null, "Usuario no encontrado.");
+
+        if (user.InstitutionId == dto.InstitutionId)
+            return (null, "Ya perteneces a esta institución.");
+
+        if (string.IsNullOrWhiteSpace(user.PhoneNumber))
+            return (null, "Debes registrar un teléfono móvil para solicitar pertenecer a una institución.");
+
+        if (!user.PhoneNumberConfirmed)
+            return (null, "Debes confirmar tu teléfono móvil antes de solicitar pertenecer a una institución.");
+
+        var institution = await _institutions.GetByIdAsync(dto.InstitutionId, ct);
+        if (institution is null)
+            return (null, "La institución seleccionada no existe.");
+
+        var hasResponsible = (await _users.GetInstitutionResponsiblesAsync(dto.InstitutionId, ct)).Any();
+        if (!hasResponsible)
+            return (null, "La institución no tiene responsables asignados.");
+
+        var pending = await _membershipRequests.GetPendingAsync(userId, dto.InstitutionId, ct);
+        if (pending is not null)
+            return (null, "Ya tienes una solicitud pendiente para esta institución.");
+
+        var created = await _membershipRequests.CreateAsync(new InstitutionMembershipRequest
+        {
+            InstitutionId = dto.InstitutionId,
+            ApplicantUserId = userId,
+            Status = InstitutionMembershipRequestStatus.Pending,
+        }, ct);
+
+        var withDetails = await _membershipRequests.GetByIdWithDetailsAsync(created.Id, ct);
+        return (MapMembershipRequest(withDetails ?? created), null);
+    }
+
+    public async Task<IEnumerable<InstitutionMembershipRequestDto>> GetMyInstitutionMembershipRequestsAsync(Guid userId, CancellationToken ct = default)
+    {
+        var requests = await _membershipRequests.GetByApplicantAsync(userId, ct);
+        return requests.Select(MapMembershipRequest);
+    }
+
+    public async Task<(IEnumerable<InstitutionMembershipRequestDto>? Requests, string? Error)> GetInstitutionInboxAsync(Guid responsibleUserId, CancellationToken ct = default)
+    {
+        var user = await _users.GetByIdAsync(responsibleUserId, ct);
+        if (user is null)
+            return (null, "Usuario no encontrado.");
+
+        if (!user.IsInstitutionResponsible || user.ResponsibleInstitutionId is null)
+            return (null, "No tienes permisos para revisar solicitudes institucionales.");
+
+        var requests = await _membershipRequests.GetPendingForInstitutionAsync(user.ResponsibleInstitutionId.Value, ct);
+        return (requests.Select(MapMembershipRequest), null);
+    }
+
+    public async Task<(InstitutionMembershipRequestDto? Request, string? Error)> ReviewInstitutionMembershipRequestAsync(
+        Guid responsibleUserId,
+        Guid requestId,
+        ReviewInstitutionMembershipRequestDto dto,
+        CancellationToken ct = default)
+    {
+        var request = await _membershipRequests.GetByIdWithDetailsAsync(requestId, ct);
+        if (request is null)
+            return (null, "Solicitud no encontrada.");
+
+        var isResponsible = await _users.IsInstitutionResponsibleAsync(responsibleUserId, request.InstitutionId, ct);
+        if (!isResponsible)
+            return (null, "No tienes permisos para revisar esta solicitud.");
+
+        if (request.Status != InstitutionMembershipRequestStatus.Pending)
+            return (null, "Esta solicitud ya fue procesada.");
+
+        request.Status = dto.Approve
+            ? InstitutionMembershipRequestStatus.Approved
+            : InstitutionMembershipRequestStatus.Denied;
+        request.ReviewedByUserId = responsibleUserId;
+        request.ReviewedAt = DateTime.UtcNow;
+        request.ReviewMessage = dto.Message?.Trim();
+
+        await _membershipRequests.UpdateAsync(request, ct);
+
+        if (dto.Approve)
+        {
+            var applicant = request.ApplicantUser ?? await _users.GetByIdAsync(request.ApplicantUserId, ct);
+            if (applicant is not null)
+            {
+                applicant.InstitutionId = request.InstitutionId;
+                await _users.UpdateAsync(applicant, ct);
+            }
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.ApplicantUser?.Email))
+        {
+            await _email.SendInstitutionMembershipRequestReviewedAsync(
+                request.ApplicantUser.Email!,
+                request.ApplicantUser.FirstName,
+                request.Institution?.Name ?? "Institución",
+                dto.Approve,
+                request.ReviewMessage,
+                ct);
+        }
+
+        var updated = await _membershipRequests.GetByIdWithDetailsAsync(requestId, ct);
+        return (MapMembershipRequest(updated ?? request), null);
+    }
+
     private static string SimplifyRepositoryError(string message)
     {
         const string prefix = "Failed to create user:";
@@ -286,5 +425,26 @@ public class AuthManager : IAuthManager
             filtered = "user";
 
         return $"{filtered}_{Guid.NewGuid():N}";
+    }
+
+    private static InstitutionMembershipRequestDto MapMembershipRequest(InstitutionMembershipRequest request)
+    {
+        return new InstitutionMembershipRequestDto
+        {
+            Id = request.Id,
+            InstitutionId = request.InstitutionId,
+            InstitutionName = request.Institution?.Name ?? string.Empty,
+            ApplicantUserId = request.ApplicantUserId,
+            ApplicantFullName = request.ApplicantUser?.FullName ?? string.Empty,
+            ApplicantEmail = request.ApplicantUser?.Email ?? string.Empty,
+            ApplicantPhoneNumber = request.ApplicantUser?.PhoneNumber,
+            ApplicantPhoneConfirmed = request.ApplicantUser?.PhoneNumberConfirmed ?? false,
+            Status = request.Status,
+            CreatedAt = request.CreatedAt,
+            ReviewedAt = request.ReviewedAt,
+            ReviewMessage = request.ReviewMessage,
+            ReviewedByUserId = request.ReviewedByUserId,
+            ReviewedByName = request.ReviewedByUser?.FullName,
+        };
     }
 }

@@ -38,8 +38,25 @@
                             <label class="form-label">Contraseña *</label>
                             <InputText @bind-Value="newUser.Password" class="form-control" type="password" />
                         </div>
+                        <div class="mb-3 form-check">
+                            <InputCheckbox @bind-Value="newUser.IsInstitutionResponsible" class="form-check-input" />
+                            <label class="form-check-label">Responsable de institución</label>
+                        </div>
                     </div>
                 </div>
+                @if (newUser.IsInstitutionResponsible)
+                {
+                    <div class="mb-3">
+                        <label class="form-label">Institución responsable *</label>
+                        <InputSelect @bind-Value="newUser.ResponsibleInstitutionId" class="form-select">
+                            <option value="">Seleccione</option>
+                            @foreach (var inst in institutions)
+                            {
+                                <option value="@inst.Id">@inst.Name</option>
+                            }
+                        </InputSelect>
+                    </div>
+                }
                 <button type="submit" class="btn btn-primary" disabled="@submitting">
                     @(submitting ? "Guardando..." : "Guardar")
                 </button>
@@ -70,6 +87,7 @@ else
                         <th>Nombre</th>
                         <th>Email</th>
                         <th>Rol</th>
+                        <th>Responsable</th>
                         <th>Estado</th>
                         <th>Fecha de registro</th>
                     </tr>
@@ -81,6 +99,16 @@ else
                             <td><strong>@user.FirstName @user.LastName</strong></td>
                             <td>@user.Email</td>
                             <td><span class="badge text-bg-info">@user.Role</span></td>
+                            <td>
+                                @if (user.IsInstitutionResponsible)
+                                {
+                                    <span class="badge text-bg-success">@user.ResponsibleInstitutionName</span>
+                                }
+                                else
+                                {
+                                    <span class="badge text-bg-secondary">No</span>
+                                }
+                            </td>
                             <td>
                                 @if (user.IsActive)
                                 {
@@ -107,6 +135,7 @@ else
     private bool submitting = false;
     private string? errorMessage;
     private UserFormModel newUser = new();
+    private List<InstitutionDto> institutions = [];
 
     protected override async Task OnInitializedAsync()
     {
@@ -119,10 +148,13 @@ else
         try
         {
             response = await Http.GetFromJsonAsync<PagedResponse<UserDto>>("api/users?page=1&pageSize=50");
+            var instResp = await Http.GetFromJsonAsync<PagedResponse<InstitutionDto>>("api/institutions?page=1&pageSize=200");
+            institutions = instResp?.Items?.ToList() ?? [];
         }
         catch
         {
             response = null;
+            institutions = [];
         }
         loading = false;
     }
@@ -138,7 +170,9 @@ else
                 newUser.FirstName,
                 newUser.LastName,
                 newUser.Email,
-                newUser.Password
+                newUser.Password,
+                newUser.IsInstitutionResponsible,
+                newUser.ResponsibleInstitutionId
             });
 
             if (result.IsSuccessStatusCode)
@@ -168,5 +202,7 @@ else
         public string LastName { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
         public string Password { get; set; } = string.Empty;
+        public bool IsInstitutionResponsible { get; set; }
+        public Guid? ResponsibleInstitutionId { get; set; }
     }
 }

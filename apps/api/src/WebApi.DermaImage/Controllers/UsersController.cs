@@ -96,6 +96,9 @@ public class UsersController : ControllerBase
             IsActive = user.IsActive,
             InstitutionId = user.InstitutionId,
             InstitutionName = user.Institution?.Name,
+            IsInstitutionResponsible = user.IsInstitutionResponsible,
+            ResponsibleInstitutionId = user.ResponsibleInstitutionId,
+            ResponsibleInstitutionName = user.ResponsibleInstitution?.Name,
             CreatedAt = user.CreatedAt
         };
     }

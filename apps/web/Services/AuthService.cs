@@ -249,6 +249,24 @@ public class AuthService
         }
     }
 
+    public async Task<(bool Success, string? Error)> ConfirmPhoneAsync(ConfirmPhoneRequest request)
+    {
+        try
+        {
+            var response = await _http.PostAsJsonAsync("/api/auth/profile/confirm-phone", request);
+            if (!response.IsSuccessStatusCode)
+                return (false, await TryGetError(response));
+
+            await FetchProfileAsync();
+            AuthStateChanged?.Invoke();
+            return (true, null);
+        }
+        catch (Exception ex)
+        {
+            return (false, $"Error de conexión: {ex.Message}");
+        }
+    }
+
     public async Task<(bool Success, string? Error)> ChangePasswordAsync(ChangePasswordRequest request)
     {
         try
@@ -267,6 +285,75 @@ public class AuthService
         catch (Exception ex)
         {
             return (false, $"Error de conexión: {ex.Message}");
+        }
+    }
+
+    public async Task<(InstitutionMembershipRequestDto? Request, string? Error)> CreateInstitutionMembershipRequestAsync(CreateInstitutionMembershipRequest request)
+    {
+        try
+        {
+            var response = await _http.PostAsJsonAsync("/api/auth/institution-membership-requests", request);
+            if (!response.IsSuccessStatusCode)
+                return (null, await TryGetError(response));
+
+            var dto = await response.Content.ReadFromJsonAsync<InstitutionMembershipRequestDto>(
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            return (dto, dto is null ? "Respuesta inesperada del servidor." : null);
+        }
+        catch (Exception ex)
+        {
+            return (null, $"Error de conexión: {ex.Message}");
+        }
+    }
+
+    public async Task<List<InstitutionMembershipRequestDto>> GetMyInstitutionMembershipRequestsAsync()
+    {
+        try
+        {
+            var requests = await _http.GetFromJsonAsync<List<InstitutionMembershipRequestDto>>(
+                "/api/auth/institution-membership-requests/mine",
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            return requests ?? [];
+        }
+        catch
+        {
+            return [];
+        }
+    }
+
+    public async Task<(List<InstitutionMembershipRequestDto>? Requests, string? Error)> GetInstitutionInboxAsync()
+    {
+        try
+        {
+            var response = await _http.GetAsync("/api/auth/institution-membership-requests/inbox");
+            if (!response.IsSuccessStatusCode)
+                return (null, await TryGetError(response));
+
+            var requests = await response.Content.ReadFromJsonAsync<List<InstitutionMembershipRequestDto>>(
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            return (requests ?? [], null);
+        }
+        catch (Exception ex)
+        {
+            return (null, $"Error de conexión: {ex.Message}");
+        }
+    }
+
+    public async Task<(InstitutionMembershipRequestDto? Request, string? Error)> ReviewInstitutionMembershipRequestAsync(Guid requestId, ReviewInstitutionMembershipRequest request)
+    {
+        try
+        {
+            var response = await _http.PostAsJsonAsync($"/api/auth/institution-membership-requests/{requestId}/review", request);
+            if (!response.IsSuccessStatusCode)
+                return (null, await TryGetError(response));
+
+            var dto = await response.Content.ReadFromJsonAsync<InstitutionMembershipRequestDto>(
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            return (dto, dto is null ? "Respuesta inesperada del servidor." : null);
+        }
+        catch (Exception ex)
+        {
+            return (null, $"Error de conexión: {ex.Message}");
         }
     }
 
@@ -488,6 +575,7 @@ public class AuthService
             "CurrentPassword" => "Contraseña actual",
             "NewPassword" => "Nueva contraseña",
             "InstitutionId" => "Institución",
+            "PhoneNumber" => "Teléfono móvil",
             _ => fieldName,
         };
     }

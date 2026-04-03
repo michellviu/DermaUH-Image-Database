@@ -39,6 +39,15 @@ else
                 <span class="badge badge-warning">⚠ Correo no verificado</span>
             }
 
+            @if (_profile.PhoneNumberConfirmed)
+            {
+                <span class="badge badge-success mt-2">✓ Móvil verificado</span>
+            }
+            else
+            {
+                <span class="badge badge-warning mt-2">⚠ Móvil no verificado</span>
+            }
+
             <div class="profile-roles mt-3">
                 @foreach (var role in _profile.Roles)
                 {
@@ -98,6 +107,15 @@ else
                                        placeholder="+53 5 000 0000" type="tel" />
                         </div>
 
+                        @if (!_profile.PhoneNumberConfirmed)
+                        {
+                            <div class="form-actions mb-3">
+                                <button type="button" class="btn btn-outline-primary" @onclick="ConfirmPhoneAsync" disabled="@_confirmingPhone">
+                                    @(_confirmingPhone ? "Confirmando..." : "Confirmar móvil")
+                                </button>
+                            </div>
+                        }
+
                         <div class="form-actions">
                             <button type="submit" class="btn btn-primary" disabled="@_savingProfile">
                                 @(_savingProfile ? "Guardando..." : "Guardar cambios")
@@ -154,6 +172,81 @@ else
                 </div>
             </div>
 
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Mis solicitudes de institución</h2>
+                </div>
+                <div class="card-body">
+                    @if (_myRequests.Count == 0)
+                    {
+                        <div class="alert alert-secondary">No tienes solicitudes registradas.</div>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Institución</th>
+                                        <th>Estado</th>
+                                        <th>Fecha</th>
+                                        <th>Mensaje</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var req in _myRequests)
+                                    {
+                                        <tr>
+                                            <td>@req.InstitutionName</td>
+                                            <td>@StatusText(req.Status)</td>
+                                            <td>@req.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                                            <td>@(string.IsNullOrWhiteSpace(req.ReviewMessage) ? "-" : req.ReviewMessage)</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            @if (_profile.IsInstitutionResponsible)
+            {
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Inbox de solicitudes (@_profile.ResponsibleInstitutionName)</h2>
+                    </div>
+                    <div class="card-body">
+                        @if (!string.IsNullOrEmpty(_inboxError))
+                        {
+                            <div class="alert alert-danger">@_inboxError</div>
+                        }
+
+                        @if (_inboxRequests.Count == 0)
+                        {
+                            <div class="alert alert-secondary">No hay solicitudes pendientes.</div>
+                        }
+                        else
+                        {
+                            @foreach (var req in _inboxRequests)
+                            {
+                                <div class="card mb-3">
+                                    <div class="card-body">
+                                        <strong>@req.ApplicantFullName</strong> · @req.ApplicantEmail
+                                        <div class="text-muted small mt-1">Móvil: @(req.ApplicantPhoneNumber ?? "No registrado") (@(req.ApplicantPhoneConfirmed ? "confirmado" : "no confirmado"))</div>
+                                        <div class="text-muted small">Solicitud: @req.CreatedAt.ToString("yyyy-MM-dd HH:mm")</div>
+                                        <div class="form-actions mt-3">
+                                            <button class="btn btn-success btn-sm" @onclick="() => ReviewRequestAsync(req.Id, true)">Aprobar</button>
+                                            <button class="btn btn-outline-secondary btn-sm" @onclick="() => ReviewRequestAsync(req.Id, false)">Denegar</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        }
+                    </div>
+                </div>
+            }
+
         </div>
     </div>
 }
@@ -166,11 +259,15 @@ else
     private bool _savingProfile;
     private bool _savingPwd;
     private bool _pwdMismatch;
+    private bool _confirmingPhone;
 
     private string? _profileSuccess;
     private string? _profileError;
     private string? _pwdSuccess;
     private string? _pwdError;
+    private string? _inboxError;
+    private List<InstitutionMembershipRequestDto> _myRequests = [];
+    private List<InstitutionMembershipRequestDto> _inboxRequests = [];
 
     protected override async Task OnInitializedAsync()
     {
@@ -186,6 +283,8 @@ else
                 InstitutionId = _profile.InstitutionId,
             };
         }
+
+        await LoadInstitutionRequestDataAsync();
     }
 
     private async Task SaveProfileAsync()
@@ -206,6 +305,7 @@ else
 
         _profileSuccess = "Perfil actualizado correctamente.";
         _profile = await Auth.FetchProfileAsync();
+        await LoadInstitutionRequestDataAsync();
     }
 
     private async Task ChangePasswordAsync()
@@ -233,4 +333,66 @@ else
         _pwdSuccess = "Contraseña actualizada correctamente.";
         _pwdForm = new ChangePasswordRequest();
     }
+
+    private async Task ConfirmPhoneAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_profileForm.PhoneNumber))
+        {
+            _profileError = "Debes introducir un teléfono móvil antes de confirmarlo.";
+            return;
+        }
+
+        _confirmingPhone = true;
+        var (success, error) = await Auth.ConfirmPhoneAsync(new ConfirmPhoneRequest
+        {
+            PhoneNumber = _profileForm.PhoneNumber
+        });
+        _confirmingPhone = false;
+
+        if (!success)
+        {
+            _profileError = error;
+            return;
+        }
+
+        _profileSuccess = "Teléfono móvil confirmado.";
+        _profile = await Auth.FetchProfileAsync();
+    }
+
+    private async Task LoadInstitutionRequestDataAsync()
+    {
+        _myRequests = await Auth.GetMyInstitutionMembershipRequestsAsync();
+
+        if (_profile?.IsInstitutionResponsible == true)
+        {
+            var (requests, error) = await Auth.GetInstitutionInboxAsync();
+            _inboxError = error;
+            _inboxRequests = requests ?? [];
+        }
+    }
+
+    private async Task ReviewRequestAsync(Guid requestId, bool approve)
+    {
+        _inboxError = null;
+        var (_, error) = await Auth.ReviewInstitutionMembershipRequestAsync(requestId, new ReviewInstitutionMembershipRequest
+        {
+            Approve = approve
+        });
+
+        if (!string.IsNullOrWhiteSpace(error))
+        {
+            _inboxError = error;
+            return;
+        }
+
+        await LoadInstitutionRequestDataAsync();
+    }
+
+    private static string StatusText(InstitutionMembershipRequestStatus status) => status switch
+    {
+        InstitutionMembershipRequestStatus.Pending => "Pendiente",
+        InstitutionMembershipRequestStatus.Approved => "Aprobada",
+        InstitutionMembershipRequestStatus.Denied => "Denegada",
+        _ => status.ToString()
+    };
 }

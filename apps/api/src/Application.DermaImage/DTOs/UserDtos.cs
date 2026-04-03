@@ -12,6 +12,8 @@ public class CreateUserDto
     public string Password { get; set; } = string.Empty;
     public UserRole? Role { get; set; }
     public Guid? InstitutionId { get; set; }
+    public bool IsInstitutionResponsible { get; set; }
+    public Guid? ResponsibleInstitutionId { get; set; }
 }
 
 public class AssignRoleDto
@@ -29,5 +31,8 @@ public class UserResponseDto
     public bool IsActive { get; set; }
     public Guid? InstitutionId { get; set; }
     public string? InstitutionName { get; set; }
+    public bool IsInstitutionResponsible { get; set; }
+    public Guid? ResponsibleInstitutionId { get; set; }
+    public string? ResponsibleInstitutionName { get; set; }
     public DateTime CreatedAt { get; set; }
 }

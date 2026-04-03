@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Domain.DermaImage.Entities.Enums;
 
 namespace Application.DermaImage.DTOs;
 
@@ -92,7 +93,11 @@ public class UserProfileDto
     public string LastName { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
     public string? PhoneNumber { get; set; }
+    public bool PhoneNumberConfirmed { get; set; }
     public bool EmailConfirmed { get; set; }
+    public bool IsInstitutionResponsible { get; set; }
+    public Guid? ResponsibleInstitutionId { get; set; }
+    public string? ResponsibleInstitutionName { get; set; }
     public Guid? InstitutionId { get; set; }
     public string? InstitutionName { get; set; }
     public IList<string> Roles { get; set; } = new List<string>();
@@ -111,6 +116,45 @@ public class UpdateProfileDto
     public string? PhoneNumber { get; set; }
 
     public Guid? InstitutionId { get; set; }
+}
+
+public class ConfirmPhoneDto
+{
+    [Required]
+    public string PhoneNumber { get; set; } = string.Empty;
+}
+
+public class CreateInstitutionMembershipRequestDto
+{
+    [Required]
+    public Guid InstitutionId { get; set; }
+}
+
+public class ReviewInstitutionMembershipRequestDto
+{
+    [Required]
+    public bool Approve { get; set; }
+
+    [MaxLength(1000)]
+    public string? Message { get; set; }
+}
+
+public class InstitutionMembershipRequestDto
+{
+    public Guid Id { get; set; }
+    public Guid InstitutionId { get; set; }
+    public string InstitutionName { get; set; } = string.Empty;
+    public Guid ApplicantUserId { get; set; }
+    public string ApplicantFullName { get; set; } = string.Empty;
+    public string ApplicantEmail { get; set; } = string.Empty;
+    public string? ApplicantPhoneNumber { get; set; }
+    public bool ApplicantPhoneConfirmed { get; set; }
+    public InstitutionMembershipRequestStatus Status { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime? ReviewedAt { get; set; }
+    public string? ReviewMessage { get; set; }
+    public Guid? ReviewedByUserId { get; set; }
+    public string? ReviewedByName { get; set; }
 }
 
 public class ChangePasswordDto

@@ -1,5 +1,12 @@
 namespace Web.DermaImage.Shared.Models;
 
+public enum InstitutionMembershipRequestStatus
+{
+    Pending = 0,
+    Approved = 1,
+    Denied = 2,
+}
+
 // ── Auth Request/Response Models ────────────────────────────────────────
 
 public class LoginRequest
@@ -61,7 +68,11 @@ public class UserProfile
     public string LastName { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
     public string? PhoneNumber { get; set; }
+    public bool PhoneNumberConfirmed { get; set; }
     public bool EmailConfirmed { get; set; }
+    public bool IsInstitutionResponsible { get; set; }
+    public Guid? ResponsibleInstitutionId { get; set; }
+    public string? ResponsibleInstitutionName { get; set; }
     public Guid? InstitutionId { get; set; }
     public string? InstitutionName { get; set; }
     public List<string> Roles { get; set; } = new();
@@ -85,6 +96,40 @@ public class ChangePasswordRequest
     public string CurrentPassword { get; set; } = string.Empty;
     public string NewPassword { get; set; } = string.Empty;
     public string ConfirmPassword { get; set; } = string.Empty;
+}
+
+public class ConfirmPhoneRequest
+{
+    public string PhoneNumber { get; set; } = string.Empty;
+}
+
+public class CreateInstitutionMembershipRequest
+{
+    public Guid InstitutionId { get; set; }
+}
+
+public class ReviewInstitutionMembershipRequest
+{
+    public bool Approve { get; set; }
+    public string? Message { get; set; }
+}
+
+public class InstitutionMembershipRequestDto
+{
+    public Guid Id { get; set; }
+    public Guid InstitutionId { get; set; }
+    public string InstitutionName { get; set; } = string.Empty;
+    public Guid ApplicantUserId { get; set; }
+    public string ApplicantFullName { get; set; } = string.Empty;
+    public string ApplicantEmail { get; set; } = string.Empty;
+    public string? ApplicantPhoneNumber { get; set; }
+    public bool ApplicantPhoneConfirmed { get; set; }
+    public InstitutionMembershipRequestStatus Status { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime? ReviewedAt { get; set; }
+    public string? ReviewMessage { get; set; }
+    public Guid? ReviewedByUserId { get; set; }
+    public string? ReviewedByName { get; set; }
 }
 
 public class ApiError

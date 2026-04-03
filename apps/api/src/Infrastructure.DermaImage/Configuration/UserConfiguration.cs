@@ -21,5 +21,10 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
             .WithMany(i => i.Users)
             .HasForeignKey(e => e.InstitutionId)
             .OnDelete(DeleteBehavior.SetNull);
+
+        builder.HasOne(e => e.ResponsibleInstitution)
+            .WithMany(i => i.ResponsibleUsers)
+            .HasForeignKey(e => e.ResponsibleInstitutionId)
+            .OnDelete(DeleteBehavior.SetNull);
     }
 }

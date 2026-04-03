@@ -16,6 +16,8 @@ public class DotNetSmtpClientEmailSender : IEmailService
 
     private const string ResetPasswordTemplateResource =
         "Infrastructure.DermaImage.Services.EmailTemplates.PasswordReset.html";
+    private const string InstitutionMembershipReviewedTemplateResource =
+        "Infrastructure.DermaImage.Services.EmailTemplates.InstitutionMembershipReviewed.html";
 
     private readonly ILogger<DotNetSmtpClientEmailSender> logger;
     private readonly string fromAddress;
@@ -65,6 +67,38 @@ public class DotNetSmtpClientEmailSender : IEmailService
             receivers: [toEmail],
             carbonCopy: null,
             subject: "Restablecer contraseña - DermaUH",
+            messageBody: body,
+            ct: ct);
+    }
+
+    public async Task SendInstitutionMembershipRequestReviewedAsync(
+        string toEmail,
+        string userName,
+        string institutionName,
+        bool approved,
+        string? reviewMessage,
+        CancellationToken ct = default)
+    {
+        var reviewMessageBlock = string.IsNullOrWhiteSpace(reviewMessage)
+            ? string.Empty
+            : $"<p><strong>Mensaje del responsable:</strong> {WebUtility.HtmlEncode(reviewMessage)}</p>";
+
+        var body = await BuildTemplateBodyAsync(
+            InstitutionMembershipReviewedTemplateResource,
+            new Dictionary<string, string>
+            {
+                ["UserName"] = WebUtility.HtmlEncode(userName),
+                ["InstitutionName"] = WebUtility.HtmlEncode(institutionName),
+                ["Decision"] = approved ? "APROBADA" : "DENEGADA",
+                ["ReviewMessageBlock"] = reviewMessageBlock,
+            });
+
+        await SendEmailAsync(
+            receivers: [toEmail],
+            carbonCopy: null,
+            subject: approved
+                ? "Solicitud institucional aprobada - DermaUH"
+                : "Solicitud institucional denegada - DermaUH",
             messageBody: body,
             ct: ct);
     }

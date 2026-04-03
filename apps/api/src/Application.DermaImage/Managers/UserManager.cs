@@ -32,7 +32,9 @@ public class UserManager : IUserManager
             LastName = dto.LastName,
             Email = dto.Email,
             UserName = BuildUserName(dto.Email),
-            InstitutionId = dto.InstitutionId
+            InstitutionId = dto.InstitutionId,
+            IsInstitutionResponsible = dto.IsInstitutionResponsible,
+            ResponsibleInstitutionId = dto.ResponsibleInstitutionId
         };
 
         var created = await _service.CreateAsync(user, dto.Password, cancellationToken);

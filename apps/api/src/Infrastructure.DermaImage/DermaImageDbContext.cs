@@ -12,6 +12,7 @@ public class DermaImageDbContext : IdentityDbContext<User, IdentityRole<Guid>, G
 
     public DbSet<DermaImg> Images => Set<DermaImg>();
     public DbSet<Institution> Institutions => Set<Institution>();
+    public DbSet<InstitutionMembershipRequest> InstitutionMembershipRequests => Set<InstitutionMembershipRequest>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

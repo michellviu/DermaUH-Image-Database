@@ -136,6 +136,19 @@ public class AuthController : ControllerBase
     }
 
     [Authorize]
+    [HttpPost("profile/confirm-phone")]
+    public async Task<IActionResult> ConfirmPhone([FromBody] ConfirmPhoneDto dto, CancellationToken ct)
+    {
+        var userId = GetCurrentUserId();
+        if (userId is null) return Unauthorized();
+
+        var (success, error) = await _auth.ConfirmPhoneAsync(userId.Value, dto, ct);
+        if (!success) return BadRequest(new { message = error });
+
+        return Ok(new { message = "Teléfono móvil confirmado correctamente." });
+    }
+
+    [Authorize]
     [HttpPut("change-password")]
     public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto dto, CancellationToken ct)
     {
@@ -153,6 +166,62 @@ public class AuthController : ControllerBase
         {
             return StatusCode(500, new { message = $"No fue posible cambiar la contraseña: {ex.Message}" });
         }
+    }
+
+    [Authorize]
+    [HttpPost("institution-membership-requests")]
+    public async Task<IActionResult> CreateInstitutionMembershipRequest([FromBody] CreateInstitutionMembershipRequestDto dto, CancellationToken ct)
+    {
+        var userId = GetCurrentUserId();
+        if (userId is null) return Unauthorized();
+
+        var (request, error) = await _auth.CreateInstitutionMembershipRequestAsync(userId.Value, dto, ct);
+        if (request is null) return BadRequest(new { message = error });
+
+        return Ok(request);
+    }
+
+    [Authorize]
+    [HttpGet("institution-membership-requests/mine")]
+    public async Task<IActionResult> GetMyInstitutionMembershipRequests(CancellationToken ct)
+    {
+        var userId = GetCurrentUserId();
+        if (userId is null) return Unauthorized();
+
+        var requests = await _auth.GetMyInstitutionMembershipRequestsAsync(userId.Value, ct);
+        return Ok(requests);
+    }
+
+    [Authorize]
+    [HttpGet("institution-membership-requests/inbox")]
+    public async Task<IActionResult> GetInstitutionInbox(CancellationToken ct)
+    {
+        var userId = GetCurrentUserId();
+        if (userId is null) return Unauthorized();
+
+        var (requests, error) = await _auth.GetInstitutionInboxAsync(userId.Value, ct);
+        if (requests is null) return Forbid();
+
+        return Ok(requests);
+    }
+
+    [Authorize]
+    [HttpPost("institution-membership-requests/{requestId:guid}/review")]
+    public async Task<IActionResult> ReviewInstitutionMembershipRequest(Guid requestId, [FromBody] ReviewInstitutionMembershipRequestDto dto, CancellationToken ct)
+    {
+        var userId = GetCurrentUserId();
+        if (userId is null) return Unauthorized();
+
+        var (request, error) = await _auth.ReviewInstitutionMembershipRequestAsync(userId.Value, requestId, dto, ct);
+        if (request is null)
+        {
+            if (!string.IsNullOrWhiteSpace(error) && error.Contains("permisos", StringComparison.OrdinalIgnoreCase))
+                return Forbid();
+
+            return BadRequest(new { message = error });
+        }
+
+        return Ok(request);
     }
 
     // ── Helpers ─────────────────────────────────────────────────────────
