@@ -18,16 +18,10 @@ public class DermaImgConfiguration : IEntityTypeConfiguration<DermaImg>
         builder.Property(e => e.FileName).IsRequired().HasMaxLength(500);
         builder.Property(e => e.FilePath).IsRequired().HasMaxLength(1000);
         builder.Property(e => e.ContentType).IsRequired().HasMaxLength(100);
-        builder.Property(e => e.Attribution).HasMaxLength(500);
         builder.Property(e => e.Diagnosis).HasMaxLength(500);
-        builder.Property(e => e.DiagnosisLevel2).HasMaxLength(500);
-        builder.Property(e => e.DiagnosisLevel3).HasMaxLength(500);
-        builder.Property(e => e.DiagnosisLevel4).HasMaxLength(500);
-        builder.Property(e => e.DiagnosisLevel5).HasMaxLength(500);
         builder.Property(e => e.ClinicalNotes).HasMaxLength(2000);
 
         // Enum conversions stored as strings
-        builder.Property(e => e.CopyrightLicense).HasConversion<string>().HasMaxLength(50);
         builder.Property(e => e.ImageType).HasConversion<string>().HasMaxLength(50);
         builder.Property(e => e.ImageManipulation).HasConversion<string>().HasMaxLength(50);
         builder.Property(e => e.DermoscopicType).HasConversion<string>().HasMaxLength(50);
@@ -37,6 +31,8 @@ public class DermaImgConfiguration : IEntityTypeConfiguration<DermaImg>
         builder.Property(e => e.DiagnosisCategory).HasConversion<string>().HasMaxLength(50);
         builder.Property(e => e.DiagnosisConfirmType).HasConversion<string>().HasMaxLength(100);
         builder.Property(e => e.MelMitoticIndex).HasConversion<string>().HasMaxLength(50);
+        builder.Property(e => e.FotoType).HasConversion<string>().HasMaxLength(50);
+        builder.Property(e => e.InjuryType).HasConversion<string>().HasMaxLength(50);
 
         // Soft delete filter
         builder.HasQueryFilter(e => !e.IsDeleted);
