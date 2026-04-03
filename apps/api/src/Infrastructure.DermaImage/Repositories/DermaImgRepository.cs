@@ -1,15 +1,17 @@
 using Domain.DermaImage.Entities;
 using Domain.DermaImage.Interfaces.Repository;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace Infrastructure.DermaImage.Repositories;
 
 public class DermaImgRepository : Repository<DermaImg>, IDermaImgRepository
 {
-    public DermaImgRepository(DermaImageDbContext context) : base(context) { }
+    public DermaImgRepository(DermaImageDbContext context, ILoggerFactory loggerFactory) : base(context, loggerFactory) { }
 
     private IQueryable<DermaImg> BuildVisibilityQuery(bool includePrivate)
     {
+        Logger.LogInformation("Building image visibility query. IncludePrivate: {IncludePrivate}", includePrivate);
         var query = DbSet.AsNoTracking();
         if (!includePrivate)
         {
@@ -21,6 +23,7 @@ public class DermaImgRepository : Repository<DermaImg>, IDermaImgRepository
 
     public Task<DermaImg?> GetByPublicIdAsync(string publicId, CancellationToken cancellationToken = default)
     {
+        Logger.LogInformation("Fetching image by public id: {PublicId}", publicId);
         return DbSet
             .Include(i => i.Contributor)
             .Include(i => i.Institution)
@@ -29,6 +32,7 @@ public class DermaImgRepository : Repository<DermaImg>, IDermaImgRepository
 
     public async Task<IEnumerable<DermaImg>> GetByContributorIdAsync(Guid contributorId, CancellationToken cancellationToken = default)
     {
+        Logger.LogInformation("Fetching images by contributor id: {ContributorId}", contributorId);
         return await DbSet
             .Where(i => i.ContributorId == contributorId)
             .Include(i => i.Contributor)
@@ -39,6 +43,7 @@ public class DermaImgRepository : Repository<DermaImg>, IDermaImgRepository
 
     public async Task<IEnumerable<DermaImg>> GetByInstitutionIdAsync(Guid institutionId, CancellationToken cancellationToken = default)
     {
+        Logger.LogInformation("Fetching images by institution id: {InstitutionId}", institutionId);
         return await DbSet
             .Where(i => i.InstitutionId == institutionId)
             .Include(i => i.Contributor)
@@ -53,6 +58,7 @@ public class DermaImgRepository : Repository<DermaImg>, IDermaImgRepository
         DermaImgFilter? filter = null,
         CancellationToken cancellationToken = default)
     {
+        Logger.LogInformation("Fetching paged filtered images. Page: {Page}, PageSize: {PageSize}, HasFilter: {HasFilter}", page, pageSize, filter is not null);
         page = page < 1 ? 1 : page;
         pageSize = pageSize < 1 ? 20 : pageSize;
 
@@ -68,6 +74,16 @@ public class DermaImgRepository : Repository<DermaImg>, IDermaImgRepository
             if (filter.DiagnosisCategories is { Count: > 0 })
             {
                 query = query.Where(i => i.DiagnosisCategory.HasValue && filter.DiagnosisCategories.Contains(i.DiagnosisCategory.Value));
+            }
+
+            if (filter.InjuryTypes is { Count: > 0 })
+            {
+                query = query.Where(i => i.InjuryType.HasValue && filter.InjuryTypes.Contains(i.InjuryType.Value));
+            }
+
+            if (filter.FotoTypes is { Count: > 0 })
+            {
+                query = query.Where(i => i.FotoType.HasValue && filter.FotoTypes.Contains(i.FotoType.Value));
             }
 
             if (filter.Sexes is { Count: > 0 })
@@ -102,16 +118,19 @@ public class DermaImgRepository : Repository<DermaImg>, IDermaImgRepository
             .Take(pageSize)
             .ToListAsync(cancellationToken);
 
+        Logger.LogInformation("Fetched paged filtered images. Returned: {Count}, TotalCount: {TotalCount}", items.Count, totalCount);
         return (items, totalCount);
     }
 
     public async Task<int> CountByVisibilityAsync(bool includePrivate, CancellationToken cancellationToken = default)
     {
+        Logger.LogInformation("Counting images by visibility. IncludePrivate: {IncludePrivate}", includePrivate);
         return await BuildVisibilityQuery(includePrivate).CountAsync(cancellationToken);
     }
 
     public async Task<int> CountDistinctContributorsAsync(bool includePrivate, CancellationToken cancellationToken = default)
     {
+        Logger.LogInformation("Counting distinct contributors. IncludePrivate: {IncludePrivate}", includePrivate);
         return await BuildVisibilityQuery(includePrivate)
             .Select(i => i.ContributorId)
             .Distinct()
@@ -120,6 +139,7 @@ public class DermaImgRepository : Repository<DermaImg>, IDermaImgRepository
 
     public async Task<IReadOnlyList<(string Key, int Count)>> GetDiagnosisCategoryCountsAsync(bool includePrivate, CancellationToken cancellationToken = default)
     {
+        Logger.LogInformation("Fetching diagnosis category counts. IncludePrivate: {IncludePrivate}", includePrivate);
         var grouped = await BuildVisibilityQuery(includePrivate)
             .Where(i => i.DiagnosisCategory.HasValue)
             .GroupBy(i => i.DiagnosisCategory)
@@ -132,6 +152,7 @@ public class DermaImgRepository : Repository<DermaImg>, IDermaImgRepository
 
     public async Task<IReadOnlyList<(string Key, int Count)>> GetSexCountsAsync(bool includePrivate, CancellationToken cancellationToken = default)
     {
+        Logger.LogInformation("Fetching sex counts. IncludePrivate: {IncludePrivate}", includePrivate);
         var grouped = await BuildVisibilityQuery(includePrivate)
             .Where(i => i.Sex.HasValue)
             .GroupBy(i => i.Sex)
@@ -144,6 +165,7 @@ public class DermaImgRepository : Repository<DermaImg>, IDermaImgRepository
 
     public async Task<IReadOnlyList<(string Key, int Count)>> GetAnatomicalSiteCountsAsync(bool includePrivate, CancellationToken cancellationToken = default)
     {
+        Logger.LogInformation("Fetching anatomical site counts. IncludePrivate: {IncludePrivate}", includePrivate);
         var grouped = await BuildVisibilityQuery(includePrivate)
             .Where(i => i.AnatomSiteGeneral.HasValue)
             .GroupBy(i => i.AnatomSiteGeneral)
@@ -154,8 +176,35 @@ public class DermaImgRepository : Repository<DermaImg>, IDermaImgRepository
         return grouped.Select(x => (x.Key, x.Count)).ToList();
     }
 
+    public async Task<IReadOnlyList<(string Key, int Count)>> GetPhotoTypeCountsAsync(bool includePrivate, CancellationToken cancellationToken = default)
+    {
+        Logger.LogInformation("Fetching photo type counts. IncludePrivate: {IncludePrivate}", includePrivate);
+        var grouped = await BuildVisibilityQuery(includePrivate)
+            .Where(i => i.FotoType.HasValue)
+            .GroupBy(i => i.FotoType)
+            .Select(g => new { Key = g.Key!.Value.ToString(), Count = g.Count() })
+            .OrderByDescending(x => x.Count)
+            .ToListAsync(cancellationToken);
+
+        return grouped.Select(x => (x.Key, x.Count)).ToList();
+    }
+
+    public async Task<IReadOnlyList<(string Key, int Count)>> GetInjuryTypeCountsAsync(bool includePrivate, CancellationToken cancellationToken = default)
+    {
+        Logger.LogInformation("Fetching injury type counts. IncludePrivate: {IncludePrivate}", includePrivate);
+        var grouped = await BuildVisibilityQuery(includePrivate)
+            .Where(i => i.InjuryType.HasValue)
+            .GroupBy(i => i.InjuryType)
+            .Select(g => new { Key = g.Key!.Value.ToString(), Count = g.Count() })
+            .OrderByDescending(x => x.Count)
+            .ToListAsync(cancellationToken);
+
+        return grouped.Select(x => (x.Key, x.Count)).ToList();
+    }
+
     public async Task<IReadOnlyList<(int Year, int Month, int Count)>> GetMonthlyUploadCountsAsync(int recentMonths, bool includePrivate, CancellationToken cancellationToken = default)
     {
+        Logger.LogInformation("Fetching monthly upload counts. RecentMonths: {RecentMonths}, IncludePrivate: {IncludePrivate}", recentMonths, includePrivate);
         recentMonths = Math.Clamp(recentMonths, 1, 24);
         var utcNow = DateTime.UtcNow;
         var firstDay = new DateTime(utcNow.Year, utcNow.Month, 1, 0, 0, 0, DateTimeKind.Utc)
@@ -174,6 +223,7 @@ public class DermaImgRepository : Repository<DermaImg>, IDermaImgRepository
 
     public async Task<IReadOnlyList<(Guid InstitutionId, string InstitutionName, int Count)>> GetTopInstitutionsByImageCountAsync(int take, bool includePrivate, CancellationToken cancellationToken = default)
     {
+        Logger.LogInformation("Fetching top institutions by image count. Take: {Take}, IncludePrivate: {IncludePrivate}", take, includePrivate);
         take = Math.Clamp(take, 1, 20);
 
         var grouped = await BuildVisibilityQuery(includePrivate)
@@ -198,6 +248,7 @@ public class DermaImgRepository : Repository<DermaImg>, IDermaImgRepository
 
     public async Task<string> GeneratePublicIdAsync(CancellationToken cancellationToken = default)
     {
+        Logger.LogInformation("Generating public id for image");
         var count = await Context.Images
             .IgnoreQueryFilters()
             .CountAsync(cancellationToken);
