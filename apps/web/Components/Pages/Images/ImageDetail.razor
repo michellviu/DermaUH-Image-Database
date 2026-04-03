@@ -40,8 +40,6 @@ else
                     @KeyValue("Tipo de Imagen", image.ImageType)
                     @KeyValue("Manipulación", image.ImageManipulation)
                     @KeyValue("Tipo Dermatoscópico", image.DermoscopicType)
-                    @KeyValue("Licencia", image.CopyrightLicense)
-                    @KeyValue("Atribución", image.Attribution)
                     @KeyValue("Institución", image.InstitutionId?.ToString())
                 </div>
             </SectionCard>
@@ -50,6 +48,7 @@ else
                 <div class="kv-grid">
                     @KeyValue("Edad Aproximada", image.AgeApprox?.ToString())
                     @KeyValue("Sexo", image.Sex)
+                    @KeyValue("Fototipo", image.FotoType)
                     @KeyValue("Historial Personal MM", FormatBool(image.PersonalHxMm))
                     @KeyValue("Historial Familiar MM", FormatBool(image.FamilyHxMm))
                 </div>
@@ -67,13 +66,8 @@ else
                 <div class="kv-grid">
                     @KeyValue("Diagnóstico", image.Diagnosis)
                     @KeyValue("Categoría", image.DiagnosisCategory)
-                    @KeyValue("Nivel 2", image.DiagnosisLevel2)
-                    @KeyValue("Nivel 3", image.DiagnosisLevel3)
-                    @KeyValue("Nivel 4", image.DiagnosisLevel4)
-                    @KeyValue("Nivel 5", image.DiagnosisLevel5)
+                    @KeyValue("Tipo de lesión", image.InjuryType)
                     @KeyValue("Confirmación", image.DiagnosisConfirmType)
-                    @KeyValue("Melanocítico", FormatBool(image.Melanocytic))
-                    @KeyValue("Biopsia Concomitante", FormatBool(image.ConcomitantBiopsy))
                 </div>
             </SectionCard>
 
