@@ -28,9 +28,6 @@ namespace Infrastructure.DermaImage.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<int?>("AcquisitionDay")
-                        .HasColumnType("integer");
-
                     b.Property<int?>("AgeApprox")
                         .HasColumnType("integer");
 
@@ -42,19 +39,12 @@ namespace Infrastructure.DermaImage.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
-                    b.Property<string>("Attribution")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
                     b.Property<double?>("ClinSizeLongDiamMm")
                         .HasColumnType("double precision");
 
                     b.Property<string>("ClinicalNotes")
                         .HasMaxLength(2000)
                         .HasColumnType("character varying(2000)");
-
-                    b.Property<bool?>("ConcomitantBiopsy")
-                        .HasColumnType("boolean");
 
                     b.Property<string>("ContentType")
                         .IsRequired()
@@ -63,10 +53,6 @@ namespace Infrastructure.DermaImage.Migrations
 
                     b.Property<Guid>("ContributorId")
                         .HasColumnType("uuid");
-
-                    b.Property<string>("CopyrightLicense")
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -87,22 +73,6 @@ namespace Infrastructure.DermaImage.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
-                    b.Property<string>("DiagnosisLevel2")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.Property<string>("DiagnosisLevel3")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.Property<string>("DiagnosisLevel4")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.Property<string>("DiagnosisLevel5")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
                     b.Property<bool?>("FamilyHxMm")
                         .HasColumnType("boolean");
 
@@ -119,11 +89,19 @@ namespace Infrastructure.DermaImage.Migrations
                     b.Property<long>("FileSize")
                         .HasColumnType("bigint");
 
+                    b.Property<string>("FotoType")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
                     b.Property<string>("ImageManipulation")
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
                     b.Property<string>("ImageType")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("InjuryType")
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
@@ -144,9 +122,6 @@ namespace Infrastructure.DermaImage.Migrations
                         .HasColumnType("double precision");
 
                     b.Property<bool?>("MelUlcer")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool?>("Melanocytic")
                         .HasColumnType("boolean");
 
                     b.Property<bool?>("PersonalHxMm")
