@@ -9,6 +9,8 @@ public class StatisticsOverviewDto
     public int ContributorsCount { get; set; }
 
     public IReadOnlyList<StatisticsBucketDto> DiagnosisDistribution { get; set; } = [];
+    public IReadOnlyList<StatisticsBucketDto> InjuryTypeDistribution { get; set; } = [];
+    public IReadOnlyList<StatisticsBucketDto> PhotoTypeDistribution { get; set; } = [];
     public IReadOnlyList<StatisticsBucketDto> SexDistribution { get; set; } = [];
     public IReadOnlyList<StatisticsBucketDto> AnatomicalSiteDistribution { get; set; } = [];
     public IReadOnlyList<MonthlyUploadDto> MonthlyUploads { get; set; } = [];
