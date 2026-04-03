@@ -78,6 +78,38 @@ else
             }
         </article>
 
+        <article class="analytics-card">
+            <h2>Tipos de lesión</h2>
+            @foreach (var item in overview.InjuryTypeDistribution)
+            {
+                <div class="analytics-bar-row">
+                    <div class="analytics-bar-label">
+                        <span>@item.Label</span>
+                        <span>@item.Count (@item.Percentage.ToString("F1")%)</span>
+                    </div>
+                    <div class="analytics-bar-track">
+                        <span class="analytics-bar-fill" style="width: @GetWidth(item.Percentage);"></span>
+                    </div>
+                </div>
+            }
+        </article>
+
+        <article class="analytics-card">
+            <h2>Fototipo</h2>
+            @foreach (var item in overview.PhotoTypeDistribution)
+            {
+                <div class="analytics-bar-row">
+                    <div class="analytics-bar-label">
+                        <span>@item.Label</span>
+                        <span>@item.Count (@item.Percentage.ToString("F1")%)</span>
+                    </div>
+                    <div class="analytics-bar-track">
+                        <span class="analytics-bar-fill analytics-bar-fill--soft" style="width: @GetWidth(item.Percentage);"></span>
+                    </div>
+                </div>
+            }
+        </article>
+
         <article class="analytics-card analytics-card--wide">
             <h2>Sitios anatómicos más frecuentes</h2>
             @foreach (var item in overview.AnatomicalSiteDistribution.Take(6))
