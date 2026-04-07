@@ -186,6 +186,20 @@ a:hover,
     background: color-mix(in srgb, var(--surface-container-low) 86%, transparent);
 }
 
+.btn-outline-danger {
+    color: #b21e4b;
+    background: color-mix(in srgb, #ffe9f0 66%, var(--surface-container-lowest) 34%);
+    border-color: color-mix(in srgb, #f06292 68%, #e11d48 32%);
+    box-shadow: 0 6px 16px color-mix(in srgb, #f06292 22%, transparent);
+}
+
+.btn-outline-danger:hover {
+    color: #8f1239;
+    background: color-mix(in srgb, #ffd9e7 78%, var(--surface-container-lowest) 22%);
+    border-color: color-mix(in srgb, #ec407a 70%, #be123c 30%);
+    transform: translateY(-1px);
+}
+
 .btn-success {
     color: var(--on-primary);
     background: linear-gradient(125deg, var(--primary-container), var(--tertiary));

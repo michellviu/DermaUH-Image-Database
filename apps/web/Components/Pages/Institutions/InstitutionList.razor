@@ -1,6 +1,10 @@
 @page "/institutions"
 @rendermode InteractiveServer
 @inject HttpClient Http
+@inject IJSRuntime JS
+@using System.Text.Json
+@using Microsoft.JSInterop
+@implements IAsyncDisposable
 
 <PageTitle>Instituciones - DermaUH</PageTitle>
 
@@ -19,14 +23,6 @@
         </Authorized>
     </AuthorizeView>
 </section>
-
-<AuthorizeView Roles="Admin">
-    <NotAuthorized>
-        <div class="alert alert-secondary institutions-note">
-            Tu rol tiene acceso de solo lectura para instituciones.
-        </div>
-    </NotAuthorized>
-</AuthorizeView>
 
 @if (showForm)
 {
@@ -99,10 +95,11 @@ else
         </article>
     </div>
 
-    <section class="institutions-grid">
-        @foreach (var inst in response.Items)
-        {
-            <article class="institution-card">
+    <section id="@carouselRegionId" class="institutions-carousel" aria-label="Carrusel de instituciones">
+        <div id="@carouselTrackId" class="institutions-track" tabindex="0">
+            @foreach (var inst in response.Items)
+            {
+                <article class="institution-card">
                 <h3>@inst.Name</h3>
                 <p>@(inst.Description ?? "Sin descripción institucional.")</p>
 
@@ -119,22 +116,99 @@ else
                     }
                     <span class="institution-date">Alta: @inst.CreatedAt.ToString("yyyy-MM-dd")</span>
                 </div>
-            </article>
-        }
+
+                <AuthorizeView Roles="Admin">
+                    <Authorized>
+                        <div class="mt-3 pt-3 border-top">
+                            <h6 class="mb-2">Responsables de institución</h6>
+
+                            @if (GetResponsiblesForInstitution(inst.Id).Count == 0)
+                            {
+                                <p class="text-muted small mb-2">Sin responsables asignados.</p>
+                            }
+                            else
+                            {
+                                <div class="d-flex flex-wrap gap-2 mb-2">
+                                    @foreach (var responsible in GetResponsiblesForInstitution(inst.Id))
+                                    {
+                                        <span class="badge text-bg-light border">
+                                            @responsible.FullName
+                                            <button type="button"
+                                                    class="btn btn-sm p-0 ms-1"
+                                                    title="Quitar responsable"
+                                                    @onclick="() => HandleRemoveResponsible(inst.Id, responsible.UserId)">✕</button>
+                                        </span>
+                                    }
+                                </div>
+                            }
+
+                            <div class="d-flex gap-2 align-items-center">
+                                <select class="form-select form-select-sm"
+                                        style="min-width: 220px;"
+                                        value="@GetSelectedResponsibleUser(inst.Id)"
+                                        @onchange="e => OnResponsibleSelectionChanged(inst.Id, e)">
+                                    @if (GetAvailableResponsibleCandidates(inst.Id).Count == 0)
+                                    {
+                                        <option value="">Sin candidatos disponibles</option>
+                                    }
+                                    else
+                                    {
+                                        @foreach (var user in GetAvailableResponsibleCandidates(inst.Id))
+                                        {
+                                            <option value="@user.Id">@user.FirstName @user.LastName (@user.Email)</option>
+                                        }
+                                    }
+                                </select>
+                                <button class="btn btn-sm btn-primary"
+                                        disabled="@(GetAvailableResponsibleCandidates(inst.Id).Count == 0)"
+                                        @onclick="() => HandleAssignResponsible(inst.Id)">
+                                    Asignar responsable
+                                </button>
+                            </div>
+                        </div>
+                    </Authorized>
+                </AuthorizeView>
+                </article>
+            }
+        </div>
     </section>
 }
 
 @code {
+    private const int PageSize = 10;
+
     private PagedResponse<InstitutionDto>? response;
     private bool loading = true;
     private bool showForm = false;
     private bool submitting = false;
     private string? errorMessage;
     private InstitutionFormModel newInstitution = new();
+    private List<UserDto> allUsers = new();
+    private readonly Dictionary<Guid, List<InstitutionResponsibleDto>> institutionResponsibles = new();
+    private readonly Dictionary<Guid, Guid> selectedResponsibleUsers = new();
+    private readonly string carouselRegionId = $"institutions-carousel-region-{Guid.NewGuid():N}";
+    private readonly string carouselTrackId = $"institutions-carousel-track-{Guid.NewGuid():N}";
+    private bool carouselInitialized;
 
     protected override async Task OnInitializedAsync()
     {
         await LoadData();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (carouselInitialized)
+        {
+            return;
+        }
+
+        if (loading || response?.Items is null || response.Items.Count() < 2)
+        {
+            return;
+        }
+
+        await JS.InvokeVoidAsync("institutionsCarousel.init", carouselRegionId, carouselTrackId);
+        carouselInitialized = true;
     }
 
     private async Task LoadData()
@@ -142,7 +216,38 @@ else
         loading = true;
         try
         {
-            response = await Http.GetFromJsonAsync<PagedResponse<InstitutionDto>>("api/institutions?page=1&pageSize=50");
+            var allInstitutions = new List<InstitutionDto>();
+            var page = 1;
+            var totalPages = 1;
+            var totalCount = 0;
+
+            do
+            {
+                var pageResponse = await Http.GetFromJsonAsync<PagedResponse<InstitutionDto>>($"api/institutions?page={page}&pageSize={PageSize}");
+                if (pageResponse is null)
+                {
+                    break;
+                }
+
+                allInstitutions.AddRange(pageResponse.Items);
+                totalCount = pageResponse.TotalCount;
+                totalPages = Math.Max(1, pageResponse.TotalPages);
+                page++;
+            }
+            while (page <= totalPages);
+
+            response = new PagedResponse<InstitutionDto>
+            {
+                Items = allInstitutions,
+                TotalCount = totalCount,
+                Page = 1,
+                PageSize = PageSize,
+                TotalPages = Math.Max(1, totalPages),
+                HasNext = false,
+                HasPrevious = false,
+            };
+
+            await LoadResponsiblesData();
         }
         catch
         {
@@ -173,6 +278,10 @@ else
                 newInstitution = new();
                 showForm = false;
                 await LoadData();
+                if (carouselInitialized)
+                {
+                    await JS.InvokeVoidAsync("institutionsCarousel.recalculate", carouselRegionId, carouselTrackId);
+                }
             }
             else
             {
@@ -189,6 +298,188 @@ else
         }
     }
 
+    private async Task LoadResponsiblesData()
+    {
+        institutionResponsibles.Clear();
+        selectedResponsibleUsers.Clear();
+        allUsers = await LoadAllUsersAsync();
+
+        if (response?.Items is null || !response.Items.Any())
+        {
+            return;
+        }
+
+        foreach (var institution in response.Items)
+        {
+            await RefreshInstitutionResponsibles(institution.Id);
+        }
+    }
+
+    private async Task<List<UserDto>> LoadAllUsersAsync()
+    {
+        var users = new List<UserDto>();
+        var page = 1;
+        var totalPages = 1;
+
+        try
+        {
+            do
+            {
+                var pageResponse = await Http.GetFromJsonAsync<PagedResponse<UserDto>>($"api/users?page={page}&pageSize={PageSize}");
+                if (pageResponse is null)
+                {
+                    break;
+                }
+
+                users.AddRange(pageResponse.Items);
+                totalPages = Math.Max(1, pageResponse.TotalPages);
+                page++;
+            }
+            while (page <= totalPages);
+        }
+        catch
+        {
+            // Non-admin users won't have access to users endpoint.
+            return [];
+        }
+
+        return users;
+    }
+
+    private async Task RefreshInstitutionResponsibles(Guid institutionId)
+    {
+        try
+        {
+            var responsibles = await Http.GetFromJsonAsync<List<InstitutionResponsibleDto>>($"api/institutions/{institutionId}/responsibles");
+            institutionResponsibles[institutionId] = responsibles ?? [];
+        }
+        catch
+        {
+            institutionResponsibles[institutionId] = [];
+        }
+
+        var candidates = GetAvailableResponsibleCandidates(institutionId);
+        if (candidates.Count > 0)
+        {
+            selectedResponsibleUsers[institutionId] = candidates[0].Id;
+        }
+        else
+        {
+            selectedResponsibleUsers.Remove(institutionId);
+        }
+    }
+
+    private List<InstitutionResponsibleDto> GetResponsiblesForInstitution(Guid institutionId)
+    {
+        return institutionResponsibles.TryGetValue(institutionId, out var responsibles)
+            ? responsibles
+            : [];
+    }
+
+    private List<UserDto> GetAvailableResponsibleCandidates(Guid institutionId)
+    {
+        var alreadyResponsible = GetResponsiblesForInstitution(institutionId)
+            .Select(x => x.UserId)
+            .ToHashSet();
+
+        return allUsers
+            .Where(u => !alreadyResponsible.Contains(u.Id))
+            .OrderBy(u => u.LastName)
+            .ThenBy(u => u.FirstName)
+            .ToList();
+    }
+
+    private string GetSelectedResponsibleUser(Guid institutionId)
+    {
+        return selectedResponsibleUsers.TryGetValue(institutionId, out var selected)
+            ? selected.ToString()
+            : string.Empty;
+    }
+
+    private void OnResponsibleSelectionChanged(Guid institutionId, ChangeEventArgs e)
+    {
+        var value = e.Value?.ToString();
+        if (!Guid.TryParse(value, out var userId))
+        {
+            return;
+        }
+
+        selectedResponsibleUsers[institutionId] = userId;
+    }
+
+    private async Task HandleAssignResponsible(Guid institutionId)
+    {
+        errorMessage = null;
+
+        if (!selectedResponsibleUsers.TryGetValue(institutionId, out var userId))
+        {
+            errorMessage = "Seleccione un usuario para asignar como responsable.";
+            return;
+        }
+
+        try
+        {
+            var result = await Http.PostAsJsonAsync($"api/institutions/{institutionId}/responsibles", new { UserId = userId });
+            if (!result.IsSuccessStatusCode)
+            {
+                errorMessage = await GetApiErrorAsync(result);
+                return;
+            }
+
+            await RefreshInstitutionResponsibles(institutionId);
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+    }
+
+    private async Task HandleRemoveResponsible(Guid institutionId, Guid userId)
+    {
+        errorMessage = null;
+
+        try
+        {
+            var result = await Http.DeleteAsync($"api/institutions/{institutionId}/responsibles/{userId}");
+            if (!result.IsSuccessStatusCode)
+            {
+                errorMessage = await GetApiErrorAsync(result);
+                return;
+            }
+
+            await RefreshInstitutionResponsibles(institutionId);
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+    }
+
+    private static async Task<string> GetApiErrorAsync(HttpResponseMessage response)
+    {
+        var content = await response.Content.ReadAsStringAsync();
+        if (string.IsNullOrWhiteSpace(content))
+        {
+            return $"Error: {response.StatusCode}";
+        }
+
+        try
+        {
+            using var json = JsonDocument.Parse(content);
+            if (json.RootElement.TryGetProperty("message", out var msg)
+                && msg.ValueKind == JsonValueKind.String)
+            {
+                return msg.GetString() ?? $"Error: {response.StatusCode}";
+            }
+        }
+        catch
+        {
+            // Ignore parsing errors.
+        }
+
+        return $"Error: {response.StatusCode}";
+    }
+
     private class InstitutionFormModel
     {
         public string Name { get; set; } = string.Empty;
@@ -198,5 +489,22 @@ else
         public string? Address { get; set; }
         public string? Website { get; set; }
         public string? ContactEmail { get; set; }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (!carouselInitialized)
+        {
+            return;
+        }
+
+        try
+        {
+            await JS.InvokeVoidAsync("institutionsCarousel.dispose", carouselRegionId);
+        }
+        catch
+        {
+            // Ignore disposal errors when leaving the page.
+        }
     }
 }
