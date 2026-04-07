@@ -78,10 +78,24 @@ else
                 <tbody>
                     @foreach (var user in response.Items)
                     {
+                        var userRoles = GetRolesForUser(user);
+                        var rolesToAssign = GetAssignableRolesForUser(user);
                         <tr>
                             <td><strong>@user.FirstName @user.LastName</strong></td>
                             <td>@user.Email</td>
-                            <td><span class="badge text-bg-info">@user.Role</span></td>
+                            <td>
+                                @if (userRoles.Count == 0)
+                                {
+                                    <span class="badge text-bg-secondary">Sin rol</span>
+                                }
+                                else
+                                {
+                                    @foreach (var role in userRoles)
+                                    {
+                                        <span class="badge text-bg-info me-1">@role</span>
+                                    }
+                                }
+                            </td>
                             <td>
                                 @if (user.IsActive)
                                 {
@@ -94,25 +108,53 @@ else
                             </td>
                             <td>@user.CreatedAt.ToString("yyyy-MM-dd")</td>
                             <td>
-                                <div class="d-flex gap-2">
+                                <div class="d-flex flex-column gap-2">
+                                    <div class="d-flex gap-2 align-items-center">
+                                        <select class="form-select form-select-sm"
+                                                style="min-width: 160px;"
+                                                value="@GetSelectedAssignRole(user.Id)"
+                                                @onchange="e => OnAssignRoleSelectionChanged(user.Id, e)">
+                                            @if (rolesToAssign.Count == 0)
+                                            {
+                                                <option value="" disabled>Sin roles disponibles</option>
+                                            }
+                                            else
+                                            {
+                                                @foreach (var role in rolesToAssign)
+                                                {
+                                                    <option value="@role">@role</option>
+                                                }
+                                            }
+                                        </select>
+                                        <button class="btn btn-sm btn-outline-primary"
+                                                disabled="@(rolesToAssign.Count == 0)"
+                                                @onclick="() => HandleAssignRole(user.Id)">
+                                            Asignar
+                                        </button>
+                                    </div>
+                                    <div class="d-flex gap-2 align-items-center">
                                     <select class="form-select form-select-sm"
-                                            style="min-width: 140px;"
-                                            value="@GetSelectedRole(user.Id)"
-                                            @onchange="e => OnRoleSelectionChanged(user.Id, e)">
-                                        <option value="">Seleccione</option>
-                                        @foreach (var role in assignableRoles)
+                                            style="min-width: 160px;"
+                                            value="@GetSelectedRemoveRole(user.Id)"
+                                            @onchange="e => OnRemoveRoleSelectionChanged(user.Id, e)">
+                                        @if (userRoles.Count == 0)
                                         {
-                                            <option value="@role">@role</option>
+                                            <option value="" disabled>Sin roles asignados</option>
+                                        }
+                                        else
+                                        {
+                                            @foreach (var role in userRoles)
+                                            {
+                                                <option value="@role">@role</option>
+                                            }
                                         }
                                     </select>
-                                    <button class="btn btn-sm btn-outline-primary"
-                                            @onclick="() => HandleAssignRole(user.Id)">
-                                        Asignar
-                                    </button>
                                     <button class="btn btn-sm btn-outline-danger"
+                                            disabled="@(userRoles.Count == 0)"
                                             @onclick="() => HandleRemoveRole(user.Id)">
                                         Quitar
                                     </button>
+                                </div>
                                 </div>
                             </td>
                         </tr>
@@ -130,7 +172,9 @@ else
     private bool submitting = false;
     private string? errorMessage;
     private UserFormModel newUser = new();
-    private readonly Dictionary<Guid, string> selectedRoles = new();
+    private readonly Dictionary<Guid, List<string>> userRoles = new();
+    private readonly Dictionary<Guid, string> selectedAssignRoles = new();
+    private readonly Dictionary<Guid, string> selectedRemoveRoles = new();
     private readonly string[] assignableRoles = ["Viewer", "Contributor", "Reviewer", "Admin"];
 
     protected override async Task OnInitializedAsync()
@@ -144,14 +188,46 @@ else
         try
         {
             response = await Http.GetFromJsonAsync<PagedResponse<UserDto>>("api/users?page=1&pageSize=50");
-            selectedRoles.Clear();
+            userRoles.Clear();
+            selectedAssignRoles.Clear();
+            selectedRemoveRoles.Clear();
+
             if (response?.Items is not null)
             {
+                var roleTasks = response.Items.Select(async user =>
+                {
+                    try
+                    {
+                        var roles = await Http.GetFromJsonAsync<List<string>>($"api/users/{user.Id}/roles");
+                        return new { user.Id, Roles = roles ?? [] };
+                    }
+                    catch
+                    {
+                        return new { user.Id, Roles = new List<string>() };
+                    }
+                });
+
+                var roleResults = await Task.WhenAll(roleTasks);
+                foreach (var result in roleResults)
+                {
+                    userRoles[result.Id] = result.Roles
+                        .Where(r => !string.IsNullOrWhiteSpace(r))
+                        .Distinct(StringComparer.OrdinalIgnoreCase)
+                        .ToList();
+                }
+
                 foreach (var user in response.Items)
                 {
-                    if (!string.IsNullOrWhiteSpace(user.Role))
+                    var rolesForUser = GetRolesForUser(user);
+                    if (rolesForUser.Count > 0)
                     {
-                        selectedRoles[user.Id] = user.Role;
+                        selectedRemoveRoles[user.Id] = rolesForUser[0];
+                    }
+
+                    var assignableForUser = GetAssignableRolesForUser(user);
+                    if (assignableForUser.Count > 0)
+                    {
+                        selectedAssignRoles[user.Id] = assignableForUser[0];
                     }
                 }
             }
@@ -198,14 +274,34 @@ else
         }
     }
 
-    private string GetSelectedRole(Guid userId)
+    private List<string> GetRolesForUser(UserDto user)
     {
-        return selectedRoles.TryGetValue(userId, out var role)
+        if (userRoles.TryGetValue(user.Id, out var roles) && roles.Count > 0)
+        {
+            return roles;
+        }
+
+        return string.IsNullOrWhiteSpace(user.Role)
+            ? []
+            : [user.Role];
+    }
+
+    private List<string> GetAssignableRolesForUser(UserDto user)
+    {
+        var existingRoles = GetRolesForUser(user);
+        return assignableRoles
+            .Where(role => !existingRoles.Contains(role, StringComparer.OrdinalIgnoreCase))
+            .ToList();
+    }
+
+    private string GetSelectedAssignRole(Guid userId)
+    {
+        return selectedAssignRoles.TryGetValue(userId, out var role)
             ? role
             : string.Empty;
     }
 
-    private void OnRoleSelectionChanged(Guid userId, ChangeEventArgs e)
+    private void OnAssignRoleSelectionChanged(Guid userId, ChangeEventArgs e)
     {
         var role = e.Value?.ToString();
         if (string.IsNullOrWhiteSpace(role))
@@ -213,14 +309,35 @@ else
             return;
         }
 
-        selectedRoles[userId] = role;
+        selectedAssignRoles[userId] = role;
+    }
+
+    private string GetSelectedRemoveRole(Guid userId)
+    {
+        return selectedRemoveRoles.TryGetValue(userId, out var role)
+            ? role
+            : string.Empty;
+    }
+
+    private void OnRemoveRoleSelectionChanged(Guid userId, ChangeEventArgs e)
+    {
+        var role = e.Value?.ToString();
+        if (string.IsNullOrWhiteSpace(role))
+        {
+            return;
+        }
+
+        selectedRemoveRoles[userId] = role;
     }
 
     private async Task HandleAssignRole(Guid userId)
     {
         errorMessage = null;
-        var role = GetSelectedRole(userId);
-        var currentRole = response?.Items.FirstOrDefault(x => x.Id == userId)?.Role ?? string.Empty;
+        var role = GetSelectedAssignRole(userId);
+        var currentRoles = response?.Items
+            .Where(x => x.Id == userId)
+            .SelectMany(GetRolesForUser)
+            .ToList() ?? [];
 
         if (string.IsNullOrWhiteSpace(role))
         {
@@ -228,7 +345,7 @@ else
             return;
         }
 
-        if (string.Equals(currentRole, role, StringComparison.OrdinalIgnoreCase))
+        if (currentRoles.Contains(role, StringComparer.OrdinalIgnoreCase))
         {
             errorMessage = "El usuario ya tiene este rol asignado.";
             return;
@@ -257,7 +374,7 @@ else
     private async Task HandleRemoveRole(Guid userId)
     {
         errorMessage = null;
-        var role = GetSelectedRole(userId);
+        var role = GetSelectedRemoveRole(userId);
 
         if (string.IsNullOrWhiteSpace(role))
         {

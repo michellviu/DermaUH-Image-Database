@@ -25,7 +25,6 @@ public class UserRepository : IUserRepository
         return await _context.Users
             .Include(u => u.Institution)
             .Include(u => u.ContributedImages)
-            .AsNoTracking()
             .FirstOrDefaultAsync(u => u.Id == id, cancellationToken);
     }
 
@@ -35,7 +34,6 @@ public class UserRepository : IUserRepository
         return await _context.Users
             .Include(u => u.Institution)
             .Include(u => u.ContributedImages)
-            .AsNoTracking()
             .FirstOrDefaultAsync(u => u.Email == email, cancellationToken);
     }
 
@@ -45,7 +43,6 @@ public class UserRepository : IUserRepository
         return await _context.Users
             .Include(u => u.Institution)
             .Include(u => u.ContributedImages)
-            .AsNoTracking()
             .ToListAsync(cancellationToken);
     }
 
@@ -57,7 +54,6 @@ public class UserRepository : IUserRepository
         var items = await query
             .Include(u => u.Institution)
             .Include(u => u.ContributedImages)
-            .AsNoTracking()
             .OrderBy(u => u.LastName)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
@@ -83,18 +79,9 @@ public class UserRepository : IUserRepository
     public async Task UpdateAsync(User user, CancellationToken cancellationToken = default)
     {
         _logger.LogInformation("Updating user: {@User}", user);
-        var managedUser = await GetManagedIdentityUserAsync(user.Id);
-        managedUser.FirstName = user.FirstName;
-        managedUser.LastName = user.LastName;
-        managedUser.Email = user.Email;
-        managedUser.UserName = user.UserName;
-        managedUser.PhoneNumber = user.PhoneNumber;
-        managedUser.IsActive = user.IsActive;
-        managedUser.IsDeleted = user.IsDeleted;
-        managedUser.InstitutionId = user.InstitutionId;
-        managedUser.UpdatedAt = DateTime.UtcNow;
-
-        var result = await _userManager.UpdateAsync(managedUser);
+        user.UpdatedAt = DateTime.UtcNow;
+        
+        var result = await _userManager.UpdateAsync(user);
         if (!result.Succeeded)
         {
             var errors = string.Join(", ", result.Errors.Select(e => e.Description));
@@ -161,8 +148,7 @@ public class UserRepository : IUserRepository
     public async Task<IdentityResult> ConfirmEmailAsync(User user, string token)
     {
         _logger.LogInformation("Confirming email for user: {@User}", user);
-        var managedUser = await GetManagedIdentityUserAsync(user.Id);
-        return await _userManager.ConfirmEmailAsync(managedUser, token);
+        return await _userManager.ConfirmEmailAsync(user, token);
     }
 
     public Task<string> GeneratePasswordResetTokenAsync(User user)
@@ -174,8 +160,7 @@ public class UserRepository : IUserRepository
     public async Task<IdentityResult> ResetPasswordAsync(User user, string token, string newPassword)
     {
         _logger.LogInformation("Resetting password for user: {@User}", user);
-        var managedUser = await GetManagedIdentityUserAsync(user.Id);
-        return await _userManager.ResetPasswordAsync(managedUser, token, newPassword);
+        return await _userManager.ResetPasswordAsync(user, token, newPassword);
     }
 
     public Task<bool> HasPasswordAsync(User user)
@@ -187,15 +172,13 @@ public class UserRepository : IUserRepository
     public async Task<IdentityResult> AddPasswordAsync(User user, string newPassword)
     {
         _logger.LogInformation("Adding password for user: {@User}", user);
-        var managedUser = await GetManagedIdentityUserAsync(user.Id);
-        return await _userManager.AddPasswordAsync(managedUser, newPassword);
+        return await _userManager.AddPasswordAsync(user, newPassword);
     }
 
     public async Task<IdentityResult> ChangePasswordAsync(User user, string currentPassword, string newPassword)
     {
         _logger.LogInformation("Changing password for user: {@User}", user);
-        var managedUser = await GetManagedIdentityUserAsync(user.Id);
-        return await _userManager.ChangePasswordAsync(managedUser, currentPassword, newPassword);
+        return await _userManager.ChangePasswordAsync(user, currentPassword, newPassword);
     }
 
     public Task<User?> FindByLoginAsync(string loginProvider, string providerKey)
@@ -210,24 +193,5 @@ public class UserRepository : IUserRepository
         return _userManager.AddLoginAsync(user, loginInfo);
     }
 
-    private async Task<User> GetManagedIdentityUserAsync(Guid userId)
-    {
-        var trackedUser = _context.ChangeTracker
-            .Entries<User>()
-            .FirstOrDefault(e => e.Entity.Id == userId)
-            ?.Entity;
 
-        if (trackedUser is not null)
-        {
-            return trackedUser;
-        }
-
-        var managedUser = await _userManager.FindByIdAsync(userId.ToString());
-        if (managedUser is null)
-        {
-            throw new KeyNotFoundException($"User with id '{userId}' was not found.");
-        }
-
-        return managedUser;
-    }
 }
