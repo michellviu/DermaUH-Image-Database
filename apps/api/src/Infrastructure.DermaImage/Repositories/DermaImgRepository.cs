@@ -9,6 +9,15 @@ public class DermaImgRepository : Repository<DermaImg>, IDermaImgRepository
 {
     public DermaImgRepository(DermaImageDbContext context, ILoggerFactory loggerFactory) : base(context, loggerFactory) { }
 
+    public new Task<DermaImg?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        Logger.LogInformation("Fetching image by id with related entities: {ImageId}", id);
+        return DbSet
+            .Include(i => i.Contributor)
+            .Include(i => i.Institution)
+            .FirstOrDefaultAsync(i => i.Id == id, cancellationToken);
+    }
+
     private IQueryable<DermaImg> BuildVisibilityQuery(bool includePrivate)
     {
         Logger.LogInformation("Building image visibility query. IncludePrivate: {IncludePrivate}", includePrivate);
