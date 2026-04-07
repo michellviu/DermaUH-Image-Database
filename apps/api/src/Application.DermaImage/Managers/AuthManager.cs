@@ -236,8 +236,7 @@ public class AuthManager : IAuthManager
 
         user.FirstName     = dto.FirstName;
         user.LastName      = dto.LastName;
-        user.PhoneNumber   = dto.PhoneNumber;
-        user.InstitutionId = dto.InstitutionId;
+        user.PhoneNumber = dto.PhoneNumber;
 
         await _users.UpdateAsync(user, ct);
         return (true, null);
