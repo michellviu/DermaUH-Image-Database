@@ -14,4 +14,6 @@ public class Institution : BaseEntity
     // Navigation
     public ICollection<User> Users { get; set; } = new List<User>();
     public ICollection<DermaImg> Images { get; set; } = new List<DermaImg>();
+    public ICollection<InstitutionResponsible> Responsibles { get; set; } = new List<InstitutionResponsible>();
+    public ICollection<InstitutionJoinRequest> JoinRequests { get; set; } = new List<InstitutionJoinRequest>();
 }

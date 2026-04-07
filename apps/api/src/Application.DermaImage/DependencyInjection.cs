@@ -18,6 +18,7 @@ public static class DependencyInjection
         services.AddScoped<IDermaImgManager, DermaImgManager>();
         services.AddScoped<IUserManager, Managers.UserManager>();
         services.AddScoped<IInstitutionManager, InstitutionManager>();
+        services.AddScoped<IInstitutionMembershipManager, InstitutionMembershipManager>();
         services.AddScoped<IAuthManager, AuthManager>();
         services.AddScoped<IStatisticsManager, StatisticsManager>();
 

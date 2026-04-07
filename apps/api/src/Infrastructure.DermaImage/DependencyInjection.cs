@@ -67,6 +67,7 @@ public static class DependencyInjection
         services.AddScoped<IDermaImgRepository, DermaImgRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IInstitutionRepository, InstitutionRepository>();
+        services.AddScoped<IInstitutionMembershipRepository, InstitutionMembershipRepository>();
 
         // Services
         services.AddScoped<IJwtService, JwtService>();
