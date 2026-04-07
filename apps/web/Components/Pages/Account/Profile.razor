@@ -6,6 +6,7 @@
 @attribute [Authorize]
 @inject AuthService Auth
 @inject NavigationManager Nav
+@inject HttpClient Http
 @rendermode InteractiveServer
 
 <PageTitle>Mi perfil – DermaUH</PageTitle>
@@ -107,6 +108,206 @@ else
                 </div>
             </div>
 
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h2 class="card-title">Asociación institucional</h2>
+                </div>
+                <div class="card-body">
+                    @if (!string.IsNullOrWhiteSpace(_membershipMessage))
+                    {
+                        <div class="alert alert-success">@_membershipMessage</div>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(_membershipError))
+                    {
+                        <div class="alert alert-danger">@_membershipError</div>
+                    }
+
+                    <div class="mb-3">
+                        <label class="form-label">Requisito para solicitar asociación</label>
+                        @if (_profile.EmailConfirmed)
+                        {
+                            <p class="mb-2">Tu correo está confirmado y puedes enviar solicitudes.</p>
+                        }
+                        else
+                        {
+                            <p class="text-muted mb-2">Debes confirmar tu correo electrónico para enviar solicitudes de asociación.</p>
+                        }
+                    </div>
+
+                    @if (_profile.InstitutionId is not null)
+                    {
+                        <div class="alert alert-info mb-3">
+                            Ya perteneces a la institución <strong>@_profile.InstitutionName</strong>.
+                        </div>
+                        <button type="button" class="btn btn-outline-danger"
+                                disabled="@_leavingInstitution"
+                                @onclick="LeaveInstitutionAsync">
+                            @(_leavingInstitution ? "Procesando..." : "Dejar de pertenecer")
+                        </button>
+                    }
+                    else
+                    {
+                        <div class="mb-3">
+                            <label class="form-label">Solicitar pertenecer a una institución</label>
+                            <div class="d-flex flex-wrap gap-2 align-items-center">
+                                <select class="form-select" style="max-width: 360px;" @bind="_selectedInstitutionId">
+                                    <option value="">Seleccione una institución</option>
+                                    @foreach (var institution in _institutions)
+                                    {
+                                        <option value="@institution.Id">@institution.Name</option>
+                                    }
+                                </select>
+                                <button class="btn btn-success"
+                                        disabled="@(_sendingJoinRequest || !_canRequestInstitutionAssociation)"
+                                        @onclick="SubmitJoinRequestAsync">
+                                    @(_sendingJoinRequest ? "Enviando..." : "Enviar solicitud")
+                                </button>
+                            </div>
+                            @if (!_canRequestInstitutionAssociation)
+                            {
+                                <small class="text-muted">Para solicitar asociación debes tener el correo confirmado.</small>
+                            }
+                        </div>
+                    }
+
+                    <h3 class="h6 mt-4">Mis solicitudes</h3>
+                    @if (!_myJoinRequestsPage.Items.Any())
+                    {
+                        <p class="text-muted mb-0">No has realizado solicitudes de asociación.</p>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-sm align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>Institución</th>
+                                        <th>Estado</th>
+                                        <th>Fecha</th>
+                                        <th>Comentario</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var request in _myJoinRequestsPage.Items)
+                                    {
+                                        <tr>
+                                            <td>@request.InstitutionName</td>
+                                            <td>@MapStatus(request.Status)</td>
+                                            <td>@request.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                                            <td>@(string.IsNullOrWhiteSpace(request.ReviewComment) ? "-" : request.ReviewComment)</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+
+                        @if (_myJoinRequestsPage.TotalPages > 1)
+                        {
+                            <div class="d-flex align-items-center justify-content-between gap-2 mt-2">
+                                <small class="text-muted">Página @_myJoinRequestsPage.Page de @_myJoinRequestsPage.TotalPages</small>
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-sm btn-outline-secondary"
+                                            disabled="@(!_myJoinRequestsPage.HasPrevious || _loadingMyJoinRequests)"
+                                            @onclick="() => GoToMyJoinRequestsPageAsync(_myJoinRequestsPage.Page - 1)">
+                                        Anterior
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-secondary"
+                                            disabled="@(!_myJoinRequestsPage.HasNext || _loadingMyJoinRequests)"
+                                            @onclick="() => GoToMyJoinRequestsPageAsync(_myJoinRequestsPage.Page + 1)">
+                                        Siguiente
+                                    </button>
+                                </div>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+
+            @if (_inboxRequestsPage.TotalCount > 0)
+            {
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h2 class="card-title">Inbox de solicitudes institucionales</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>Institución</th>
+                                        <th>Solicitante</th>
+                                        <th>Contacto</th>
+                                        <th>Estado</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var request in _inboxRequestsPage.Items)
+                                    {
+                                        <tr>
+                                            <td>@request.InstitutionName</td>
+                                            <td>
+                                                <strong>@request.ApplicantFullName</strong><br />
+                                                <small class="text-muted">@request.CreatedAt.ToString("yyyy-MM-dd HH:mm")</small>
+                                            </td>
+                                            <td>
+                                                <div>@request.ApplicantEmail</div>
+                                                <small class="text-muted">@request.ApplicantPhoneNumber</small>
+                                            </td>
+                                            <td>@MapStatus(request.Status)</td>
+                                            <td>
+                                                @if (request.IsPending)
+                                                {
+                                                    <div class="d-flex flex-column gap-2" style="min-width: 220px;">
+                                                        <input class="form-control form-control-sm"
+                                                               placeholder="Comentario opcional"
+                                                               value="@GetReviewComment(request.Id)"
+                                                               @oninput="e => SetReviewComment(request.Id, e.Value?.ToString() ?? string.Empty)" />
+                                                        <div class="d-flex gap-2">
+                                                            <button class="btn btn-sm btn-outline-primary"
+                                                                    @onclick="() => ReviewRequestAsync(request.Id, true)">
+                                                                Aprobar
+                                                            </button>
+                                                            <button class="btn btn-sm btn-outline-danger"
+                                                                    @onclick="() => ReviewRequestAsync(request.Id, false)">
+                                                                Denegar
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">Revisada</span>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+
+                        @if (_inboxRequestsPage.TotalPages > 1)
+                        {
+                            <div class="d-flex align-items-center justify-content-between gap-2 mt-2">
+                                <small class="text-muted">Página @_inboxRequestsPage.Page de @_inboxRequestsPage.TotalPages</small>
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-sm btn-outline-secondary"
+                                            disabled="@(!_inboxRequestsPage.HasPrevious || _loadingInboxRequests)"
+                                            @onclick="() => GoToInboxPageAsync(_inboxRequestsPage.Page - 1)">
+                                        Anterior
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-secondary"
+                                            disabled="@(!_inboxRequestsPage.HasNext || _loadingInboxRequests)"
+                                            @onclick="() => GoToInboxPageAsync(_inboxRequestsPage.Page + 1)">
+                                        Siguiente
+                                    </button>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+
             <!-- Change password -->
             <div class="card">
                 <div class="card-header">
@@ -159,6 +360,8 @@ else
 }
 
 @code {
+    private const int MembershipPageSize = 5;
+
     private UserProfile? _profile;
     private UpdateProfileRequest _profileForm = new();
     private ChangePasswordRequest _pwdForm = new();
@@ -166,26 +369,45 @@ else
     private bool _savingProfile;
     private bool _savingPwd;
     private bool _pwdMismatch;
+    private bool _sendingJoinRequest;
+    private bool _leavingInstitution;
+    private bool _loadingMyJoinRequests;
+    private bool _loadingInboxRequests;
 
     private string? _profileSuccess;
     private string? _profileError;
     private string? _pwdSuccess;
     private string? _pwdError;
+    private string? _membershipMessage;
+    private string? _membershipError;
+    private Guid? _selectedInstitutionId;
+
+    private List<InstitutionDto> _institutions = [];
+    private PagedResponse<InstitutionJoinRequestDto> _myJoinRequestsPage = new()
+    {
+        Items = [],
+        Page = 1,
+        PageSize = MembershipPageSize,
+    };
+    private PagedResponse<InstitutionJoinRequestDto> _inboxRequestsPage = new()
+    {
+        Items = [],
+        Page = 1,
+        PageSize = MembershipPageSize,
+    };
+    private int _myJoinRequestsPageNumber = 1;
+    private int _inboxRequestsPageNumber = 1;
+    private readonly Dictionary<Guid, string> _reviewComments = new();
+
+    private bool _canRequestInstitutionAssociation =>
+        _profile is not null
+        && _profile.EmailConfirmed;
 
     protected override async Task OnInitializedAsync()
     {
-        _profile = await Auth.FetchProfileAsync();
-
-        if (_profile is not null)
-        {
-            _profileForm = new UpdateProfileRequest
-            {
-                FirstName   = _profile.FirstName,
-                LastName    = _profile.LastName,
-                PhoneNumber = _profile.PhoneNumber,
-                InstitutionId = _profile.InstitutionId,
-            };
-        }
+        await ReloadProfileAsync();
+        await LoadInstitutionDataAsync();
+        await LoadMembershipDataAsync();
     }
 
     private async Task SaveProfileAsync()
@@ -205,7 +427,8 @@ else
         }
 
         _profileSuccess = "Perfil actualizado correctamente.";
-        _profile = await Auth.FetchProfileAsync();
+        await ReloadProfileAsync();
+        await LoadMembershipDataAsync();
     }
 
     private async Task ChangePasswordAsync()
@@ -232,5 +455,226 @@ else
 
         _pwdSuccess = "Contraseña actualizada correctamente.";
         _pwdForm = new ChangePasswordRequest();
+    }
+
+    private async Task ReloadProfileAsync()
+    {
+        _profile = await Auth.FetchProfileAsync();
+
+        if (_profile is null)
+        {
+            return;
+        }
+
+        _profileForm = new UpdateProfileRequest
+        {
+            FirstName = _profile.FirstName,
+            LastName = _profile.LastName,
+            PhoneNumber = _profile.PhoneNumber,
+            InstitutionId = _profile.InstitutionId,
+        };
+    }
+
+    private async Task LoadInstitutionDataAsync()
+    {
+        try
+        {
+            var response = await Http.GetFromJsonAsync<PagedResponse<InstitutionDto>>("api/institutions?page=1&pageSize=200");
+            _institutions = response?.Items.ToList() ?? [];
+        }
+        catch
+        {
+            _institutions = [];
+        }
+    }
+
+    private async Task LoadMembershipDataAsync()
+    {
+        await LoadMyJoinRequestsPageAsync(_myJoinRequestsPageNumber);
+        await LoadInboxPageAsync(_inboxRequestsPageNumber);
+    }
+
+    private async Task GoToMyJoinRequestsPageAsync(int page)
+    {
+        await LoadMyJoinRequestsPageAsync(page);
+    }
+
+    private async Task GoToInboxPageAsync(int page)
+    {
+        await LoadInboxPageAsync(page);
+    }
+
+    private async Task LoadMyJoinRequestsPageAsync(int page)
+    {
+        _loadingMyJoinRequests = true;
+        try
+        {
+            var requestedPage = Math.Max(1, page);
+            var response = await Auth.GetMyInstitutionJoinRequestsAsync(requestedPage, MembershipPageSize);
+            var normalized = NormalizePagedResponse(response, requestedPage, MembershipPageSize);
+
+            if (normalized.TotalPages > 0 && requestedPage > normalized.TotalPages)
+            {
+                response = await Auth.GetMyInstitutionJoinRequestsAsync(normalized.TotalPages, MembershipPageSize);
+                normalized = NormalizePagedResponse(response, normalized.TotalPages, MembershipPageSize);
+            }
+
+            _myJoinRequestsPage = normalized;
+            _myJoinRequestsPageNumber = normalized.Page;
+        }
+        finally
+        {
+            _loadingMyJoinRequests = false;
+        }
+    }
+
+    private async Task LoadInboxPageAsync(int page)
+    {
+        _loadingInboxRequests = true;
+        try
+        {
+            var requestedPage = Math.Max(1, page);
+            var response = await Auth.GetResponsibleInboxAsync(requestedPage, MembershipPageSize);
+            var normalized = NormalizePagedResponse(response, requestedPage, MembershipPageSize);
+
+            if (normalized.TotalPages > 0 && requestedPage > normalized.TotalPages)
+            {
+                response = await Auth.GetResponsibleInboxAsync(normalized.TotalPages, MembershipPageSize);
+                normalized = NormalizePagedResponse(response, normalized.TotalPages, MembershipPageSize);
+            }
+
+            _inboxRequestsPage = normalized;
+            _inboxRequestsPageNumber = normalized.Page;
+        }
+        finally
+        {
+            _loadingInboxRequests = false;
+        }
+    }
+
+    private async Task SubmitJoinRequestAsync()
+    {
+        _membershipError = null;
+        _membershipMessage = null;
+
+        if (_selectedInstitutionId is null || _selectedInstitutionId == Guid.Empty)
+        {
+            _membershipError = "Seleccione una institución para solicitar asociación.";
+            return;
+        }
+
+        _sendingJoinRequest = true;
+        var (success, error) = await Auth.CreateInstitutionJoinRequestAsync(_selectedInstitutionId.Value);
+        _sendingJoinRequest = false;
+
+        if (!success)
+        {
+            _membershipError = error;
+            return;
+        }
+
+        _membershipMessage = "Solicitud enviada correctamente.";
+        _myJoinRequestsPageNumber = 1;
+        await LoadMembershipDataAsync();
+    }
+
+    private async Task LeaveInstitutionAsync()
+    {
+        _membershipError = null;
+        _membershipMessage = null;
+
+        _leavingInstitution = true;
+        var (success, error) = await Auth.LeaveMyInstitutionAsync();
+        _leavingInstitution = false;
+
+        if (!success)
+        {
+            _membershipError = error;
+            return;
+        }
+
+        _membershipMessage = "Has salido de la institución correctamente.";
+        _selectedInstitutionId = null;
+        await ReloadProfileAsync();
+        await LoadMembershipDataAsync();
+    }
+
+    private async Task ReviewRequestAsync(Guid requestId, bool approve)
+    {
+        _membershipError = null;
+        _membershipMessage = null;
+
+        var comment = _reviewComments.TryGetValue(requestId, out var value)
+            ? value
+            : null;
+
+        var (success, error) = await Auth.ReviewInstitutionJoinRequestAsync(requestId, new ReviewInstitutionJoinRequest
+        {
+            Approve = approve,
+            Comment = comment,
+        });
+
+        if (!success)
+        {
+            _membershipError = error;
+            return;
+        }
+
+        _membershipMessage = approve
+            ? "Solicitud aprobada."
+            : "Solicitud denegada.";
+
+        _reviewComments.Remove(requestId);
+        await LoadMembershipDataAsync();
+    }
+
+    private static PagedResponse<T> NormalizePagedResponse<T>(PagedResponse<T>? response, int requestedPage, int fallbackPageSize)
+    {
+        var source = response ?? new PagedResponse<T>();
+        var items = source.Items?.ToList() ?? [];
+        var pageSize = source.PageSize > 0 ? source.PageSize : fallbackPageSize;
+        var totalPages = source.TotalCount == 0
+            ? 0
+            : (int)Math.Ceiling(source.TotalCount / (double)pageSize);
+        var page = totalPages == 0
+            ? 1
+            : Math.Clamp(source.Page > 0 ? source.Page : requestedPage, 1, totalPages);
+
+        return new PagedResponse<T>
+        {
+            Items = items,
+            TotalCount = source.TotalCount,
+            Page = page,
+            PageSize = pageSize,
+            TotalPages = totalPages,
+            HasPrevious = page > 1,
+            HasNext = totalPages > 0 && page < totalPages,
+        };
+    }
+
+    private string GetReviewComment(Guid requestId)
+    {
+        return _reviewComments.TryGetValue(requestId, out var comment)
+            ? comment
+            : string.Empty;
+    }
+
+    private void SetReviewComment(Guid requestId, string value)
+    {
+        _reviewComments[requestId] = value;
+    }
+
+    private static string MapStatus(string status)
+    {
+        if (string.Equals(status, "Pending", StringComparison.OrdinalIgnoreCase))
+            return "Pendiente";
+
+        if (string.Equals(status, "Approved", StringComparison.OrdinalIgnoreCase))
+            return "Aprobada";
+
+        if (string.Equals(status, "Denied", StringComparison.OrdinalIgnoreCase))
+            return "Denegada";
+
+        return status;
     }
 }
