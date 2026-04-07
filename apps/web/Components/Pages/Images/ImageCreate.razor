@@ -7,6 +7,7 @@
 @inject HttpClient Http
 @inject NavigationManager Navigation
 @inject IConfiguration Configuration
+@inject AuthService Auth
 
 <PageTitle>Nueva Imagen - DermaUH</PageTitle>
 
@@ -129,17 +130,11 @@
         <div class="col-md-6">
             <h5>Localización de la Lesión</h5>
             <div class="mb-3">
-                <label class="form-label">Institución *</label>
-                <InputSelect @bind-Value="model.InstitutionId" class="form-select">
-                    <option value="">— Seleccionar —</option>
-                    @foreach (var institution in institutions)
-                    {
-                        <option value="@institution.Id">@institution.Name</option>
-                    }
-                </InputSelect>
-                @if (institutions.Count == 0)
+                <label class="form-label">Institución del contribuidor</label>
+                <input class="form-control" value="@(_userInstitutionName ?? "Sin institución")" readonly />
+                @if (string.IsNullOrWhiteSpace(model.InstitutionId))
                 {
-                    <div class="dependency-note dependency-note--warning">No se pudieron cargar instituciones. Refresque la página.</div>
+                    <div class="dependency-note dependency-note--warning">Debes pertenecer a una institución para subir imágenes.</div>
                 }
             </div>
             <div class="mb-3">
@@ -242,7 +237,7 @@
     </div>
 
     <div class="d-flex gap-2">
-        <button type="submit" class="btn btn-primary" disabled="@submitting">
+        <button type="submit" class="btn btn-primary" disabled="@(submitting || string.IsNullOrWhiteSpace(model.InstitutionId))">
             @(submitting ? "Guardando..." : "Guardar Imagen")
         </button>
         <a href="images" class="btn btn-outline-secondary">Cancelar</a>
@@ -257,7 +252,7 @@
     private bool submitting = false;
     private string? errorMessage;
     private IBrowserFile? selectedFile;
-    private List<InstitutionDto> institutions = [];
+    private string? _userInstitutionName;
 
     private bool personalHxMm;
     private bool familyHxMm;
@@ -269,20 +264,21 @@
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadInstitutionsAsync();
+        await LoadCurrentUserInstitutionAsync();
     }
 
-    private async Task LoadInstitutionsAsync()
+    private async Task LoadCurrentUserInstitutionAsync()
     {
-        try
+        var profile = await Auth.FetchProfileAsync();
+        if (profile is null)
         {
-            var response = await Http.GetFromJsonAsync<PagedResponse<InstitutionDto>>("api/institutions?page=1&pageSize=200");
-            institutions = response?.Items.OrderBy(x => x.Name).ToList() ?? [];
+            model.InstitutionId = null;
+            _userInstitutionName = null;
+            return;
         }
-        catch
-        {
-            institutions = [];
-        }
+
+        model.InstitutionId = profile.InstitutionId?.ToString();
+        _userInstitutionName = profile.InstitutionName;
     }
 
     private Task OnDependencySourceChanged()
@@ -315,6 +311,12 @@
             if (selectedFile is null)
             {
                 errorMessage = "Debe seleccionar una imagen.";
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(model.InstitutionId))
+            {
+                errorMessage = "Debes pertenecer a una institución para subir imágenes.";
                 return;
             }
 

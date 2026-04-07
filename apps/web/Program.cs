@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Web.DermaImage.Components;
 using Web.DermaImage.Services;
 
@@ -12,6 +13,12 @@ builder.Services.AddRazorComponents()
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<AuthenticatedHttpClientHandler>();
 builder.Services.AddScoped<AuthenticationStateProvider, JwtAuthStateProvider>();
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.LoginPath = "/account/login";
+        options.AccessDeniedPath = "/account/login";
+    });
 builder.Services.AddAuthorizationCore();
 builder.Services.AddCascadingAuthenticationState();
 
@@ -36,6 +43,8 @@ if (!app.Environment.IsDevelopment())
     app.UseHttpsRedirection();
 }
 
+app.UseAuthentication();
+app.UseAuthorization();
 app.UseAntiforgery();
 
 app.MapStaticAssets();

@@ -155,10 +155,13 @@ public class ImagesController : ControllerBase
             dto.ContributorId = userId.Value;
         }
 
-        if (dto.InstitutionId == Guid.Empty)
+        var contributor = await _userManager.GetByIdAsync(dto.ContributorId, cancellationToken);
+        if (contributor is null)
         {
-            return BadRequest("InstitutionId es obligatorio.");
+            return NotFound("No se encontró el contribuidor asociado a la carga.");
         }
+
+        dto.InstitutionId = contributor.InstitutionId;
 
         var businessValidationErrors = DermaImgValidationRules.Validate(dto);
         if (businessValidationErrors.Count > 0)

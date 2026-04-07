@@ -162,14 +162,36 @@ else
                 </tbody>
             </table>
         </div>
+
+        @if (response.TotalPages > 1)
+        {
+            <div class="d-flex justify-content-between align-items-center mt-3">
+                <span class="text-muted small">Página @response.Page de @response.TotalPages · @response.TotalCount usuarios</span>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-sm btn-outline-secondary"
+                            disabled="@(!response.HasPrevious || loading)"
+                            @onclick="GoToPreviousPageAsync">
+                        Anterior
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-primary"
+                            disabled="@(!response.HasNext || loading)"
+                            @onclick="GoToNextPageAsync">
+                        Siguiente
+                    </button>
+                </div>
+            </div>
+        }
     </SectionCard>
 }
 
 @code {
+    private const int PageSize = 10;
+
     private PagedResponse<UserDto>? response;
     private bool loading = true;
     private bool showForm = false;
     private bool submitting = false;
+    private int currentPage = 1;
     private string? errorMessage;
     private UserFormModel newUser = new();
     private readonly Dictionary<Guid, List<string>> userRoles = new();
@@ -179,15 +201,16 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadData();
+        await LoadData(1);
     }
 
-    private async Task LoadData()
+    private async Task LoadData(int page)
     {
         loading = true;
+        currentPage = Math.Max(1, page);
         try
         {
-            response = await Http.GetFromJsonAsync<PagedResponse<UserDto>>("api/users?page=1&pageSize=50");
+            response = await Http.GetFromJsonAsync<PagedResponse<UserDto>>($"api/users?page={currentPage}&pageSize={PageSize}");
             userRoles.Clear();
             selectedAssignRoles.Clear();
             selectedRemoveRoles.Clear();
@@ -257,7 +280,7 @@ else
             {
                 newUser = new();
                 showForm = false;
-                await LoadData();
+                await LoadData(1);
             }
             else
             {
@@ -363,7 +386,7 @@ else
                 return;
             }
 
-            await LoadData();
+            await LoadData(currentPage);
         }
         catch (Exception ex)
         {
@@ -399,12 +422,32 @@ else
                 return;
             }
 
-            await LoadData();
+            await LoadData(currentPage);
         }
         catch (Exception ex)
         {
             errorMessage = ex.Message;
         }
+    }
+
+    private Task GoToPreviousPageAsync()
+    {
+        if (response?.HasPrevious != true)
+        {
+            return Task.CompletedTask;
+        }
+
+        return LoadData(currentPage - 1);
+    }
+
+    private Task GoToNextPageAsync()
+    {
+        if (response?.HasNext != true)
+        {
+            return Task.CompletedTask;
+        }
+
+        return LoadData(currentPage + 1);
     }
 
     private class UserFormModel

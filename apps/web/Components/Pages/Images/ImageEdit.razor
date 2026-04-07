@@ -37,7 +37,7 @@ else
 
             <div class="row">
                 <div class="col-md-6">
-                    <h5>Información del Archivo (solo lectura)</h5>
+                    <h5>Información del archivo</h5>
                     <section class="readonly-file-panel" aria-label="Información del archivo no editable">
                         <div class="readonly-file-row">
                             <span class="readonly-file-label">Nombre:</span>
@@ -51,7 +51,7 @@ else
                             <span class="readonly-file-label">Tamaño:</span>
                             <span class="readonly-file-value">@FormatFileSize(model.FileSize)</span>
                         </div>
-                        <div class="dependency-note">Estos datos están bloqueados y no se pueden modificar en edición.</div>
+                        <div class="dependency-note">Estos datos se conservan como referencia durante la edición.</div>
                     </section>
 
                     <h5 class="mt-4">Tipo de Imagen</h5>
@@ -288,7 +288,7 @@ else
 
             if (!CanEditImage(authState.User, image))
             {
-                loadError = "Solo un administrador o el contribuidor exacto de la imagen puede editarla.";
+                loadError = "No es posible editar esta imagen con la sesión actual.";
                 return;
             }
 

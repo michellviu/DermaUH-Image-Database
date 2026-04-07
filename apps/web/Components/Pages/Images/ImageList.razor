@@ -2,7 +2,10 @@
 @rendermode InteractiveServer
 @using System.Security.Claims
 @using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.JSInterop
+@implements IAsyncDisposable
 @inject HttpClient Http
+@inject IJSRuntime JS
 
 <PageTitle>Imágenes - DermaUH</PageTitle>
 
@@ -140,6 +143,18 @@
                 </a>
             }
         </div>
+
+        @if (isLoadingPage)
+        {
+            <div class="infinite-scroll-loading text-muted">Cargando más imágenes...</div>
+        }
+
+        <div id="@sentinelId" class="infinite-scroll-sentinel" aria-hidden="true"></div>
+
+        @if (hasLoaded && !hasMorePages && images.Count > 0)
+        {
+            <div class="alert alert-secondary mt-3">No hay más imágenes para mostrar.</div>
+        }
     </section>
 </div>
 
@@ -150,10 +165,16 @@
     private bool hasLoaded;
     private int totalCount;
     private string? loadingError;
+    private bool isLoadingPage;
+    private bool hasMorePages = true;
+    private int nextPageToLoad = 1;
     private int diagnosisInputVersion;
     private ElementReference diagnosisInputRef;
+    private readonly string sentinelId = $"images-infinite-sentinel-{Guid.NewGuid():N}";
+    private DotNetObjectReference<ImageList>? dotNetRef;
+    private bool observerInitialized;
 
-    private const int DefaultPageSize = 200;
+    private const int DefaultPageSize = 10;
 
     private string? diagnosisContains;
     private bool onlyMyContributions;
@@ -225,12 +246,24 @@
     protected override async Task OnInitializedAsync()
     {
         await ResolveUserContextAsync();
-        await LoadImagesAsync();
+        await ResetAndLoadImagesAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || observerInitialized)
+        {
+            return;
+        }
+
+        dotNetRef = DotNetObjectReference.Create(this);
+        await JS.InvokeVoidAsync("infiniteScroll.init", dotNetRef, sentinelId);
+        observerInitialized = true;
     }
 
     private async Task ApplyFiltersAsync()
     {
-        await LoadImagesAsync();
+        await ResetAndLoadImagesAsync();
     }
 
     private async Task OnDiagnosisInputChangedAsync(ChangeEventArgs args)
@@ -259,7 +292,7 @@
         selectedSexes.Clear();
         selectedAnatomSites.Clear();
 
-        await LoadImagesAsync();
+        await ResetAndLoadImagesAsync();
         await diagnosisInputRef.FocusAsync();
     }
 
@@ -290,35 +323,67 @@
         }
     }
 
-    private async Task LoadImagesAsync()
+    private async Task ResetAndLoadImagesAsync()
     {
-        hasLoaded = false;
+        images = [];
+        totalCount = 0;
+        nextPageToLoad = 1;
+        hasMorePages = true;
         loadingError = null;
+        hasLoaded = false;
+
+        await LoadNextPageAsync();
+    }
+
+    [JSInvokable]
+    public async Task OnInfiniteScrollTrigger()
+    {
+        await LoadNextPageAsync();
+    }
+
+    private async Task LoadNextPageAsync()
+    {
+        if (isLoadingPage || !hasMorePages)
+        {
+            return;
+        }
+
+        isLoadingPage = true;
 
         try
         {
-            var query = BuildQuery(1, DefaultPageSize);
+            var query = BuildQuery(nextPageToLoad, DefaultPageSize);
             var response = await Http.GetFromJsonAsync<PagedResponse<DermaImgDto>>(query);
             if (response is null)
             {
-                totalCount = 0;
-                images = [];
                 hasLoaded = true;
                 loadingError = "No se pudo obtener la respuesta del servidor.";
+                hasMorePages = false;
                 return;
             }
 
             totalCount = response.TotalCount;
-            images = response.Items.ToList();
+            images.AddRange(response.Items);
             hasLoaded = true;
             loadingError = null;
+            hasMorePages = response.HasNext;
+            nextPageToLoad = response.Page + 1;
         }
         catch
         {
-            totalCount = 0;
-            images = [];
-            hasLoaded = true;
-            loadingError = "Error al cargar imágenes.";
+            if (!hasLoaded)
+            {
+                totalCount = 0;
+                images = [];
+                hasLoaded = true;
+                loadingError = "Error al cargar imágenes.";
+            }
+
+            hasMorePages = false;
+        }
+        finally
+        {
+            isLoadingPage = false;
         }
     }
 
@@ -388,6 +453,23 @@
         }
 
         await ApplyFiltersAsync();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (observerInitialized)
+        {
+            try
+            {
+                await JS.InvokeVoidAsync("infiniteScroll.dispose", sentinelId);
+            }
+            catch
+            {
+                // Ignore disposal errors when circuit is closing.
+            }
+        }
+
+        dotNetRef?.Dispose();
     }
 
     private sealed record FilterOption(string Value, string Label);

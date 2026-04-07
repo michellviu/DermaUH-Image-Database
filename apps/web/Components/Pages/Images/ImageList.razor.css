@@ -90,6 +90,17 @@
     min-height: 70vh;
 }
 
+.infinite-scroll-loading {
+    text-align: center;
+    padding: 1rem 0;
+    font-size: 0.88rem;
+}
+
+.infinite-scroll-sentinel {
+    width: 100%;
+    height: 1px;
+}
+
 .images-grid {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
