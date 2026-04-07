@@ -7,28 +7,29 @@
           <tr>
             <td style="padding:28px 30px;background:linear-gradient(135deg,#ce2f79 0%,#8a2e67 100%);color:#ffffff;">
               <p style="margin:0;font-size:12px;letter-spacing:.08em;text-transform:uppercase;opacity:.88;">DermaUH</p>
-              <h1 style="margin:8px 0 4px;font-size:24px;line-height:1.25;">Restablecer contraseña</h1>
-              <p style="margin:0;font-size:14px;line-height:1.45;opacity:.92;">Protegemos tu cuenta en todo momento.</p>
+              <h1 style="margin:8px 0 4px;font-size:24px;line-height:1.25;">Actualizacion de solicitud institucional</h1>
+              <p style="margin:0;font-size:14px;line-height:1.45;opacity:.92;">Tu solicitud ya fue revisada por el equipo responsable.</p>
             </td>
           </tr>
           <tr>
             <td style="padding:30px;">
               <p style="margin:0 0 12px;font-size:16px;line-height:1.5;">Hola, <strong>{{UserName}}</strong>.</p>
-              <p style="margin:0 0 18px;font-size:15px;line-height:1.6;color:#4f3b4b;">Recibimos una solicitud para cambiar tu contraseña. Si fuiste tú, usa este botón para continuar:</p>
+              <p style="margin:0 0 10px;font-size:15px;line-height:1.6;color:#4f3b4b;">La solicitud para unirte a <strong>{{InstitutionName}}</strong> fue actualizada.</p>
 
-              <p style="margin:0 0 22px;">
-                <a href="{{ActionUrl}}" style="display:inline-block;padding:12px 24px;background:#c93b7b;color:#ffffff;text-decoration:none;border-radius:10px;font-weight:700;font-size:14px;">Restablecer contraseña</a>
+              <p style="margin:0 0 18px;">
+                <span style="display:inline-block;padding:6px 11px;border-radius:999px;background:{{StatusBadgeBg}};color:{{StatusBadgeColor}};font-size:13px;font-weight:700;">{{StatusBadgeText}}</span>
               </p>
 
               <div style="padding:14px 16px;border:1px solid #f1dbe7;border-radius:10px;background:#fff9fc;">
-                <p style="margin:0 0 6px;color:#6d3a59;font-size:13px;font-weight:600;">Importante</p>
-                <p style="margin:0;color:#4f3b4b;font-size:13px;line-height:1.55;">Este enlace expira en 2 horas. Si no solicitaste este cambio, puedes ignorar este mensaje.</p>
+                <p style="margin:0;color:#4f3b4b;font-size:14px;line-height:1.55;">{{ResultMessage}}</p>
               </div>
+
+              {{CommentSection}}
             </td>
           </tr>
           <tr>
             <td style="padding:0 30px 24px;">
-              <p style="margin:0;font-size:12px;line-height:1.6;color:#8c6d83;">Este es un correo automático de DermaUH. Por favor, no respondas directamente a este mensaje.</p>
+              <p style="margin:0;font-size:12px;line-height:1.6;color:#8c6d83;">Si tienes dudas, consulta tu perfil en DermaUH para revisar el estado de tus solicitudes.</p>
             </td>
           </tr>
         </table>

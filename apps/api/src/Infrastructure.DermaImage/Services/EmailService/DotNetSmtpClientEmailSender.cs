@@ -17,6 +17,15 @@ public class DotNetSmtpClientEmailSender : IEmailService
     private const string ResetPasswordTemplateResource =
         "Infrastructure.DermaImage.Services.EmailTemplates.PasswordReset.html";
 
+    private const string InstitutionJoinRequestReviewedTemplateResource =
+        "Infrastructure.DermaImage.Services.EmailTemplates.InstitutionJoinRequestReviewed.html";
+
+    private const string InstitutionJoinRequestReviewedCommentTemplateResource =
+        "Infrastructure.DermaImage.Services.EmailTemplates.InstitutionJoinRequestReviewedComment.html";
+
+    private const string GenericFallbackTemplateResource =
+        "Infrastructure.DermaImage.Services.EmailTemplates.GenericFallback.html";
+
     private readonly ILogger<DotNetSmtpClientEmailSender> logger;
     private readonly string fromAddress;
     private readonly string displayName;
@@ -65,6 +74,51 @@ public class DotNetSmtpClientEmailSender : IEmailService
             receivers: [toEmail],
             carbonCopy: null,
             subject: "Restablecer contraseña - DermaUH",
+            messageBody: body,
+            ct: ct);
+    }
+
+    public async Task SendInstitutionJoinRequestReviewedAsync(string toEmail, string userName, string institutionName, bool approved, string? comment, CancellationToken ct = default)
+    {
+        var safeUserName = WebUtility.HtmlEncode(userName);
+        var safeInstitutionName = WebUtility.HtmlEncode(institutionName);
+        var safeComment = WebUtility.HtmlEncode(comment?.Trim() ?? string.Empty);
+
+        var statusBadgeText = approved ? "Aprobada" : "Denegada";
+        var statusBadgeBg = approved ? "#e7f8ef" : "#fdebec";
+        var statusBadgeColor = approved ? "#1f7a4f" : "#9f2d3b";
+        var resultMessage = approved
+            ? "Tu solicitud fue aprobada. Ya puedes trabajar con esta institución en DermaUH."
+            : "Tu solicitud no fue aprobada en esta ocasión. Puedes revisar tus datos y volver a intentarlo.";
+
+            var commentSection = string.Empty;
+            if (!string.IsNullOrWhiteSpace(safeComment))
+            {
+                commentSection = await BuildTemplateBodyAsync(
+                InstitutionJoinRequestReviewedCommentTemplateResource,
+                new Dictionary<string, string>
+                {
+                    ["CommentText"] = safeComment,
+                });
+            }
+
+        var body = await BuildTemplateBodyAsync(
+            InstitutionJoinRequestReviewedTemplateResource,
+            new Dictionary<string, string>
+            {
+                ["UserName"] = safeUserName,
+                ["InstitutionName"] = safeInstitutionName,
+                ["StatusBadgeText"] = statusBadgeText,
+                ["StatusBadgeBg"] = statusBadgeBg,
+                ["StatusBadgeColor"] = statusBadgeColor,
+                ["ResultMessage"] = WebUtility.HtmlEncode(resultMessage),
+                ["CommentSection"] = commentSection,
+            });
+
+        await SendEmailAsync(
+            receivers: [toEmail],
+            carbonCopy: null,
+            subject: "Actualización de solicitud institucional - DermaUH",
             messageBody: body,
             ct: ct);
     }
@@ -155,15 +209,23 @@ public class DotNetSmtpClientEmailSender : IEmailService
     private async Task<string> LoadTemplateAsync(string resourceName)
     {
         var assembly = Assembly.GetExecutingAssembly();
-        await using var stream = assembly.GetManifestResourceStream(resourceName);
+        Stream? stream = assembly.GetManifestResourceStream(resourceName);
         if (stream is null)
         {
             logger.LogError("Email template resource not found: {ResourceName}", resourceName);
-            return "<html><body><p>Hola {{UserName}}</p><p><a href=\"{{ActionUrl}}\">Continuar</a></p></body></html>";
+            stream = assembly.GetManifestResourceStream(GenericFallbackTemplateResource);
+            if (stream is null)
+            {
+                logger.LogError("Fallback email template resource not found: {ResourceName}", GenericFallbackTemplateResource);
+                return string.Empty;
+            }
         }
 
-        using var reader = new StreamReader(stream);
-        return await reader.ReadToEndAsync();
+        await using (stream)
+        {
+            using var reader = new StreamReader(stream);
+            return await reader.ReadToEndAsync();
+        }
     }
 
     private MimeMessage GetMessage(
