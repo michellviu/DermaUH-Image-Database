@@ -11,6 +11,9 @@ public class CreateDermaImgDto
     public string ContentType { get; set; } = string.Empty;
     public long FileSize { get; set; }
     public bool IsPublic { get; set; }
+    public ImageReviewStatus? ReviewStatus { get; set; }
+    public Guid? ReviewDecisionByUserId { get; set; }
+    public DateTime? ReviewDecisionAt { get; set; }
 
     // Acquisition
     public ImageType? ImageType { get; set; }
@@ -56,6 +59,9 @@ public class DermaImgResponseDto
     public string ContentType { get; set; } = string.Empty;
     public long FileSize { get; set; }
     public bool IsPublic { get; set; }
+    public ImageReviewStatus ReviewStatus { get; set; }
+    public Guid? ReviewDecisionByUserId { get; set; }
+    public DateTime? ReviewDecisionAt { get; set; }
 
     // Acquisition
     public ImageType? ImageType { get; set; }
@@ -93,4 +99,9 @@ public class DermaImgResponseDto
     public string? ContributorFullName { get; set; }
     public Guid? InstitutionId { get; set; }
     public string? InstitutionName { get; set; }
+}
+
+public class ImageReviewDecisionDto
+{
+    public bool Approve { get; set; }
 }

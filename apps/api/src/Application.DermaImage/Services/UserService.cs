@@ -43,6 +43,11 @@ public class UserService : IUserService
         await _repository.DeleteAsync(id, cancellationToken);
     }
 
+    public async Task<IReadOnlyList<User>> GetUsersInRoleAsync(string roleName, CancellationToken cancellationToken = default)
+    {
+        return await _repository.GetUsersInRoleAsync(roleName, cancellationToken);
+    }
+
     public async Task AddToRoleAsync(User user, string role)
     {
         await _repository.AddToRoleAsync(user, role);

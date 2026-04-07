@@ -1,5 +1,6 @@
 using Application.DermaImage.DTOs;
 using Domain.DermaImage.Entities;
+using Domain.DermaImage.Entities.Enums;
 using Domain.DermaImage.Interfaces.Services;
 
 namespace Application.DermaImage.Managers;
@@ -57,6 +58,9 @@ public class DermaImgManager : IDermaImgManager
             ContentType = dto.ContentType,
             FileSize = dto.FileSize,
             IsPublic = dto.IsPublic,
+            ReviewStatus = dto.ReviewStatus ?? ImageReviewStatus.Pending,
+            ReviewDecisionByUserId = dto.ReviewDecisionByUserId,
+            ReviewDecisionAt = dto.ReviewDecisionAt,
             ImageType = dto.ImageType,
             ImageManipulation = dto.ImageManipulation,
             DermoscopicType = dto.DermoscopicType,
@@ -84,6 +88,9 @@ public class DermaImgManager : IDermaImgManager
     private static void MapToExistingEntity(CreateDermaImgDto dto, DermaImg entity)
     {
         entity.IsPublic = dto.IsPublic;
+        entity.ReviewStatus = dto.ReviewStatus ?? entity.ReviewStatus;
+        entity.ReviewDecisionByUserId = dto.ReviewDecisionByUserId;
+        entity.ReviewDecisionAt = dto.ReviewDecisionAt;
         entity.ImageType = dto.ImageType;
         entity.ImageManipulation = dto.ImageManipulation;
         entity.DermoscopicType = dto.DermoscopicType;

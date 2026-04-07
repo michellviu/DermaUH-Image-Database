@@ -49,6 +49,11 @@ else
             <p class="profile-since mt-3">
                 <small class="text-muted">Miembro desde @_profile.CreatedAt.ToString("MMMM yyyy")</small>
             </p>
+
+            @if (_profile.IsReviewer)
+            {
+                <a class="btn btn-outline-primary btn-sm mt-3" href="/images/review-inbox">Ir al inbox de revisión</a>
+            }
         </div>
 
         <!-- Right: Edit forms -->

@@ -20,6 +20,7 @@ public class DermaImgConfiguration : IEntityTypeConfiguration<DermaImg>
         builder.Property(e => e.ContentType).IsRequired().HasMaxLength(100);
         builder.Property(e => e.Diagnosis).HasMaxLength(500);
         builder.Property(e => e.ClinicalNotes).HasMaxLength(2000);
+        builder.Property(e => e.ReviewStatus).HasConversion<string>().HasMaxLength(20).IsRequired();
 
         // Enum conversions stored as strings
         builder.Property(e => e.ImageType).HasConversion<string>().HasMaxLength(50);

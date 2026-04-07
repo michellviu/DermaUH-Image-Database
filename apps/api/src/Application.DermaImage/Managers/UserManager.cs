@@ -24,6 +24,11 @@ public class UserManager : IUserManager
         return await _service.GetByIdAsync(id, cancellationToken);
     }
 
+    public async Task<IReadOnlyList<User>> GetReviewersAsync(CancellationToken cancellationToken = default)
+    {
+        return await _service.GetUsersInRoleAsync(UserRole.Reviewer.ToString(), cancellationToken);
+    }
+
     public async Task<User> CreateAsync(CreateUserDto dto, CancellationToken cancellationToken = default)
     {
         var user = new User

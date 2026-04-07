@@ -9,6 +9,9 @@ public class DermaImgDto
     public string ContentType { get; set; } = string.Empty;
     public long FileSize { get; set; }
     public bool IsPublic { get; set; }
+    public string? ReviewStatus { get; set; }
+    public Guid? ReviewDecisionByUserId { get; set; }
+    public DateTime? ReviewDecisionAt { get; set; }
 
     // Acquisition
     public string? ImageType { get; set; }

@@ -10,6 +10,7 @@ public interface IUserService
     Task<User> CreateAsync(User user, string password, CancellationToken cancellationToken = default);
     Task UpdateAsync(User user, CancellationToken cancellationToken = default);
     Task DeleteAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<User>> GetUsersInRoleAsync(string roleName, CancellationToken cancellationToken = default);
     Task AddToRoleAsync(User user, string role);
     Task RemoveFromRoleAsync(User user, string role);
     Task<IList<string>> GetRolesAsync(User user);

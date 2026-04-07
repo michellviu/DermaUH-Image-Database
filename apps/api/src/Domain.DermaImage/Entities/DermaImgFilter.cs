@@ -12,5 +12,6 @@ public class DermaImgFilter
     public IReadOnlyCollection<AnatomSiteGeneral>? AnatomSites { get; set; }
     public Guid? ContributorId { get; set; }
     public bool? IsPublic { get; set; }
+    public ImageReviewStatus? ReviewStatus { get; set; }
     public string? DiagnosisContains { get; set; }
 }
