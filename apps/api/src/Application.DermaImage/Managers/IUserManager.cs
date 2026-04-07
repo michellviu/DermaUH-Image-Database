@@ -9,6 +9,7 @@ public interface IUserManager
     Task<(IEnumerable<User> Items, int TotalCount)> GetPagedAsync(int page, int pageSize, CancellationToken cancellationToken = default);
     Task<User?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
     Task<User> CreateAsync(CreateUserDto dto, CancellationToken cancellationToken = default);
+    Task UpdateAsync(Guid id, UpdateUserDto dto, CancellationToken cancellationToken = default);
     Task<IList<string>> GetRolesAsync(Guid userId, CancellationToken cancellationToken = default);
     Task AssignRoleAsync(Guid userId, UserRole role, CancellationToken cancellationToken = default);
     Task RemoveRoleAsync(Guid userId, UserRole role, CancellationToken cancellationToken = default);

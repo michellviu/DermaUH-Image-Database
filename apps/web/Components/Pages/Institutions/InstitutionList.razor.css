@@ -105,11 +105,36 @@
     gap: 0.6rem;
 }
 
+.institution-action-buttons {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
 .institution-date {
     font-size: 0.72rem;
     text-transform: uppercase;
     letter-spacing: 0.05em;
     color: var(--on-surface-variant);
+}
+
+.responsible-users-list {
+    max-height: 220px;
+    overflow: auto;
+    border: 1px solid color-mix(in srgb, var(--outline-variant) 32%, transparent);
+    border-radius: 0.75rem;
+    padding: 0.6rem;
+    display: grid;
+    gap: 0.35rem;
+    background: color-mix(in srgb, var(--surface-container-lowest) 92%, transparent);
+}
+
+.responsible-user-option {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.9rem;
+    color: var(--on-surface);
 }
 
 @media (max-width: 880px) {

@@ -70,6 +70,14 @@ public class UsersController : ControllerBase
         return Ok(roles);
     }
 
+    [HttpPut("{id:guid}")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> Update(Guid id, [FromBody] UpdateUserDto dto, CancellationToken cancellationToken)
+    {
+        await _manager.UpdateAsync(id, dto, cancellationToken);
+        return NoContent();
+    }
+
     [HttpPost("{id:guid}/roles")]
     public async Task<IActionResult> AssignRole(Guid id, [FromBody] AssignRoleDto dto, CancellationToken cancellationToken)
     {
