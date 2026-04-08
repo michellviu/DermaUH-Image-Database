@@ -114,8 +114,70 @@ else
                     {
                         <a href="@inst.Website" target="_blank" rel="noopener noreferrer" class="btn btn-outline-primary">Sitio web</a>
                     }
+
+                    <AuthorizeView Roles="Admin">
+                        <Authorized>
+                            <button type="button" class="btn btn-outline-secondary btn-sm" @onclick="() => BeginEditInstitution(inst)">
+                                Editar
+                            </button>
+                        </Authorized>
+                    </AuthorizeView>
+
                     <span class="institution-date">Alta: @inst.CreatedAt.ToString("yyyy-MM-dd")</span>
                 </div>
+
+                @if (editingInstitutionId == inst.Id)
+                {
+                    <div class="mt-3 pt-3 border-top">
+                        <h6 class="mb-3">Editar institución</h6>
+
+                        <EditForm Model="editingInstitution" OnValidSubmit="() => HandleUpdateInstitution(inst.Id)" FormName="@($"editInstitution-{inst.Id}")">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-2">
+                                        <label class="form-label">Nombre *</label>
+                                        <InputText @bind-Value="editingInstitution.Name" class="form-control form-control-sm" />
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label">País</label>
+                                        <InputText @bind-Value="editingInstitution.Country" class="form-control form-control-sm" />
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label">Ciudad</label>
+                                        <InputText @bind-Value="editingInstitution.City" class="form-control form-control-sm" />
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label">Dirección</label>
+                                        <InputText @bind-Value="editingInstitution.Address" class="form-control form-control-sm" />
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-2">
+                                        <label class="form-label">Descripción</label>
+                                        <InputTextArea @bind-Value="editingInstitution.Description" class="form-control form-control-sm" rows="3" />
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label">Website</label>
+                                        <InputText @bind-Value="editingInstitution.Website" class="form-control form-control-sm" />
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label">Email de Contacto</label>
+                                        <InputText @bind-Value="editingInstitution.ContactEmail" class="form-control form-control-sm" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-sm btn-primary" disabled="@(updatingInstitutionId == inst.Id)">
+                                    @(updatingInstitutionId == inst.Id ? "Guardando..." : "Guardar cambios")
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" @onclick="CancelEditInstitution" disabled="@(updatingInstitutionId == inst.Id)">
+                                    Cancelar
+                                </button>
+                            </div>
+                        </EditForm>
+                    </div>
+                }
 
                 <AuthorizeView Roles="Admin">
                     <Authorized>
@@ -183,6 +245,9 @@ else
     private bool submitting = false;
     private string? errorMessage;
     private InstitutionFormModel newInstitution = new();
+    private InstitutionFormModel editingInstitution = new();
+    private Guid? editingInstitutionId;
+    private Guid? updatingInstitutionId;
     private List<UserDto> allUsers = new();
     private readonly Dictionary<Guid, List<InstitutionResponsibleDto>> institutionResponsibles = new();
     private readonly Dictionary<Guid, Guid> selectedResponsibleUsers = new();
@@ -295,6 +360,75 @@ else
         finally
         {
             submitting = false;
+        }
+    }
+
+    private void BeginEditInstitution(InstitutionDto institution)
+    {
+        errorMessage = null;
+        editingInstitutionId = institution.Id;
+        editingInstitution = new InstitutionFormModel
+        {
+            Name = institution.Name,
+            Description = institution.Description,
+            Country = institution.Country,
+            City = institution.City,
+            Address = institution.Address,
+            Website = institution.Website,
+            ContactEmail = institution.ContactEmail,
+        };
+    }
+
+    private void CancelEditInstitution()
+    {
+        editingInstitutionId = null;
+        updatingInstitutionId = null;
+        editingInstitution = new InstitutionFormModel();
+    }
+
+    private async Task HandleUpdateInstitution(Guid institutionId)
+    {
+        if (editingInstitutionId != institutionId)
+        {
+            return;
+        }
+
+        updatingInstitutionId = institutionId;
+        errorMessage = null;
+
+        try
+        {
+            var result = await Http.PutAsJsonAsync($"api/institutions/{institutionId}", new
+            {
+                editingInstitution.Name,
+                editingInstitution.Description,
+                editingInstitution.Country,
+                editingInstitution.City,
+                editingInstitution.Address,
+                editingInstitution.Website,
+                editingInstitution.ContactEmail,
+            });
+
+            if (!result.IsSuccessStatusCode)
+            {
+                errorMessage = await GetApiErrorAsync(result);
+                return;
+            }
+
+            await LoadData();
+            CancelEditInstitution();
+            if (carouselInitialized)
+            {
+                await JS.InvokeVoidAsync("institutionsCarousel.recalculate", carouselRegionId, carouselTrackId);
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+        finally
+        {
+            updatingInstitutionId = null;
         }
     }
 

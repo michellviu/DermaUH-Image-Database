@@ -82,7 +82,8 @@ window.institutionsCarousel = (() => {
                 return -(base + boost);
             }
 
-            return -base;
+            // Keep the selected card stable while hovering over the center zone.
+            return 0;
         }
 
         function reorderForInfiniteLoop(speed) {
