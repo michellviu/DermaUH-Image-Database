@@ -1,4 +1,5 @@
 using Domain.DermaImage.Entities.Enums;
+using System.ComponentModel.DataAnnotations;
 
 namespace Application.DermaImage.DTOs;
 
@@ -56,6 +57,11 @@ public class DermaImgResponseDto
     public string ContentType { get; set; } = string.Empty;
     public long FileSize { get; set; }
     public bool IsPublic { get; set; }
+    public ImageApprovalStatus ApprovalStatus { get; set; }
+    public string? ReviewComment { get; set; }
+    public DateTime? ReviewedAt { get; set; }
+    public Guid? ReviewedByUserId { get; set; }
+    public string? ReviewedByFullName { get; set; }
 
     // Acquisition
     public ImageType? ImageType { get; set; }
@@ -93,4 +99,12 @@ public class DermaImgResponseDto
     public string? ContributorFullName { get; set; }
     public Guid? InstitutionId { get; set; }
     public string? InstitutionName { get; set; }
+}
+
+public class ReviewImageUploadDto
+{
+    public bool Approve { get; set; }
+
+    [MaxLength(500)]
+    public string? Comment { get; set; }
 }

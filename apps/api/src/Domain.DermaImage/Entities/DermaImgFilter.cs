@@ -10,6 +10,7 @@ public class DermaImgFilter
     public IReadOnlyCollection<PhotoType>? FotoTypes { get; set; }
     public IReadOnlyCollection<Sex>? Sexes { get; set; }
     public IReadOnlyCollection<AnatomSiteGeneral>? AnatomSites { get; set; }
+    public IReadOnlyCollection<ImageApprovalStatus>? ApprovalStatuses { get; set; }
     public Guid? ContributorId { get; set; }
     public bool? IsPublic { get; set; }
     public string? DiagnosisContains { get; set; }
