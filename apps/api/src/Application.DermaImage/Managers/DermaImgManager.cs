@@ -1,5 +1,6 @@
 using Application.DermaImage.DTOs;
 using Domain.DermaImage.Entities;
+using Domain.DermaImage.Entities.Enums;
 using Domain.DermaImage.Interfaces.Services;
 
 namespace Application.DermaImage.Managers;
@@ -34,6 +35,22 @@ public class DermaImgManager : IDermaImgManager
         return await _service.CreateAsync(image, cancellationToken);
     }
 
+    public async Task<DermaImg> ReviewUploadAsync(Guid id, Guid reviewerUserId, ImageApprovalStatus status, string? reviewComment, CancellationToken cancellationToken = default)
+    {
+        var existing = await _service.GetByIdAsync(id, cancellationToken)
+            ?? throw new KeyNotFoundException($"Image with id '{id}' was not found.");
+
+        existing.ApprovalStatus = status;
+        existing.ReviewedByUserId = reviewerUserId;
+        existing.ReviewedAt = DateTime.UtcNow;
+        existing.ReviewComment = string.IsNullOrWhiteSpace(reviewComment)
+            ? null
+            : reviewComment.Trim();
+
+        await _service.UpdateAsync(existing, cancellationToken);
+        return existing;
+    }
+
     public async Task UpdateAsync(Guid id, CreateDermaImgDto dto, CancellationToken cancellationToken = default)
     {
         var existing = await _service.GetByIdAsync(id, cancellationToken)
@@ -57,6 +74,10 @@ public class DermaImgManager : IDermaImgManager
             ContentType = dto.ContentType,
             FileSize = dto.FileSize,
             IsPublic = dto.IsPublic,
+            ApprovalStatus = ImageApprovalStatus.Pending,
+            ReviewedAt = null,
+            ReviewedByUserId = null,
+            ReviewComment = null,
             ImageType = dto.ImageType,
             ImageManipulation = dto.ImageManipulation,
             DermoscopicType = dto.DermoscopicType,

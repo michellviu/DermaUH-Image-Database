@@ -51,6 +51,11 @@ public class UserManager : IUserManager
         return await _service.GetRolesAsync(user);
     }
 
+    public async Task<IReadOnlyList<User>> GetActiveUsersByRoleAsync(UserRole role, CancellationToken cancellationToken = default)
+    {
+        return await _service.GetActiveUsersByRoleAsync(role, cancellationToken);
+    }
+
     public async Task AssignRoleAsync(Guid userId, UserRole role, CancellationToken cancellationToken = default)
     {
         var user = await _service.GetByIdAsync(userId, cancellationToken)

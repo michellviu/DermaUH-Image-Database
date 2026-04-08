@@ -149,14 +149,14 @@ public class InstitutionMembershipManager : IInstitutionMembershipManager
         await _users.UpdateAsync(user, cancellationToken);
     }
 
-    public async Task<(IReadOnlyList<InstitutionJoinRequestResponseDto> Items, int TotalCount)> GetResponsibleInboxAsync(Guid responsibleUserId, int page, int pageSize, CancellationToken cancellationToken = default)
+    public async Task<(IReadOnlyList<InstitutionJoinRequestResponseDto> Items, int TotalCount)> GetResponsibleInboxAsync(Guid responsibleUserId, int page, int pageSize, bool includeReviewed = false, CancellationToken cancellationToken = default)
     {
         var validPage = Math.Max(1, page);
         var validPageSize = Math.Clamp(pageSize, 1, 100);
         var responsibilities = await _membership.GetResponsibilitiesByUserAsync(responsibleUserId, cancellationToken);
         var institutionIds = responsibilities.Select(x => x.InstitutionId);
 
-        var (requests, totalCount) = await _membership.GetInboxJoinRequestsAsync(institutionIds, validPage, validPageSize, cancellationToken);
+        var (requests, totalCount) = await _membership.GetInboxJoinRequestsAsync(institutionIds, validPage, validPageSize, includeReviewed, cancellationToken);
         return (requests.Select(MapToDto).ToList(), totalCount);
     }
 

@@ -1,5 +1,6 @@
 using Application.DermaImage.DTOs;
 using Domain.DermaImage.Entities;
+using Domain.DermaImage.Entities.Enums;
 
 namespace Application.DermaImage.Managers;
 
@@ -9,6 +10,7 @@ public interface IDermaImgManager
     Task<DermaImg?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
     Task<DermaImg?> GetByPublicIdAsync(string publicId, CancellationToken cancellationToken = default);
     Task<DermaImg> CreateAsync(CreateDermaImgDto dto, CancellationToken cancellationToken = default);
+    Task<DermaImg> ReviewUploadAsync(Guid id, Guid reviewerUserId, ImageApprovalStatus status, string? reviewComment, CancellationToken cancellationToken = default);
     Task UpdateAsync(Guid id, CreateDermaImgDto dto, CancellationToken cancellationToken = default);
     Task DeleteAsync(Guid id, CancellationToken cancellationToken = default);
 }

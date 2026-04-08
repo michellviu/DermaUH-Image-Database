@@ -11,6 +11,6 @@ public interface IInstitutionMembershipManager
     Task<InstitutionJoinRequestResponseDto> CreateJoinRequestAsync(Guid requesterUserId, CreateInstitutionJoinRequestDto dto, CancellationToken cancellationToken = default);
     Task<(IReadOnlyList<InstitutionJoinRequestResponseDto> Items, int TotalCount)> GetMyJoinRequestsAsync(Guid requesterUserId, int page, int pageSize, CancellationToken cancellationToken = default);
     Task LeaveInstitutionAsync(Guid requesterUserId, CancellationToken cancellationToken = default);
-    Task<(IReadOnlyList<InstitutionJoinRequestResponseDto> Items, int TotalCount)> GetResponsibleInboxAsync(Guid responsibleUserId, int page, int pageSize, CancellationToken cancellationToken = default);
+    Task<(IReadOnlyList<InstitutionJoinRequestResponseDto> Items, int TotalCount)> GetResponsibleInboxAsync(Guid responsibleUserId, int page, int pageSize, bool includeReviewed = false, CancellationToken cancellationToken = default);
     Task<InstitutionJoinRequestResponseDto> ReviewJoinRequestAsync(Guid responsibleUserId, Guid requestId, ReviewInstitutionJoinRequestDto dto, CancellationToken cancellationToken = default);
 }
