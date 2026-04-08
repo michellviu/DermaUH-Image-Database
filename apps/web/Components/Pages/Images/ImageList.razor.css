@@ -96,6 +96,32 @@
     font-size: 0.88rem;
 }
 
+.load-more-wrap {
+    display: flex;
+    justify-content: center;
+    padding: 0.4rem 0 0.8rem;
+}
+
+.load-more-btn {
+    border: none;
+    background: transparent;
+    color: var(--primary);
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    font-size: 0.78rem;
+    padding: 0.2rem 0.5rem;
+    border-radius: 999px;
+    transition: color 0.18s ease, background-color 0.18s ease;
+}
+
+.load-more-btn:hover,
+.load-more-btn:focus-visible {
+    color: var(--on-primary-container);
+    background: color-mix(in srgb, var(--primary-container) 60%, transparent);
+    outline: none;
+}
+
 .infinite-scroll-sentinel {
     width: 100%;
     height: 1px;

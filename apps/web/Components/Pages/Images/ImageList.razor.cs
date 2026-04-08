@@ -101,14 +101,17 @@ public partial class ImageList
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (!firstRender || observerInitialized)
+        if (!observerInitialized)
         {
-            return;
+            dotNetRef = DotNetObjectReference.Create(this);
+            await JS.InvokeVoidAsync("infiniteScroll.init", dotNetRef, sentinelId);
+            observerInitialized = true;
         }
 
-        dotNetRef = DotNetObjectReference.Create(this);
-        await JS.InvokeVoidAsync("infiniteScroll.init", dotNetRef, sentinelId);
-        observerInitialized = true;
+        if (observerInitialized && hasMorePages && !isLoadingPage)
+        {
+            await JS.InvokeVoidAsync("infiniteScroll.check", sentinelId);
+        }
     }
 
     private async Task ApplyFiltersAsync()
@@ -187,6 +190,11 @@ public partial class ImageList
 
     [JSInvokable]
     public async Task OnInfiniteScrollTrigger()
+    {
+        await LoadNextPageAsync();
+    }
+
+    private async Task LoadMoreAsync()
     {
         await LoadNextPageAsync();
     }

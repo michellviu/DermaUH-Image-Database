@@ -14,6 +14,7 @@ public partial class ImageCreate
     private CreateImageFormModel model = new();
     private bool submitting;
     private string? errorMessage;
+    private string? successMessage;
     private IBrowserFile? selectedFile;
     private string? _userInstitutionName;
     private string UserInstitutionDisplayValue => _userInstitutionName ?? "Sin institución";
@@ -69,6 +70,7 @@ public partial class ImageCreate
     {
         submitting = true;
         errorMessage = null;
+        successMessage = null;
 
         try
         {
@@ -130,7 +132,13 @@ public partial class ImageCreate
             var response = await Http.PostAsync("api/images", formData);
             if (response.IsSuccessStatusCode)
             {
-                Navigation.NavigateTo("images");
+                successMessage = "La imagen fue enviada correctamente. Será revisada por especialistas y te informaremos la decisión en tu perfil.";
+                selectedFile = null;
+                model = new CreateImageFormModel();
+                await LoadCurrentUserInstitutionAsync();
+                personalHxMm = false;
+                familyHxMm = false;
+                melUlcer = false;
             }
             else
             {

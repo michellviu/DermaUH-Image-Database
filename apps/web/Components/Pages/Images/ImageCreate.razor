@@ -25,6 +25,16 @@
         <div class="alert alert-danger">@errorMessage</div>
     }
 
+    @if (!string.IsNullOrEmpty(successMessage))
+    {
+        <div class="alert alert-success">
+            <div>@successMessage</div>
+            <div class="mt-2">
+                <a href="/account/profile" class="btn btn-sm btn-outline-success">Ver estado en mi perfil</a>
+            </div>
+        </div>
+    }
+
     <ImageClinicalMetadataForm Model="model"
                                DermoscopicEnabled="dermoscopicEnabled"
                                InjuryTypeEnabled="injuryTypeEnabled"
@@ -66,7 +76,7 @@
 
     <div class="d-flex gap-2">
         <button type="submit" class="btn btn-primary" disabled="@(submitting || string.IsNullOrWhiteSpace(model.InstitutionId))">
-            @(submitting ? "Guardando..." : "Guardar Imagen")
+            @(submitting ? "Enviando..." : "Enviar a revisión")
         </button>
         <a href="images" class="btn btn-outline-secondary">Cancelar</a>
     </div>

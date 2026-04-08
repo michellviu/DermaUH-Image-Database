@@ -28,6 +28,7 @@ else
 
     <section class="detail-summary-strip">
         <span class="summary-chip @(image.IsPublic ? "summary-chip--public" : "summary-chip--private")">@(image.IsPublic ? "Pública" : "Privada")</span>
+        <span class="summary-chip">Revisión: @MapApprovalStatus(image.ApprovalStatus)</span>
         @if (!string.IsNullOrWhiteSpace(image.DiagnosisCategory))
         {
             <span class="summary-chip">@LocalizeCategory(image.DiagnosisCategory)</span>
@@ -224,6 +225,14 @@ else
         "PalmsSoles" => "Palmas/Plantas",
         "OralGenital" => "Oral/Genital",
         _ => value ?? "—"
+    };
+
+    private static string MapApprovalStatus(string? status) => status switch
+    {
+        "Pending" => "Pendiente",
+        "Approved" => "Aprobada",
+        "Declined" => "Declinada",
+        _ => string.IsNullOrWhiteSpace(status) ? "Pendiente" : status,
     };
 
     private RenderFragment KeyValue(string label, string? value) => builder =>

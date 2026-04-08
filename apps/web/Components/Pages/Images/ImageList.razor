@@ -149,6 +149,13 @@
             <div class="infinite-scroll-loading text-muted">Cargando más imágenes...</div>
         }
 
+        @if (hasLoaded && hasMorePages && !isLoadingPage)
+        {
+            <div class="load-more-wrap">
+                <button type="button" class="load-more-btn" @onclick="LoadMoreAsync">Ver más</button>
+            </div>
+        }
+
         <div id="@sentinelId" class="infinite-scroll-sentinel" aria-hidden="true"></div>
 
         @if (hasLoaded && !hasMorePages && images.Count > 0)
