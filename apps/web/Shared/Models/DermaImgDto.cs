@@ -9,6 +9,11 @@ public class DermaImgDto
     public string ContentType { get; set; } = string.Empty;
     public long FileSize { get; set; }
     public bool IsPublic { get; set; }
+    public string ApprovalStatus { get; set; } = string.Empty;
+    public string? ReviewComment { get; set; }
+    public DateTime? ReviewedAt { get; set; }
+    public Guid? ReviewedByUserId { get; set; }
+    public string? ReviewedByFullName { get; set; }
 
     // Acquisition
     public string? ImageType { get; set; }
@@ -45,4 +50,10 @@ public class DermaImgDto
     public string? ContributorFullName { get; set; }
     public Guid? InstitutionId { get; set; }
     public string? InstitutionName { get; set; }
+}
+
+public class ReviewImageUploadRequest
+{
+    public bool Approve { get; set; }
+    public string? Comment { get; set; }
 }
