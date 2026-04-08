@@ -24,6 +24,21 @@ public class DermaImg : BaseEntity
     /// <summary>Whether the image is visible to anonymous/public users.</summary>
     public bool IsPublic { get; set; } = false;
 
+    /// <summary>Review lifecycle status for publication workflow.</summary>
+    public ImageApprovalStatus ApprovalStatus { get; set; } = ImageApprovalStatus.Pending;
+
+    /// <summary>Optional reviewer comment captured at decision time.</summary>
+    public string? ReviewComment { get; set; }
+
+    /// <summary>Timestamp when the review decision was made.</summary>
+    public DateTime? ReviewedAt { get; set; }
+
+    /// <summary>Reviewer user who made the decision.</summary>
+    public Guid? ReviewedByUserId { get; set; }
+
+    [ForeignKey("ReviewedByUserId")]
+    public User? ReviewedByUser { get; set; }
+
     // ── Acquisition / Technologic ──────────────────────────────────────
     /// <summary>Dermatologic image type (dermoscopic, clinical, etc.).</summary>
     public ImageType? ImageType { get; set; }
