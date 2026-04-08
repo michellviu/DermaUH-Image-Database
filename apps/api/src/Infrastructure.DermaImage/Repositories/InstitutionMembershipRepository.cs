@@ -116,7 +116,7 @@ public class InstitutionMembershipRepository : IInstitutionMembershipRepository
         return (items, totalCount);
     }
 
-    public async Task<(IReadOnlyList<InstitutionJoinRequest> Items, int TotalCount)> GetInboxJoinRequestsAsync(IEnumerable<Guid> institutionIds, int page, int pageSize, CancellationToken cancellationToken = default)
+    public async Task<(IReadOnlyList<InstitutionJoinRequest> Items, int TotalCount)> GetInboxJoinRequestsAsync(IEnumerable<Guid> institutionIds, int page, int pageSize, bool includeReviewed = false, CancellationToken cancellationToken = default)
     {
         var ids = institutionIds.Distinct().ToList();
         if (ids.Count == 0)
@@ -130,10 +130,14 @@ public class InstitutionMembershipRepository : IInstitutionMembershipRepository
             .Include(x => x.ReviewedByUser)
             .Where(x => ids.Contains(x.InstitutionId));
 
+        if (!includeReviewed)
+        {
+            query = query.Where(x => x.Status == InstitutionJoinRequestStatus.Pending);
+        }
+
         var totalCount = await query.CountAsync(cancellationToken);
         var items = await query
-            .OrderBy(x => x.Status == InstitutionJoinRequestStatus.Pending ? 0 : 1)
-            .ThenByDescending(x => x.CreatedAt)
+            .OrderByDescending(x => x.CreatedAt)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync(cancellationToken);

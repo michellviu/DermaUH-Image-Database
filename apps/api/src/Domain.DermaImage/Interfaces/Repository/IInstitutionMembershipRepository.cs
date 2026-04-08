@@ -13,7 +13,7 @@ public interface IInstitutionMembershipRepository
     Task<InstitutionJoinRequest?> GetJoinRequestByIdAsync(Guid requestId, CancellationToken cancellationToken = default);
     Task<InstitutionJoinRequest?> GetPendingJoinRequestAsync(Guid applicantUserId, Guid institutionId, CancellationToken cancellationToken = default);
     Task<(IReadOnlyList<InstitutionJoinRequest> Items, int TotalCount)> GetJoinRequestsByUserAsync(Guid applicantUserId, int page, int pageSize, CancellationToken cancellationToken = default);
-    Task<(IReadOnlyList<InstitutionJoinRequest> Items, int TotalCount)> GetInboxJoinRequestsAsync(IEnumerable<Guid> institutionIds, int page, int pageSize, CancellationToken cancellationToken = default);
+    Task<(IReadOnlyList<InstitutionJoinRequest> Items, int TotalCount)> GetInboxJoinRequestsAsync(IEnumerable<Guid> institutionIds, int page, int pageSize, bool includeReviewed = false, CancellationToken cancellationToken = default);
     Task AddJoinRequestAsync(InstitutionJoinRequest joinRequest, CancellationToken cancellationToken = default);
     Task UpdateJoinRequestAsync(InstitutionJoinRequest joinRequest, CancellationToken cancellationToken = default);
 }

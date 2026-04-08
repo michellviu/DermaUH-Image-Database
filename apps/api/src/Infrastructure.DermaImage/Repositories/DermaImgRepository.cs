@@ -1,4 +1,5 @@
 using Domain.DermaImage.Entities;
+using Domain.DermaImage.Entities.Enums;
 using Domain.DermaImage.Interfaces.Repository;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -15,13 +16,16 @@ public class DermaImgRepository : Repository<DermaImg>, IDermaImgRepository
         return DbSet
             .Include(i => i.Contributor)
             .Include(i => i.Institution)
+            .Include(i => i.ReviewedByUser)
             .FirstOrDefaultAsync(i => i.Id == id, cancellationToken);
     }
 
     private IQueryable<DermaImg> BuildVisibilityQuery(bool includePrivate)
     {
         Logger.LogInformation("Building image visibility query. IncludePrivate: {IncludePrivate}", includePrivate);
-        var query = DbSet.AsNoTracking();
+        var query = DbSet.AsNoTracking()
+            .Where(i => i.ApprovalStatus == ImageApprovalStatus.Approved);
+
         if (!includePrivate)
         {
             query = query.Where(i => i.IsPublic);
@@ -36,6 +40,7 @@ public class DermaImgRepository : Repository<DermaImg>, IDermaImgRepository
         return DbSet
             .Include(i => i.Contributor)
             .Include(i => i.Institution)
+            .Include(i => i.ReviewedByUser)
             .FirstOrDefaultAsync(i => i.PublicId == publicId, cancellationToken);
     }
 
@@ -110,6 +115,11 @@ public class DermaImgRepository : Repository<DermaImg>, IDermaImgRepository
                 query = query.Where(i => i.AnatomSiteGeneral.HasValue && filter.AnatomSites.Contains(i.AnatomSiteGeneral.Value));
             }
 
+            if (filter.ApprovalStatuses is { Count: > 0 })
+            {
+                query = query.Where(i => filter.ApprovalStatuses.Contains(i.ApprovalStatus));
+            }
+
             if (filter.IsPublic.HasValue)
             {
                 query = query.Where(i => i.IsPublic == filter.IsPublic.Value);
@@ -128,6 +138,7 @@ public class DermaImgRepository : Repository<DermaImg>, IDermaImgRepository
             .OrderByDescending(i => i.CreatedAt)
             .Include(i => i.Contributor)
             .Include(i => i.Institution)
+            .Include(i => i.ReviewedByUser)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync(cancellationToken);
