@@ -1,4 +1,5 @@
 using Domain.DermaImage.Entities;
+using Domain.DermaImage.Entities.Enums;
 using Domain.DermaImage.Interfaces.Repository;
 using Domain.DermaImage.Interfaces.Services;
 
@@ -56,5 +57,10 @@ public class UserService : IUserService
     public async Task<IList<string>> GetRolesAsync(User user)
     {
         return await _repository.GetRolesAsync(user);
+    }
+
+    public async Task<IReadOnlyList<User>> GetActiveUsersByRoleAsync(UserRole role, CancellationToken cancellationToken = default)
+    {
+        return await _repository.GetActiveUsersByRoleAsync(role, cancellationToken);
     }
 }

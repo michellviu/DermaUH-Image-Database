@@ -54,6 +54,7 @@ public class ImagesController : ControllerBase
             Sexes = sexes,
             AnatomSites = anatomSites,
             IsPublic = true,
+            ApprovalStatuses = [ImageApprovalStatus.Approved],
             DiagnosisContains = diagnosisContains
         };
 
@@ -72,7 +73,7 @@ public class ImagesController : ControllerBase
     public async Task<ActionResult<DermaImgResponseDto>> GetById(Guid id, CancellationToken cancellationToken)
     {
         var image = await _manager.GetByIdAsync(id, cancellationToken);
-        if (image is not null && !image.IsPublic && !CanReadPrivateImages())
+        if (image is not null && !CanAccessImage(image))
         {
             return NotFound();
         }
@@ -84,7 +85,7 @@ public class ImagesController : ControllerBase
     public async Task<ActionResult<DermaImgResponseDto>> GetByPublicId(string publicId, CancellationToken cancellationToken)
     {
         var image = await _manager.GetByPublicIdAsync(publicId, cancellationToken);
-        if (image is not null && !image.IsPublic && !CanReadPrivateImages())
+        if (image is not null && !CanAccessImage(image))
         {
             return NotFound();
         }
@@ -101,7 +102,7 @@ public class ImagesController : ControllerBase
             return NotFound();
         }
 
-        if (!image.IsPublic && !CanReadPrivateImages())
+        if (!CanAccessImage(image))
         {
             return NotFound();
         }
@@ -142,6 +143,12 @@ public class ImagesController : ControllerBase
         if (userId is null)
         {
             return Unauthorized();
+        }
+
+        var activeReviewers = await _userManager.GetActiveUsersByRoleAsync(UserRole.Reviewer, cancellationToken);
+        if (activeReviewers.Count == 0)
+        {
+            return BadRequest(new { message = "No hay especialistas asignados con rol REVIEWER para revisar la subida. Contacta al administrador." });
         }
 
         // Contributors can only create images under their own identity.
@@ -208,6 +215,14 @@ public class ImagesController : ControllerBase
         var contributor = await _userManager.GetByIdAsync(existing.ContributorId, cancellationToken);
         dto.InstitutionId = contributor?.InstitutionId;
 
+        if (!isAdmin)
+        {
+            existing.ApprovalStatus = ImageApprovalStatus.Pending;
+            existing.ReviewedByUserId = null;
+            existing.ReviewedAt = null;
+            existing.ReviewComment = null;
+        }
+
         var businessValidationErrors = DermaImgValidationRules.Validate(dto);
         if (businessValidationErrors.Count > 0)
         {
@@ -248,14 +263,117 @@ public class ImagesController : ControllerBase
         return NoContent();
     }
 
-    private bool CanReadPrivateImages()
+    [Authorize(Roles = "Admin,Contributor,Reviewer")]
+    [HttpGet("review-requests/mine")]
+    public async Task<ActionResult<PagedResponse<DermaImgResponseDto>>> GetMyReviewRequests(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10,
+        [FromQuery] ImageApprovalStatus? status = null,
+        CancellationToken cancellationToken = default)
     {
+        var userId = GetCurrentUserId();
+        if (userId is null)
+        {
+            return Unauthorized();
+        }
+
+        var validPage = Math.Max(1, page);
+        var validPageSize = Math.Clamp(pageSize, 1, 100);
+
+        var filter = new DermaImgFilter
+        {
+            ContributorId = userId.Value,
+            ApprovalStatuses = status.HasValue ? [status.Value] : null,
+        };
+
+        var (items, totalCount) = await _manager.GetPagedAsync(validPage, validPageSize, filter, cancellationToken);
+        return Ok(new PagedResponse<DermaImgResponseDto>
+        {
+            Items = items.Select(MapToResponseDto),
+            TotalCount = totalCount,
+            Page = validPage,
+            PageSize = validPageSize,
+        });
+    }
+
+    [Authorize(Roles = "Admin,Reviewer")]
+    [HttpGet("review-requests/inbox")]
+    public async Task<ActionResult<PagedResponse<DermaImgResponseDto>>> GetReviewInbox(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10,
+        [FromQuery] bool includeReviewed = false,
+        CancellationToken cancellationToken = default)
+    {
+        var validPage = Math.Max(1, page);
+        var validPageSize = Math.Clamp(pageSize, 1, 100);
+
+        var filter = new DermaImgFilter
+        {
+            ApprovalStatuses = includeReviewed ? null : [ImageApprovalStatus.Pending],
+        };
+
+        var (items, totalCount) = await _manager.GetPagedAsync(validPage, validPageSize, filter, cancellationToken);
+        return Ok(new PagedResponse<DermaImgResponseDto>
+        {
+            Items = items.Select(MapToResponseDto),
+            TotalCount = totalCount,
+            Page = validPage,
+            PageSize = validPageSize,
+        });
+    }
+
+    [Authorize(Roles = "Admin,Reviewer")]
+    [HttpPost("{id:guid}/review")]
+    public async Task<ActionResult<DermaImgResponseDto>> ReviewUpload(Guid id, [FromBody] ReviewImageUploadDto dto, CancellationToken cancellationToken)
+    {
+        var userId = GetCurrentUserId();
+        if (userId is null)
+        {
+            return Unauthorized();
+        }
+
+        var image = await _manager.GetByIdAsync(id, cancellationToken);
+        if (image is null)
+        {
+            return NotFound();
+        }
+
+        if (image.ApprovalStatus != ImageApprovalStatus.Pending)
+        {
+            return BadRequest(new { message = "La imagen ya fue revisada previamente." });
+        }
+
+        var nextStatus = dto.Approve ? ImageApprovalStatus.Approved : ImageApprovalStatus.Declined;
+        await _manager.ReviewUploadAsync(id, userId.Value, nextStatus, dto.Comment, cancellationToken);
+
+        var reviewed = await _manager.GetByIdAsync(id, cancellationToken);
+        if (reviewed is null)
+        {
+            return NotFound();
+        }
+
+        return Ok(MapToResponseDto(reviewed));
+    }
+
+    private bool CanAccessImage(DermaImg image)
+    {
+        if (image.ApprovalStatus == ImageApprovalStatus.Approved && image.IsPublic)
+        {
+            return true;
+        }
+
         if (!(User.Identity?.IsAuthenticated ?? false))
         {
             return false;
         }
 
-        return User.IsInRole("Admin") || User.IsInRole("Reviewer") || User.IsInRole("Contributor");
+        if (User.IsInRole("Admin") || User.IsInRole("Reviewer"))
+        {
+            return true;
+        }
+
+        var userId = GetCurrentUserId();
+        return userId.HasValue && image.ContributorId == userId.Value;
     }
 
     private Guid? GetCurrentUserId()
@@ -278,6 +396,13 @@ public class ImagesController : ControllerBase
             ContentType = image.ContentType,
             FileSize = image.FileSize,
             IsPublic = image.IsPublic,
+            ApprovalStatus = image.ApprovalStatus,
+            ReviewComment = image.ReviewComment,
+            ReviewedAt = image.ReviewedAt,
+            ReviewedByUserId = image.ReviewedByUserId,
+            ReviewedByFullName = image.ReviewedByUser is null
+                ? null
+                : $"{image.ReviewedByUser.FirstName} {image.ReviewedByUser.LastName}".Trim(),
             ImageType = image.ImageType,
             ImageManipulation = image.ImageManipulation,
             DermoscopicType = image.DermoscopicType,

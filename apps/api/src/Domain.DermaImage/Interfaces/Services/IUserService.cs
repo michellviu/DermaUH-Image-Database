@@ -1,4 +1,5 @@
 using Domain.DermaImage.Entities;
+using Domain.DermaImage.Entities.Enums;
 
 namespace Domain.DermaImage.Interfaces.Services;
 
@@ -13,4 +14,5 @@ public interface IUserService
     Task AddToRoleAsync(User user, string role);
     Task RemoveFromRoleAsync(User user, string role);
     Task<IList<string>> GetRolesAsync(User user);
+    Task<IReadOnlyList<User>> GetActiveUsersByRoleAsync(UserRole role, CancellationToken cancellationToken = default);
 }
