@@ -1,0 +1,260 @@
+<div class="row">
+    <div class="col-md-6">
+        @if (FileSection is not null)
+        {
+            @FileSection
+        }
+
+        <h5 class="mt-4">Tipo de Imagen</h5>
+        <div class="mb-3">
+            <label class="form-label">Tipo de Imagen</label>
+            <InputSelect @bind-Value="Model.ImageType" @bind-Value:after="NotifyDependencySourceChangedAsync" class="form-select">
+                <option value="">— Seleccionar —</option>
+                <option value="Dermoscopic">Dermoscópica</option>
+                <option value="ClinicalOverview">Clínica: Vista General</option>
+                <option value="ClinicalCloseUp">Clínica: Primer Plano</option>
+                <option value="TBPTileOverview">TBP Tile: Vista General</option>
+                <option value="TBPTileCloseUp">TBP Tile: Primer Plano</option>
+                <option value="RCMMacroscopic">RCM: Macroscópica</option>
+                <option value="RCMTile">RCM: Tile</option>
+                <option value="RCMMosaic">RCM: Mosaico</option>
+            </InputSelect>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Manipulación de Imagen</label>
+            <InputSelect @bind-Value="Model.ImageManipulation" class="form-select">
+                <option value="">— Seleccionar —</option>
+                <option value="InstrumentOnly">Solo Instrumento</option>
+                <option value="Altered">Alterada</option>
+                <option value="Synthetic">Sintética</option>
+                <option value="Unknown">Desconocida</option>
+            </InputSelect>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Tipo Dermatoscópico</label>
+            <InputSelect @bind-Value="Model.DermoscopicType" class="form-select" disabled="@(!DermoscopicEnabled)">
+                <option value="">— Seleccionar —</option>
+                <option value="ContactPolarized">Contacto Polarizado</option>
+                <option value="ContactNonPolarized">Contacto No Polarizado</option>
+                <option value="NonContactPolarized">Sin Contacto Polarizado</option>
+            </InputSelect>
+            @if (!DermoscopicEnabled)
+            {
+                <div class="dependency-note">Disponible solo cuando "Tipo de Imagen" es Dermoscópica.</div>
+            }
+        </div>
+
+        <h5 class="mt-4">Datos del Paciente</h5>
+        <div class="mb-3">
+            <label class="form-label">Edad Aproximada</label>
+            <InputNumber @bind-Value="Model.AgeApprox" class="form-control" />
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Sexo</label>
+            <InputSelect @bind-Value="Model.Sex" class="form-select">
+                <option value="">— Seleccionar —</option>
+                <option value="Male">Masculino</option>
+                <option value="Female">Femenino</option>
+            </InputSelect>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Fototipo</label>
+            <InputSelect @bind-Value="Model.FotoType" class="form-select">
+                <option value="">— Seleccionar —</option>
+                <option value="I">I</option>
+                <option value="II">II</option>
+                <option value="III">III</option>
+                <option value="IV">IV</option>
+                <option value="V">V</option>
+                <option value="VI">VI</option>
+            </InputSelect>
+        </div>
+        <div class="mb-3 form-check">
+            <InputCheckbox class="form-check-input"
+                           id="personalHxMm"
+                           Value="PersonalHxMm"
+                           ValueChanged="SetPersonalHxMmAsync"
+                           ValueExpression="@(() => PersonalHxMm)" />
+            <label class="form-check-label" for="personalHxMm">Historial Personal de Melanoma</label>
+        </div>
+        <div class="mb-3 form-check">
+            <InputCheckbox class="form-check-input"
+                           id="familyHxMm"
+                           Value="FamilyHxMm"
+                           ValueChanged="SetFamilyHxMmAsync"
+                           ValueExpression="@(() => FamilyHxMm)" />
+            <label class="form-check-label" for="familyHxMm">Historial Familiar de Melanoma</label>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <h5>Localización de la Lesión</h5>
+        <div class="mb-3">
+            <label class="form-label">@InstitutionFieldLabel</label>
+            <div class="form-control">@InstitutionDisplayValue</div>
+            @if (ShowInstitutionWarning && !string.IsNullOrWhiteSpace(InstitutionWarningMessage))
+            {
+                <div class="dependency-note dependency-note--warning">@InstitutionWarningMessage</div>
+            }
+            else if (!string.IsNullOrWhiteSpace(InstitutionDependencyNote))
+            {
+                <div class="dependency-note">@InstitutionDependencyNote</div>
+            }
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Sitio Anatómico General</label>
+            <InputSelect @bind-Value="Model.AnatomSiteGeneral" class="form-select">
+                <option value="">— Seleccionar —</option>
+                <option value="HeadNeck">Cabeza/Cuello</option>
+                <option value="UpperExtremity">Extremidad Superior</option>
+                <option value="LowerExtremity">Extremidad Inferior</option>
+                <option value="AnteriorTorso">Torso Anterior</option>
+                <option value="LateralTorso">Torso Lateral</option>
+                <option value="PosteriorTorso">Torso Posterior</option>
+                <option value="PalmsSoles">Palmas/Plantas</option>
+                <option value="OralGenital">Oral/Genital</option>
+            </InputSelect>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Diámetro Mayor (mm)</label>
+            <InputNumber @bind-Value="Model.ClinSizeLongDiamMm" class="form-control" />
+        </div>
+
+        <h5 class="mt-4">Diagnóstico</h5>
+        <div class="mb-3">
+            <label class="form-label">Diagnóstico</label>
+            <InputText @bind-Value="Model.Diagnosis" class="form-control" />
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Categoría</label>
+            <InputSelect @bind-Value="Model.DiagnosisCategory" @bind-Value:after="NotifyDependencySourceChangedAsync" class="form-select">
+                <option value="">— Seleccionar —</option>
+                <option value="Benign">Benigno</option>
+                <option value="Indeterminate">Indeterminado</option>
+                <option value="Malignant">Maligno</option>
+            </InputSelect>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Tipo de Lesión</label>
+            <InputSelect @bind-Value="Model.InjuryType" @bind-Value:after="NotifyDependencySourceChangedAsync" class="form-select" disabled="@(!InjuryTypeEnabled)">
+                <option value="">— Seleccionar —</option>
+                <option value="Melanoma">Melanoma</option>
+                <option value="BasalCellCarcinoma">Carcinoma Basocelular</option>
+                <option value="SquamousCellCarcinoma">Carcinoma Escamocelular</option>
+                <option value="Others">Otros</option>
+            </InputSelect>
+            @if (!InjuryTypeEnabled)
+            {
+                <div class="dependency-note">Solo se habilita cuando la categoría es "Maligno".</div>
+            }
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Método de Confirmación</label>
+            <InputSelect @bind-Value="Model.DiagnosisConfirmType" class="form-select">
+                <option value="">— Seleccionar —</option>
+                <option value="Histopathology">Histopatología</option>
+                <option value="SingleContributorClinicalAssessment">Evaluación Clínica Individual</option>
+                <option value="SerialImagingShowingNoChange">Imágenes Seriadas Sin Cambio</option>
+                <option value="SingleImageExpertConsensus">Consenso de Expertos</option>
+                <option value="ConfocalMicroscopyWithConsensusDermoscopy">Microscopía Confocal</option>
+            </InputSelect>
+        </div>
+
+        <h5 class="mt-4">Histología (Melanoma)</h5>
+        <div class="mb-3">
+            <label class="form-label">Espesor de Melanoma (mm)</label>
+            <InputNumber @bind-Value="Model.MelThickMm" class="form-control" disabled="@(!MelanomaHistologyEnabled)" />
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Índice Mitótico</label>
+            <InputSelect @bind-Value="Model.MelMitoticIndex" class="form-select" disabled="@(!MelanomaHistologyEnabled)">
+                <option value="">— Seleccionar —</option>
+                <option value="Zero">0/mm²</option>
+                <option value="LessThanOne">&lt;1/mm²</option>
+                <option value="One">1/mm²</option>
+                <option value="Two">2/mm²</option>
+                <option value="Three">3/mm²</option>
+                <option value="Four">4/mm²</option>
+                <option value="MoreThanFour">&gt;4/mm²</option>
+            </InputSelect>
+        </div>
+        <div class="mb-3 form-check">
+            <InputCheckbox class="form-check-input"
+                           id="melUlcer"
+                           disabled="@(!MelanomaHistologyEnabled)"
+                           Value="MelUlcer"
+                           ValueChanged="SetMelUlcerAsync"
+                           ValueExpression="@(() => MelUlcer)" />
+            <label class="form-check-label" for="melUlcer">Ulceración Histopatológica</label>
+        </div>
+        @if (!MelanomaHistologyEnabled)
+        {
+            <div class="dependency-note">Los campos histológicos solo aplican cuando el tipo de lesión es "Melanoma".</div>
+        }
+
+        <h5 class="mt-4">Notas</h5>
+        <div class="mb-3">
+            <label class="form-label">Notas Clínicas</label>
+            <InputTextArea @bind-Value="Model.ClinicalNotes" class="form-control" rows="3" />
+        </div>
+
+        <div class="mb-3 form-check">
+            <InputCheckbox @bind-Value="Model.IsPublic" class="form-check-input" id="isPublic" />
+            <label class="form-check-label" for="isPublic">Visible públicamente</label>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public CreateImageFormModel Model { get; set; } = default!;
+    [Parameter] public RenderFragment? FileSection { get; set; }
+    [Parameter] public bool DermoscopicEnabled { get; set; }
+    [Parameter] public bool InjuryTypeEnabled { get; set; }
+    [Parameter] public bool MelanomaHistologyEnabled { get; set; }
+    [Parameter] public string InstitutionFieldLabel { get; set; } = string.Empty;
+    [Parameter] public string InstitutionDisplayValue { get; set; } = string.Empty;
+    [Parameter] public string? InstitutionDependencyNote { get; set; }
+    [Parameter] public string? InstitutionWarningMessage { get; set; }
+    [Parameter] public bool ShowInstitutionWarning { get; set; }
+    [Parameter] public EventCallback OnDependencySourceChanged { get; set; }
+
+    [Parameter] public bool PersonalHxMm { get; set; }
+    [Parameter] public EventCallback<bool> PersonalHxMmChanged { get; set; }
+
+    [Parameter] public bool FamilyHxMm { get; set; }
+    [Parameter] public EventCallback<bool> FamilyHxMmChanged { get; set; }
+
+    [Parameter] public bool MelUlcer { get; set; }
+    [Parameter] public EventCallback<bool> MelUlcerChanged { get; set; }
+
+    private Task NotifyDependencySourceChangedAsync()
+    {
+        return OnDependencySourceChanged.HasDelegate
+            ? OnDependencySourceChanged.InvokeAsync()
+            : Task.CompletedTask;
+    }
+
+    private Task SetPersonalHxMmAsync(bool value)
+    {
+        PersonalHxMm = value;
+        return PersonalHxMmChanged.HasDelegate
+            ? PersonalHxMmChanged.InvokeAsync(value)
+            : Task.CompletedTask;
+    }
+
+    private Task SetFamilyHxMmAsync(bool value)
+    {
+        FamilyHxMm = value;
+        return FamilyHxMmChanged.HasDelegate
+            ? FamilyHxMmChanged.InvokeAsync(value)
+            : Task.CompletedTask;
+    }
+
+    private Task SetMelUlcerAsync(bool value)
+    {
+        MelUlcer = value;
+        return MelUlcerChanged.HasDelegate
+            ? MelUlcerChanged.InvokeAsync(value)
+            : Task.CompletedTask;
+    }
+}
