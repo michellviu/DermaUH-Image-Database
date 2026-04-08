@@ -227,6 +227,7 @@ public class InstitutionsController : ControllerBase
     public async Task<ActionResult<PagedResponse<InstitutionJoinRequestResponseDto>>> GetResponsibleInbox(
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 5,
+        [FromQuery] bool includeReviewed = false,
         CancellationToken cancellationToken = default)
     {
         var userId = GetCurrentUserId();
@@ -237,7 +238,7 @@ public class InstitutionsController : ControllerBase
 
         var validPage = Math.Max(1, page);
         var validPageSize = Math.Clamp(pageSize, 1, 100);
-        var (items, totalCount) = await _membershipManager.GetResponsibleInboxAsync(userId.Value, validPage, validPageSize, cancellationToken);
+        var (items, totalCount) = await _membershipManager.GetResponsibleInboxAsync(userId.Value, validPage, validPageSize, includeReviewed, cancellationToken);
         return Ok(new PagedResponse<InstitutionJoinRequestResponseDto>
         {
             Items = items,
