@@ -18,6 +18,7 @@ public class User : IdentityUser<Guid>
 
     // Navigation
     public ICollection<DermaImg> ContributedImages { get; set; } = new List<DermaImg>();
+    public ICollection<DermaImg> ReviewedImages { get; set; } = new List<DermaImg>();
     public ICollection<InstitutionResponsible> ResponsibleInstitutions { get; set; } = new List<InstitutionResponsible>();
     public ICollection<InstitutionJoinRequest> InstitutionJoinRequests { get; set; } = new List<InstitutionJoinRequest>();
     public ICollection<InstitutionJoinRequest> ReviewedInstitutionJoinRequests { get; set; } = new List<InstitutionJoinRequest>();

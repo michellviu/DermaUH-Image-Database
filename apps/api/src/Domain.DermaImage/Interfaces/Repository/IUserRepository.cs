@@ -1,4 +1,5 @@
 using Domain.DermaImage.Entities;
+using Domain.DermaImage.Entities.Enums;
 using Microsoft.AspNetCore.Identity;
 
 namespace Domain.DermaImage.Interfaces.Repository;
@@ -20,6 +21,7 @@ public interface IUserRepository
     Task AddToRoleAsync(User user, string role);
     Task RemoveFromRoleAsync(User user, string role);
     Task<IList<string>> GetRolesAsync(User user);
+    Task<IReadOnlyList<User>> GetActiveUsersByRoleAsync(UserRole role, CancellationToken cancellationToken = default);
 
     // Auth-specific
     Task<bool> CheckPasswordAsync(User user, string password);

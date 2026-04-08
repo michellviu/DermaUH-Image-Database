@@ -39,6 +39,13 @@ namespace Infrastructure.DermaImage.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
+                    b.Property<string>("ApprovalStatus")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasDefaultValue("Pending");
+
                     b.Property<double?>("ClinSizeLongDiamMm")
                         .HasColumnType("double precision");
 
@@ -132,6 +139,16 @@ namespace Infrastructure.DermaImage.Migrations
                         .HasMaxLength(30)
                         .HasColumnType("character varying(30)");
 
+                    b.Property<string>("ReviewComment")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTime?>("ReviewedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ReviewedByUserId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("Sex")
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
@@ -147,6 +164,8 @@ namespace Infrastructure.DermaImage.Migrations
 
                     b.HasIndex("PublicId")
                         .IsUnique();
+
+                    b.HasIndex("ReviewedByUserId");
 
                     b.ToTable("Images", (string)null);
                 });
@@ -553,9 +572,16 @@ namespace Infrastructure.DermaImage.Migrations
                         .HasForeignKey("InstitutionId")
                         .OnDelete(DeleteBehavior.SetNull);
 
+                    b.HasOne("Domain.DermaImage.Entities.User", "ReviewedByUser")
+                        .WithMany("ReviewedImages")
+                        .HasForeignKey("ReviewedByUserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.Navigation("Contributor");
 
                     b.Navigation("Institution");
+
+                    b.Navigation("ReviewedByUser");
                 });
 
             modelBuilder.Entity("Domain.DermaImage.Entities.InstitutionJoinRequest", b =>
@@ -682,6 +708,8 @@ namespace Infrastructure.DermaImage.Migrations
                     b.Navigation("InstitutionJoinRequests");
 
                     b.Navigation("ResponsibleInstitutions");
+
+                    b.Navigation("ReviewedImages");
 
                     b.Navigation("ReviewedInstitutionJoinRequests");
                 });

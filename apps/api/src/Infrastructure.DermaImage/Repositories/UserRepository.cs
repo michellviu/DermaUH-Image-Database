@@ -1,4 +1,5 @@
 using Domain.DermaImage.Entities;
+using Domain.DermaImage.Entities.Enums;
 using Domain.DermaImage.Interfaces.Repository;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -118,6 +119,18 @@ public class UserRepository : IUserRepository
     {
         _logger.LogInformation("Fetching roles for user: {@User}", user);
         return await _userManager.GetRolesAsync(user);
+    }
+
+    public async Task<IReadOnlyList<User>> GetActiveUsersByRoleAsync(UserRole role, CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation("Fetching active users by role: {Role}", role);
+        var usersInRole = await _userManager.GetUsersInRoleAsync(role.ToString());
+
+        return usersInRole
+            .Where(u => u.IsActive && !u.IsDeleted)
+            .OrderBy(u => u.LastName)
+            .ThenBy(u => u.FirstName)
+            .ToList();
     }
 
     public async Task<User> CreateExternalAsync(User user, CancellationToken cancellationToken = default)
