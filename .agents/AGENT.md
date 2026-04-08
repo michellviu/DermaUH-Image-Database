@@ -81,6 +81,13 @@ Matriz actual relevante:
 - Paginas bajo `Components/Pages/*`.
 - Componentes compartidos bajo `Components/Shared/*`.
 - Servicios de cliente/autenticacion bajo `Services/*`.
+- Para paginas de mediana/alta complejidad, separar markup y logica con patron `*.razor` + `*.razor.cs` (code-behind).
+- Cuando haya formularios extensos reutilizables, extraer secciones comunes a componentes compartidos en `Components/Shared/*`.
+
+Convenciones actuales relevantes:
+
+- Flujo de crear/editar imagen reutiliza `Components/Shared/ImageClinicalMetadataForm.razor` para metadatos clinicos.
+- `AuthService` esta organizado en parciales (`AuthService.cs`, `AuthService.Authentication.cs`, `AuthService.ProfileMembership.cs`, `AuthService.Errors.cs`) para mejorar mantenibilidad sin cambiar su API publica.
 
 ### 4.2 Autenticacion y sesion
 
