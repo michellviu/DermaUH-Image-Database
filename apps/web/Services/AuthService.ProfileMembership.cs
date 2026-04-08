@@ -137,11 +137,11 @@ public partial class AuthService
         }
     }
 
-    public async Task<PagedResponse<InstitutionJoinRequestDto>> GetResponsibleInboxAsync(int page = 1, int pageSize = 5)
+    public async Task<PagedResponse<InstitutionJoinRequestDto>> GetResponsibleInboxAsync(int page = 1, int pageSize = 5, bool includeReviewed = false)
     {
         try
         {
-            return await _http.GetFromJsonAsync<PagedResponse<InstitutionJoinRequestDto>>($"/api/institutions/join-requests/inbox?page={page}&pageSize={pageSize}",
+            return await _http.GetFromJsonAsync<PagedResponse<InstitutionJoinRequestDto>>($"/api/institutions/join-requests/inbox?page={page}&pageSize={pageSize}&includeReviewed={includeReviewed.ToString().ToLowerInvariant()}",
                 new JsonSerializerOptions { PropertyNameCaseInsensitive = true })
                 ?? new PagedResponse<InstitutionJoinRequestDto>
                 {
@@ -166,6 +166,72 @@ public partial class AuthService
         try
         {
             var response = await _http.PostAsJsonAsync($"/api/institutions/join-requests/{requestId}/review", request);
+            if (!response.IsSuccessStatusCode)
+            {
+                return (false, await TryGetError(response));
+            }
+
+            return (true, null);
+        }
+        catch (Exception ex)
+        {
+            return (false, $"Error de conexión: {ex.Message}");
+        }
+    }
+
+    public async Task<PagedResponse<DermaImgDto>> GetMyImageReviewRequestsAsync(int page = 1, int pageSize = 5)
+    {
+        try
+        {
+            return await _http.GetFromJsonAsync<PagedResponse<DermaImgDto>>($"/api/images/review-requests/mine?page={page}&pageSize={pageSize}",
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true })
+                ?? new PagedResponse<DermaImgDto>
+                {
+                    Items = [],
+                    Page = page,
+                    PageSize = pageSize,
+                };
+        }
+        catch
+        {
+            return new PagedResponse<DermaImgDto>
+            {
+                Items = [],
+                Page = page,
+                PageSize = pageSize,
+            };
+        }
+    }
+
+    public async Task<PagedResponse<DermaImgDto>> GetImageReviewInboxAsync(int page = 1, int pageSize = 5, bool includeReviewed = false)
+    {
+        try
+        {
+            return await _http.GetFromJsonAsync<PagedResponse<DermaImgDto>>($"/api/images/review-requests/inbox?page={page}&pageSize={pageSize}&includeReviewed={includeReviewed.ToString().ToLowerInvariant()}",
+                new JsonSerializerOptions { PropertyNameCaseInsensitive = true })
+                ?? new PagedResponse<DermaImgDto>
+                {
+                    Items = [],
+                    Page = page,
+                    PageSize = pageSize,
+                };
+        }
+        catch
+        {
+            return new PagedResponse<DermaImgDto>
+            {
+                Items = [],
+                Page = page,
+                PageSize = pageSize,
+            };
+        }
+    }
+
+    public async Task<(bool Success, string? Error)> ReviewImageUploadAsync(Guid imageId, ReviewImageUploadRequest request)
+    {
+        try
+        {
+            var response = await _http.PostAsJsonAsync($"/api/images/{imageId}/review", request);
             if (!response.IsSuccessStatusCode)
             {
                 return (false, await TryGetError(response));

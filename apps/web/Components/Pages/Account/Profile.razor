@@ -223,6 +223,156 @@ else
                 </div>
             </div>
 
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h2 class="card-title">Estado de revisión de mis imágenes</h2>
+                </div>
+                <div class="card-body">
+                    @if (!_myImageReviewRequestsPage.Items.Any())
+                    {
+                        <p class="text-muted mb-0">Aún no has enviado imágenes para revisión.</p>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-sm align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>Imagen</th>
+                                        <th>Estado</th>
+                                        <th>Enviada</th>
+                                        <th>Revisada por</th>
+                                        <th>Comentario</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var request in _myImageReviewRequestsPage.Items)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <a href="/images/@request.Id">@request.FileName</a>
+                                            </td>
+                                            <td>@MapImageReviewStatus(request.ApprovalStatus)</td>
+                                            <td>@request.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                                            <td>@(string.IsNullOrWhiteSpace(request.ReviewedByFullName) ? "-" : request.ReviewedByFullName)</td>
+                                            <td>@(string.IsNullOrWhiteSpace(request.ReviewComment) ? "-" : request.ReviewComment)</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+
+                        @if (_myImageReviewRequestsPage.TotalPages > 1)
+                        {
+                            <div class="d-flex align-items-center justify-content-between gap-2 mt-2">
+                                <small class="text-muted">Página @_myImageReviewRequestsPage.Page de @_myImageReviewRequestsPage.TotalPages</small>
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-sm btn-outline-secondary"
+                                            disabled="@(!_myImageReviewRequestsPage.HasPrevious || _loadingMyImageReviewRequests)"
+                                            @onclick="() => GoToMyImageReviewRequestsPageAsync(_myImageReviewRequestsPage.Page - 1)">
+                                        Anterior
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-secondary"
+                                            disabled="@(!_myImageReviewRequestsPage.HasNext || _loadingMyImageReviewRequests)"
+                                            @onclick="() => GoToMyImageReviewRequestsPageAsync(_myImageReviewRequestsPage.Page + 1)">
+                                        Siguiente
+                                    </button>
+                                </div>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+
+            @if (_isReviewerOrAdmin)
+            {
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h2 class="card-title">Inbox de revisión de imágenes</h2>
+                    </div>
+                    <div class="card-body">
+                        @if (!_reviewImageInboxPage.Items.Any())
+                        {
+                            <p class="text-muted mb-0">No hay imágenes pendientes de revisión.</p>
+                        }
+                        else
+                        {
+                            <div class="table-responsive">
+                                <table class="table table-striped align-middle">
+                                    <thead>
+                                        <tr>
+                                            <th>Imagen</th>
+                                            <th>Contribuidor</th>
+                                            <th>Estado</th>
+                                            <th>Fecha</th>
+                                            <th>Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var request in _reviewImageInboxPage.Items)
+                                        {
+                                            <tr>
+                                                <td>
+                                                    <a href="/images/@request.Id">@request.FileName</a><br />
+                                                    <small class="text-muted">@request.PublicId</small>
+                                                </td>
+                                                <td>@(string.IsNullOrWhiteSpace(request.ContributorFullName) ? "-" : request.ContributorFullName)</td>
+                                                <td>@MapImageReviewStatus(request.ApprovalStatus)</td>
+                                                <td>@request.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                                                <td>
+                                                    @if (request.ApprovalStatus.Equals("Pending", StringComparison.OrdinalIgnoreCase))
+                                                    {
+                                                        <div class="d-flex flex-column gap-2" style="min-width: 220px;">
+                                                            <input class="form-control form-control-sm"
+                                                                   placeholder="Comentario opcional"
+                                                                   value="@GetImageReviewComment(request.Id)"
+                                                                   @oninput="e => SetImageReviewComment(request.Id, e.Value?.ToString() ?? string.Empty)" />
+                                                            <div class="d-flex gap-2">
+                                                                <button class="btn btn-sm btn-outline-primary"
+                                                                        @onclick="() => ReviewImageAsync(request.Id, true)">
+                                                                    Aprobar
+                                                                </button>
+                                                                <button class="btn btn-sm btn-outline-danger"
+                                                                        @onclick="() => ReviewImageAsync(request.Id, false)">
+                                                                    Declinar
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-muted">Revisada</span>
+                                                    }
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            @if (_reviewImageInboxPage.TotalPages > 1)
+                            {
+                                <div class="d-flex align-items-center justify-content-between gap-2 mt-2">
+                                    <small class="text-muted">Página @_reviewImageInboxPage.Page de @_reviewImageInboxPage.TotalPages</small>
+                                    <div class="d-flex gap-2">
+                                        <button class="btn btn-sm btn-outline-secondary"
+                                                disabled="@(!_reviewImageInboxPage.HasPrevious || _loadingReviewImageInbox)"
+                                                @onclick="() => GoToReviewImageInboxPageAsync(_reviewImageInboxPage.Page - 1)">
+                                            Anterior
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-secondary"
+                                                disabled="@(!_reviewImageInboxPage.HasNext || _loadingReviewImageInbox)"
+                                                @onclick="() => GoToReviewImageInboxPageAsync(_reviewImageInboxPage.Page + 1)">
+                                            Siguiente
+                                        </button>
+                                    </div>
+                                </div>
+                            }
+                        }
+                    </div>
+                </div>
+            }
+
             @if (_inboxRequestsPage.TotalCount > 0)
             {
                 <div class="card mb-4">

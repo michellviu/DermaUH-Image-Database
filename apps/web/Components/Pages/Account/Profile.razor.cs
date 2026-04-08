@@ -6,6 +6,7 @@ namespace Web.DermaImage.Components.Pages.Account;
 public partial class Profile
 {
     private const int MembershipPageSize = 5;
+    private const int ImageReviewPageSize = 5;
 
     private UserProfile? _profile;
     private UpdateProfileRequest _profileForm = new();
@@ -18,6 +19,8 @@ public partial class Profile
     private bool _leavingInstitution;
     private bool _loadingMyJoinRequests;
     private bool _loadingInboxRequests;
+    private bool _loadingMyImageReviewRequests;
+    private bool _loadingReviewImageInbox;
 
     private string? _profileSuccess;
     private string? _profileError;
@@ -42,9 +45,31 @@ public partial class Profile
         PageSize = MembershipPageSize,
     };
 
+    private PagedResponse<DermaImgDto> _myImageReviewRequestsPage = new()
+    {
+        Items = [],
+        Page = 1,
+        PageSize = ImageReviewPageSize,
+    };
+
+    private PagedResponse<DermaImgDto> _reviewImageInboxPage = new()
+    {
+        Items = [],
+        Page = 1,
+        PageSize = ImageReviewPageSize,
+    };
+
     private int _myJoinRequestsPageNumber = 1;
     private int _inboxRequestsPageNumber = 1;
+    private int _myImageReviewRequestsPageNumber = 1;
+    private int _reviewImageInboxPageNumber = 1;
     private readonly Dictionary<Guid, string> _reviewComments = new();
+    private readonly Dictionary<Guid, string> _imageReviewComments = new();
+
+    private bool _isReviewerOrAdmin =>
+        _profile?.Roles.Any(r =>
+            string.Equals(r, "Reviewer", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(r, "Admin", StringComparison.OrdinalIgnoreCase)) == true;
 
     private bool _canRequestInstitutionAssociation =>
         _profile is not null
@@ -55,6 +80,7 @@ public partial class Profile
         await ReloadProfileAsync();
         await LoadInstitutionDataAsync();
         await LoadMembershipDataAsync();
+        await LoadImageReviewDataAsync();
     }
 
     private async Task SaveProfileAsync()
@@ -141,6 +167,25 @@ public partial class Profile
         await LoadInboxPageAsync(_inboxRequestsPageNumber);
     }
 
+    private async Task LoadImageReviewDataAsync()
+    {
+        await LoadMyImageReviewRequestsPageAsync(_myImageReviewRequestsPageNumber);
+
+        if (_isReviewerOrAdmin)
+        {
+            await LoadReviewImageInboxPageAsync(_reviewImageInboxPageNumber);
+        }
+        else
+        {
+            _reviewImageInboxPage = new PagedResponse<DermaImgDto>
+            {
+                Items = [],
+                Page = 1,
+                PageSize = ImageReviewPageSize,
+            };
+        }
+    }
+
     private async Task GoToMyJoinRequestsPageAsync(int page)
     {
         await LoadMyJoinRequestsPageAsync(page);
@@ -149,6 +194,16 @@ public partial class Profile
     private async Task GoToInboxPageAsync(int page)
     {
         await LoadInboxPageAsync(page);
+    }
+
+    private async Task GoToMyImageReviewRequestsPageAsync(int page)
+    {
+        await LoadMyImageReviewRequestsPageAsync(page);
+    }
+
+    private async Task GoToReviewImageInboxPageAsync(int page)
+    {
+        await LoadReviewImageInboxPageAsync(page);
     }
 
     private async Task LoadMyJoinRequestsPageAsync(int page)
@@ -199,6 +254,54 @@ public partial class Profile
         }
     }
 
+    private async Task LoadMyImageReviewRequestsPageAsync(int page)
+    {
+        _loadingMyImageReviewRequests = true;
+        try
+        {
+            var requestedPage = Math.Max(1, page);
+            var response = await Auth.GetMyImageReviewRequestsAsync(requestedPage, ImageReviewPageSize);
+            var normalized = NormalizePagedResponse(response, requestedPage, ImageReviewPageSize);
+
+            if (normalized.TotalPages > 0 && requestedPage > normalized.TotalPages)
+            {
+                response = await Auth.GetMyImageReviewRequestsAsync(normalized.TotalPages, ImageReviewPageSize);
+                normalized = NormalizePagedResponse(response, normalized.TotalPages, ImageReviewPageSize);
+            }
+
+            _myImageReviewRequestsPage = normalized;
+            _myImageReviewRequestsPageNumber = normalized.Page;
+        }
+        finally
+        {
+            _loadingMyImageReviewRequests = false;
+        }
+    }
+
+    private async Task LoadReviewImageInboxPageAsync(int page)
+    {
+        _loadingReviewImageInbox = true;
+        try
+        {
+            var requestedPage = Math.Max(1, page);
+            var response = await Auth.GetImageReviewInboxAsync(requestedPage, ImageReviewPageSize);
+            var normalized = NormalizePagedResponse(response, requestedPage, ImageReviewPageSize);
+
+            if (normalized.TotalPages > 0 && requestedPage > normalized.TotalPages)
+            {
+                response = await Auth.GetImageReviewInboxAsync(normalized.TotalPages, ImageReviewPageSize);
+                normalized = NormalizePagedResponse(response, normalized.TotalPages, ImageReviewPageSize);
+            }
+
+            _reviewImageInboxPage = normalized;
+            _reviewImageInboxPageNumber = normalized.Page;
+        }
+        finally
+        {
+            _loadingReviewImageInbox = false;
+        }
+    }
+
     private async Task SubmitJoinRequestAsync()
     {
         _membershipError = null;
@@ -244,6 +347,7 @@ public partial class Profile
         _selectedInstitutionId = null;
         await ReloadProfileAsync();
         await LoadMembershipDataAsync();
+        await LoadImageReviewDataAsync();
     }
 
     private async Task ReviewRequestAsync(Guid requestId, bool approve)
@@ -273,6 +377,35 @@ public partial class Profile
 
         _reviewComments.Remove(requestId);
         await LoadMembershipDataAsync();
+    }
+
+    private async Task ReviewImageAsync(Guid imageId, bool approve)
+    {
+        _membershipError = null;
+        _membershipMessage = null;
+
+        var comment = _imageReviewComments.TryGetValue(imageId, out var value)
+            ? value
+            : null;
+
+        var (success, error) = await Auth.ReviewImageUploadAsync(imageId, new ReviewImageUploadRequest
+        {
+            Approve = approve,
+            Comment = comment,
+        });
+
+        if (!success)
+        {
+            _membershipError = error;
+            return;
+        }
+
+        _membershipMessage = approve
+            ? "Imagen aprobada correctamente."
+            : "Imagen declinada correctamente.";
+
+        _imageReviewComments.Remove(imageId);
+        await LoadImageReviewDataAsync();
     }
 
     private static PagedResponse<T> NormalizePagedResponse<T>(PagedResponse<T>? response, int requestedPage, int fallbackPageSize)
@@ -329,5 +462,37 @@ public partial class Profile
         }
 
         return status;
+    }
+
+    private static string MapImageReviewStatus(string status)
+    {
+        if (string.Equals(status, "Pending", StringComparison.OrdinalIgnoreCase))
+        {
+            return "Pendiente";
+        }
+
+        if (string.Equals(status, "Approved", StringComparison.OrdinalIgnoreCase))
+        {
+            return "Aprobada";
+        }
+
+        if (string.Equals(status, "Declined", StringComparison.OrdinalIgnoreCase))
+        {
+            return "Declinada";
+        }
+
+        return status;
+    }
+
+    private string GetImageReviewComment(Guid imageId)
+    {
+        return _imageReviewComments.TryGetValue(imageId, out var comment)
+            ? comment
+            : string.Empty;
+    }
+
+    private void SetImageReviewComment(Guid imageId, string value)
+    {
+        _imageReviewComments[imageId] = value;
     }
 }
