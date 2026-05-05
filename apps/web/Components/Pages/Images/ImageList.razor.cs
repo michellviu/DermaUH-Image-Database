@@ -1,8 +1,10 @@
+using System.Net.Http;
 using System.Net.Http.Json;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.JSInterop;
+using Web.DermaImage.Services;
 using Web.DermaImage.Shared.Models;
 
 namespace Web.DermaImage.Components.Pages.Images;
@@ -15,6 +17,7 @@ public partial class ImageList
     private bool hasLoaded;
     private int totalCount;
     private string? loadingError;
+    private string? downloadError;
     private bool isLoadingPage;
     private bool hasMorePages = true;
     private int nextPageToLoad = 1;
@@ -30,6 +33,9 @@ public partial class ImageList
     private bool onlyMyContributions;
     private bool isAuthenticated;
     private Guid? currentUserId;
+    private bool isDownloading;
+
+    private readonly HashSet<Guid> selectedImageIds = [];
 
     private readonly HashSet<string> selectedImageTypes = [];
     private readonly HashSet<string> selectedDiagnosisCategories = [];
@@ -183,6 +189,8 @@ public partial class ImageList
         nextPageToLoad = 1;
         hasMorePages = true;
         loadingError = null;
+        downloadError = null;
+        selectedImageIds.Clear();
         hasLoaded = false;
 
         await LoadNextPageAsync();
@@ -247,11 +255,16 @@ public partial class ImageList
 
     private string BuildQuery(int page, int pageSize)
     {
-        var queryParams = new List<string>
-        {
-            $"page={page}",
-            $"pageSize={pageSize}",
-        };
+        var queryParams = BuildFilterQueryParams();
+        queryParams.Insert(0, $"pageSize={pageSize}");
+        queryParams.Insert(0, $"page={page}");
+
+        return $"api/images?{string.Join("&", queryParams)}";
+    }
+
+    private List<string> BuildFilterQueryParams()
+    {
+        var queryParams = new List<string>();
 
         foreach (var value in selectedImageTypes)
         {
@@ -293,9 +306,15 @@ public partial class ImageList
             queryParams.Add($"contributorId={currentUserId.Value}");
         }
 
-        queryParams.Add("isPublic=true");
+        return queryParams;
+    }
 
-        return $"api/images?{string.Join("&", queryParams)}";
+    private string BuildDownloadAllQuery()
+    {
+        var queryParams = BuildFilterQueryParams();
+        return queryParams.Count == 0
+            ? "api/images/download"
+            : $"api/images/download?{string.Join("&", queryParams)}";
     }
 
     private async Task ToggleSelection(ChangeEventArgs args, string value, HashSet<string> selectedValues)
@@ -311,6 +330,121 @@ public partial class ImageList
         }
 
         await ApplyFiltersAsync();
+    }
+
+    private bool IsImageSelected(Guid id) => selectedImageIds.Contains(id);
+
+    private bool IsPageFullySelected => images.Count > 0 && images.All(img => selectedImageIds.Contains(img.Id));
+
+    private Task ToggleImageSelection(ChangeEventArgs args, Guid id)
+    {
+        var isChecked = args.Value as bool? ?? false;
+        if (isChecked)
+        {
+            selectedImageIds.Add(id);
+        }
+        else
+        {
+            selectedImageIds.Remove(id);
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private Task ToggleSelectAllOnPage(ChangeEventArgs args)
+    {
+        var isChecked = args.Value as bool? ?? false;
+
+        if (isChecked)
+        {
+            foreach (var image in images)
+            {
+                selectedImageIds.Add(image.Id);
+            }
+        }
+        else
+        {
+            foreach (var image in images)
+            {
+                selectedImageIds.Remove(image.Id);
+            }
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private async Task DownloadSelectedAsync()
+    {
+        if (selectedImageIds.Count == 0)
+        {
+            return;
+        }
+
+        var payload = new DownloadImagesRequest
+        {
+            ImageIds = selectedImageIds.ToList()
+        };
+
+        var request = new HttpRequestMessage(HttpMethod.Post, "api/images/download")
+        {
+            Content = JsonContent.Create(payload)
+        };
+
+        var fallbackName = $"dermauh-imagenes-seleccion-{DateTime.UtcNow:yyyyMMdd-HHmm}.zip";
+        await StartDownloadAsync(request, fallbackName);
+    }
+
+    private async Task DownloadAllAsync()
+    {
+        if (totalCount == 0)
+        {
+            return;
+        }
+
+        var request = new HttpRequestMessage(HttpMethod.Get, BuildDownloadAllQuery());
+        var fallbackName = $"dermauh-imagenes-{DateTime.UtcNow:yyyyMMdd-HHmm}.zip";
+        await StartDownloadAsync(request, fallbackName);
+    }
+
+    private async Task StartDownloadAsync(HttpRequestMessage request, string fallbackName)
+    {
+        if (isDownloading)
+        {
+            return;
+        }
+
+        isDownloading = true;
+        downloadError = null;
+
+        try
+        {
+            using var response = await Http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
+            if (!response.IsSuccessStatusCode)
+            {
+                downloadError = await ApiValidationMessageParser.BuildFriendlyErrorMessageAsync(response);
+                return;
+            }
+
+            var fileName = ResolveFileName(response, fallbackName);
+            await using var stream = await response.Content.ReadAsStreamAsync();
+            using var streamRef = new DotNetStreamReference(stream);
+            await JS.InvokeVoidAsync("fileDownloads.downloadFileFromStream", fileName, streamRef);
+        }
+        catch (Exception ex)
+        {
+            downloadError = $"No fue posible descargar las imagenes: {ex.Message}";
+        }
+        finally
+        {
+            isDownloading = false;
+        }
+    }
+
+    private static string ResolveFileName(HttpResponseMessage response, string fallback)
+    {
+        var contentDisposition = response.Content.Headers.ContentDisposition;
+        var candidate = contentDisposition?.FileNameStar ?? contentDisposition?.FileName;
+        return string.IsNullOrWhiteSpace(candidate) ? fallback : candidate.Trim('"');
     }
 
     public async ValueTask DisposeAsync()

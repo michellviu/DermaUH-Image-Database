@@ -34,6 +34,67 @@ public class DermaImgRepository : Repository<DermaImg>, IDermaImgRepository
         return query;
     }
 
+    private static IQueryable<DermaImg> ApplyFilter(IQueryable<DermaImg> query, DermaImgFilter? filter)
+    {
+        if (filter is null)
+        {
+            return query;
+        }
+
+        if (filter.ImageTypes is { Count: > 0 })
+        {
+            query = query.Where(i => i.ImageType.HasValue && filter.ImageTypes.Contains(i.ImageType.Value));
+        }
+
+        if (filter.DiagnosisCategories is { Count: > 0 })
+        {
+            query = query.Where(i => i.DiagnosisCategory.HasValue && filter.DiagnosisCategories.Contains(i.DiagnosisCategory.Value));
+        }
+
+        if (filter.InjuryTypes is { Count: > 0 })
+        {
+            query = query.Where(i => i.InjuryType.HasValue && filter.InjuryTypes.Contains(i.InjuryType.Value));
+        }
+
+        if (filter.FotoTypes is { Count: > 0 })
+        {
+            query = query.Where(i => i.FotoType.HasValue && filter.FotoTypes.Contains(i.FotoType.Value));
+        }
+
+        if (filter.ContributorId.HasValue)
+        {
+            query = query.Where(i => i.ContributorId == filter.ContributorId.Value);
+        }
+
+        if (filter.Sexes is { Count: > 0 })
+        {
+            query = query.Where(i => i.Sex.HasValue && filter.Sexes.Contains(i.Sex.Value));
+        }
+
+        if (filter.AnatomSites is { Count: > 0 })
+        {
+            query = query.Where(i => i.AnatomSiteGeneral.HasValue && filter.AnatomSites.Contains(i.AnatomSiteGeneral.Value));
+        }
+
+        if (filter.ApprovalStatuses is { Count: > 0 })
+        {
+            query = query.Where(i => filter.ApprovalStatuses.Contains(i.ApprovalStatus));
+        }
+
+        if (filter.IsPublic.HasValue)
+        {
+            query = query.Where(i => i.IsPublic == filter.IsPublic.Value);
+        }
+
+        if (!string.IsNullOrWhiteSpace(filter.DiagnosisContains))
+        {
+            var diagnosis = filter.DiagnosisContains.Trim().ToLower();
+            query = query.Where(i => i.Diagnosis != null && i.Diagnosis.ToLower().Contains(diagnosis));
+        }
+
+        return query;
+    }
+
     public Task<DermaImg?> GetByPublicIdAsync(string publicId, CancellationToken cancellationToken = default)
     {
         Logger.LogInformation("Fetching image by public id: {PublicId}", publicId);
@@ -66,6 +127,25 @@ public class DermaImgRepository : Repository<DermaImg>, IDermaImgRepository
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<IReadOnlyList<DermaImg>> GetByIdsAsync(IReadOnlyCollection<Guid> ids, CancellationToken cancellationToken = default)
+    {
+        if (ids is null || ids.Count == 0)
+        {
+            return Array.Empty<DermaImg>();
+        }
+
+        var idList = ids.Distinct().ToList();
+        Logger.LogInformation("Fetching images by ids. Count: {Count}", idList.Count);
+
+        return await DbSet
+            .Where(i => idList.Contains(i.Id))
+            .Include(i => i.Contributor)
+            .Include(i => i.Institution)
+            .Include(i => i.ReviewedByUser)
+            .OrderByDescending(i => i.CreatedAt)
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<(IEnumerable<DermaImg> Items, int TotalCount)> GetPagedFilteredAsync(
         int page,
         int pageSize,
@@ -76,61 +156,7 @@ public class DermaImgRepository : Repository<DermaImg>, IDermaImgRepository
         page = page < 1 ? 1 : page;
         pageSize = pageSize < 1 ? 20 : pageSize;
 
-        var query = DbSet.AsQueryable();
-
-        if (filter is not null)
-        {
-            if (filter.ImageTypes is { Count: > 0 })
-            {
-                query = query.Where(i => i.ImageType.HasValue && filter.ImageTypes.Contains(i.ImageType.Value));
-            }
-
-            if (filter.DiagnosisCategories is { Count: > 0 })
-            {
-                query = query.Where(i => i.DiagnosisCategory.HasValue && filter.DiagnosisCategories.Contains(i.DiagnosisCategory.Value));
-            }
-
-            if (filter.InjuryTypes is { Count: > 0 })
-            {
-                query = query.Where(i => i.InjuryType.HasValue && filter.InjuryTypes.Contains(i.InjuryType.Value));
-            }
-
-            if (filter.FotoTypes is { Count: > 0 })
-            {
-                query = query.Where(i => i.FotoType.HasValue && filter.FotoTypes.Contains(i.FotoType.Value));
-            }
-
-            if (filter.ContributorId.HasValue)
-            {
-                query = query.Where(i => i.ContributorId == filter.ContributorId.Value);
-            }
-
-            if (filter.Sexes is { Count: > 0 })
-            {
-                query = query.Where(i => i.Sex.HasValue && filter.Sexes.Contains(i.Sex.Value));
-            }
-
-            if (filter.AnatomSites is { Count: > 0 })
-            {
-                query = query.Where(i => i.AnatomSiteGeneral.HasValue && filter.AnatomSites.Contains(i.AnatomSiteGeneral.Value));
-            }
-
-            if (filter.ApprovalStatuses is { Count: > 0 })
-            {
-                query = query.Where(i => filter.ApprovalStatuses.Contains(i.ApprovalStatus));
-            }
-
-            if (filter.IsPublic.HasValue)
-            {
-                query = query.Where(i => i.IsPublic == filter.IsPublic.Value);
-            }
-
-            if (!string.IsNullOrWhiteSpace(filter.DiagnosisContains))
-            {
-                var diagnosis = filter.DiagnosisContains.Trim().ToLower();
-                query = query.Where(i => i.Diagnosis != null && i.Diagnosis.ToLower().Contains(diagnosis));
-            }
-        }
+        var query = ApplyFilter(DbSet.AsQueryable(), filter);
 
         var totalCount = await query.CountAsync(cancellationToken);
 
@@ -145,6 +171,22 @@ public class DermaImgRepository : Repository<DermaImg>, IDermaImgRepository
 
         Logger.LogInformation("Fetched paged filtered images. Returned: {Count}, TotalCount: {TotalCount}", items.Count, totalCount);
         return (items, totalCount);
+    }
+
+    public async Task<IReadOnlyList<DermaImg>> GetFilteredAsync(DermaImgFilter? filter = null, CancellationToken cancellationToken = default)
+    {
+        Logger.LogInformation("Fetching filtered images. HasFilter: {HasFilter}", filter is not null);
+        var query = ApplyFilter(DbSet.AsQueryable(), filter);
+
+        var items = await query
+            .OrderByDescending(i => i.CreatedAt)
+            .Include(i => i.Contributor)
+            .Include(i => i.Institution)
+            .Include(i => i.ReviewedByUser)
+            .ToListAsync(cancellationToken);
+
+        Logger.LogInformation("Fetched filtered images. Returned: {Count}", items.Count);
+        return items;
     }
 
     public async Task<int> CountByVisibilityAsync(bool includePrivate, CancellationToken cancellationToken = default)

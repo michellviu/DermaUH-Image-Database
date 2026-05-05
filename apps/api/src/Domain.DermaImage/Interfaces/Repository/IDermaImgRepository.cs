@@ -8,6 +8,8 @@ public interface IDermaImgRepository : IRepository<DermaImg>
     Task<IEnumerable<DermaImg>> GetByContributorIdAsync(Guid contributorId, CancellationToken cancellationToken = default);
     Task<IEnumerable<DermaImg>> GetByInstitutionIdAsync(Guid institutionId, CancellationToken cancellationToken = default);
     Task<(IEnumerable<DermaImg> Items, int TotalCount)> GetPagedFilteredAsync(int page, int pageSize, DermaImgFilter? filter = null, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<DermaImg>> GetFilteredAsync(DermaImgFilter? filter = null, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<DermaImg>> GetByIdsAsync(IReadOnlyCollection<Guid> ids, CancellationToken cancellationToken = default);
     Task<int> CountByVisibilityAsync(bool includePrivate, CancellationToken cancellationToken = default);
     Task<int> CountDistinctContributorsAsync(bool includePrivate, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<(string Key, int Count)>> GetDiagnosisCategoryCountsAsync(bool includePrivate, CancellationToken cancellationToken = default);

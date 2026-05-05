@@ -29,6 +29,16 @@ public class DermaImgManager : IDermaImgManager
         return await _service.GetByPublicIdAsync(publicId, cancellationToken);
     }
 
+    public async Task<IReadOnlyList<DermaImg>> GetFilteredAsync(DermaImgFilter? filter = null, CancellationToken cancellationToken = default)
+    {
+        return await _service.GetFilteredAsync(filter, cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<DermaImg>> GetByIdsAsync(IReadOnlyCollection<Guid> ids, CancellationToken cancellationToken = default)
+    {
+        return await _service.GetByIdsAsync(ids, cancellationToken);
+    }
+
     public async Task<DermaImg> CreateAsync(CreateDermaImgDto dto, CancellationToken cancellationToken = default)
     {
         var image = MapToEntity(dto);

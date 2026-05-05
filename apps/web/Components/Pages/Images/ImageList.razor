@@ -114,12 +114,40 @@
 
     <section class="gallery-results">
         <div class="gallery-results-head">
-            <span>@totalCount casos encontrados</span>
+            <div class="results-count">
+                <span>@totalCount casos encontrados</span>
+                @if (selectedImageIds.Count > 0)
+                {
+                    <span class="results-selection">@selectedImageIds.Count seleccionadas</span>
+                }
+            </div>
+            <div class="results-actions">
+                <label class="select-all-check">
+                    <input class="form-check-input"
+                           type="checkbox"
+                           aria-label="Seleccionar todo lo cargado"
+                           checked="@IsPageFullySelected"
+                           disabled="@(images.Count == 0)"
+                           @onchange="ToggleSelectAllOnPage" />
+                    <span>Seleccionar todo lo cargado</span>
+                </label>
+                <button type="button" class="btn btn-outline-secondary" @onclick="DownloadSelectedAsync" disabled="@(selectedImageIds.Count == 0 || isDownloading)">
+                    @(isDownloading ? "Descargando..." : "Descargar seleccion")
+                </button>
+                <button type="button" class="btn btn-primary" @onclick="DownloadAllAsync" disabled="@(totalCount == 0 || isDownloading)">
+                    @(isDownloading ? "Descargando..." : "Descargar todo")
+                </button>
+            </div>
         </div>
 
         @if (loadingError is not null)
         {
             <div class="alert alert-danger">@loadingError</div>
+        }
+
+        @if (downloadError is not null)
+        {
+            <div class="alert alert-danger">@downloadError</div>
         }
 
         @if (hasLoaded && totalCount == 0)
@@ -132,15 +160,24 @@
         <div class="images-grid">
             @foreach (var img in images)
             {
-                <a href="images/@img.Id" class="image-card" title="Ver detalle">
-                    <ImagePreview ImageId="@img.Id" Alt="@img.FileName" />
-                    <div class="image-card-footer">
-                        <div class="image-name" title="@img.FileName">
-                            <span class="image-name-text">@img.FileName</span>
+                <div class="image-card-wrap">
+                    <label class="image-select" title="Seleccionar imagen">
+                        <input type="checkbox"
+                               aria-label="Seleccionar imagen"
+                               checked="@IsImageSelected(img.Id)"
+                               @onchange="(e) => ToggleImageSelection(e, img.Id)" />
+                        <span class="image-select-box" aria-hidden="true"></span>
+                    </label>
+                    <a href="images/@img.Id" class="image-card @(IsImageSelected(img.Id) ? "image-card--selected" : string.Empty)" title="Ver detalle">
+                        <ImagePreview ImageId="@img.Id" Alt="@img.FileName" />
+                        <div class="image-card-footer">
+                            <div class="image-name" title="@img.FileName">
+                                <span class="image-name-text">@img.FileName</span>
+                            </div>
+                            <div class="image-meta">@(img.DiagnosisCategory ?? "—") · @(img.ImageType ?? "—")</div>
                         </div>
-                        <div class="image-meta">@(img.DiagnosisCategory ?? "—") · @(img.ImageType ?? "—")</div>
-                    </div>
-                </a>
+                    </a>
+                </div>
             }
         </div>
 

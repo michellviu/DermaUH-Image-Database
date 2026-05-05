@@ -6,8 +6,11 @@ using Domain.DermaImage.Entities.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.IO.Compression;
 using System.Security.Claims;
+using System.Text;
 using WebApi.DermaImage.Managers;
+using WebApi.DermaImage.Metadata;
 
 namespace WebApi.DermaImage.Controllers;
 
@@ -117,6 +120,66 @@ public class ImagesController : ControllerBase
             : image.ContentType;
 
         return PhysicalFile(image.FilePath, contentType, enableRangeProcessing: true);
+    }
+
+    [AllowAnonymous]
+    [HttpPost("download")]
+    public async Task<IActionResult> DownloadSelected([FromBody] DownloadImagesRequest request, CancellationToken cancellationToken)
+    {
+        if (request is null || request.ImageIds is null || request.ImageIds.Count == 0)
+        {
+            return BadRequest("Debe seleccionar al menos una imagen para descargar.");
+        }
+
+        var images = await _manager.GetByIdsAsync(request.ImageIds, cancellationToken);
+        var accessibleImages = images.Where(CanAccessImage).ToList();
+
+        if (accessibleImages.Count == 0)
+        {
+            return NotFound("No se encontraron imagenes disponibles para descargar.");
+        }
+
+        var fileName = BuildZipFileName("seleccion");
+        return await BuildZipResultAsync(accessibleImages, fileName, cancellationToken);
+    }
+
+    [AllowAnonymous]
+    [HttpGet("download")]
+    public async Task<IActionResult> DownloadAll(
+        [FromQuery] List<ImageType>? imageTypes = null,
+        [FromQuery] List<DiagnosisCategory>? diagnosisCategories = null,
+        [FromQuery] List<InjuryType>? injuryTypes = null,
+        [FromQuery] List<PhotoType>? fotoTypes = null,
+        [FromQuery] List<Sex>? sexes = null,
+        [FromQuery] List<AnatomSiteGeneral>? anatomSites = null,
+        [FromQuery] Guid? contributorId = null,
+        [FromQuery] string? diagnosisContains = null,
+        CancellationToken cancellationToken = default)
+    {
+        var filter = new DermaImgFilter
+        {
+            ImageTypes = imageTypes,
+            DiagnosisCategories = diagnosisCategories,
+            InjuryTypes = injuryTypes,
+            FotoTypes = fotoTypes,
+            ContributorId = contributorId,
+            Sexes = sexes,
+            AnatomSites = anatomSites,
+            IsPublic = true,
+            ApprovalStatuses = [ImageApprovalStatus.Approved],
+            DiagnosisContains = diagnosisContains
+        };
+
+        var images = await _manager.GetFilteredAsync(filter, cancellationToken);
+        var accessibleImages = images.Where(CanAccessImage).ToList();
+
+        if (accessibleImages.Count == 0)
+        {
+            return NotFound("No se encontraron imagenes para descargar con los filtros actuales.");
+        }
+
+        var fileName = BuildZipFileName("galeria");
+        return await BuildZipResultAsync(accessibleImages, fileName, cancellationToken);
     }
 
     [Authorize(Roles = "Admin,Contributor")]
@@ -354,6 +417,104 @@ public class ImagesController : ControllerBase
 
         return Ok(MapToResponseDto(reviewed));
     }
+
+    private static string BuildZipFileName(string suffix)
+    {
+        var safeSuffix = string.IsNullOrWhiteSpace(suffix)
+            ? "imagenes"
+            : $"imagenes-{suffix.Trim().ToLowerInvariant()}";
+        return $"dermauh-{safeSuffix}-{DateTime.UtcNow:yyyyMMdd-HHmm}.zip";
+    }
+
+    private static async Task<FileContentResult> BuildZipResultAsync(
+        IReadOnlyList<DermaImg> images,
+        string fileName,
+        CancellationToken cancellationToken)
+    {
+        var missingFiles = new List<string>();
+        await using var archiveStream = new MemoryStream();
+
+        using (var archive = new ZipArchive(archiveStream, ZipArchiveMode.Create, leaveOpen: true))
+        {
+            var csvEntry = archive.CreateEntry("metadata.csv", CompressionLevel.Fastest);
+            await using (var entryStream = csvEntry.Open())
+            await using (var writer = new StreamWriter(entryStream, new UTF8Encoding(encoderShouldEmitUTF8Identifier: true)))
+            {
+                var csv = ImageMetadataCatalog.BuildImagesCsv(images);
+                await writer.WriteAsync(csv);
+            }
+
+            foreach (var image in images)
+            {
+                if (string.IsNullOrWhiteSpace(image.FilePath) || !System.IO.File.Exists(image.FilePath))
+                {
+                    missingFiles.Add($"{image.PublicId} | {image.FileName}");
+                    continue;
+                }
+
+                var extension = ResolveImageExtension(image);
+                var entryName = $"images/{SanitizeFileName(image.PublicId)}{extension}";
+                var entry = archive.CreateEntry(entryName, CompressionLevel.Fastest);
+
+                await using var fileStream = System.IO.File.OpenRead(image.FilePath);
+                await using var entryStream = entry.Open();
+                await fileStream.CopyToAsync(entryStream, cancellationToken);
+            }
+
+            if (missingFiles.Count > 0)
+            {
+                var errorsEntry = archive.CreateEntry("errores.txt", CompressionLevel.Fastest);
+                await using var errorStream = errorsEntry.Open();
+                await using var writer = new StreamWriter(errorStream, new UTF8Encoding(encoderShouldEmitUTF8Identifier: true));
+                await writer.WriteLineAsync("No se encontraron los siguientes archivos:");
+                foreach (var missing in missingFiles)
+                {
+                    await writer.WriteLineAsync(missing);
+                }
+            }
+        }
+
+        archiveStream.Position = 0;
+        return new FileContentResult(archiveStream.ToArray(), "application/zip")
+        {
+            FileDownloadName = fileName
+        };
+    }
+
+    private static string ResolveImageExtension(DermaImg image)
+    {
+        var extension = Path.GetExtension(image.FileName);
+        if (!string.IsNullOrWhiteSpace(extension))
+        {
+            return extension.StartsWith('.') ? extension : $".{extension}";
+        }
+
+        if (!string.IsNullOrWhiteSpace(image.ContentType) && ContentTypeMappings.TryGetValue(image.ContentType, out var mapped))
+        {
+            return mapped;
+        }
+
+        extension = Path.GetExtension(image.FilePath);
+        return string.IsNullOrWhiteSpace(extension) ? ".jpg" : extension;
+    }
+
+    private static string SanitizeFileName(string value)
+    {
+        var filtered = new string(value.Where(c => char.IsLetterOrDigit(c) || c == '_' || c == '-').ToArray());
+        return string.IsNullOrWhiteSpace(filtered) ? "imagen" : filtered;
+    }
+
+    private static readonly IReadOnlyDictionary<string, string> ContentTypeMappings =
+        new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["image/jpeg"] = ".jpg",
+            ["image/jpg"] = ".jpg",
+            ["image/png"] = ".png",
+            ["image/gif"] = ".gif",
+            ["image/webp"] = ".webp",
+            ["image/bmp"] = ".bmp",
+            ["image/tiff"] = ".tiff"
+        };
 
     private bool CanAccessImage(DermaImg image)
     {

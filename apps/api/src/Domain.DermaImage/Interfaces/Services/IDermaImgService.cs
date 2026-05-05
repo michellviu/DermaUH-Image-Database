@@ -7,6 +7,8 @@ public interface IDermaImgService
     Task<DermaImg?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
     Task<DermaImg?> GetByPublicIdAsync(string publicId, CancellationToken cancellationToken = default);
     Task<(IEnumerable<DermaImg> Items, int TotalCount)> GetPagedAsync(int page, int pageSize, DermaImgFilter? filter = null, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<DermaImg>> GetFilteredAsync(DermaImgFilter? filter = null, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<DermaImg>> GetByIdsAsync(IReadOnlyCollection<Guid> ids, CancellationToken cancellationToken = default);
     Task<DermaImg> CreateAsync(DermaImg image, CancellationToken cancellationToken = default);
     Task UpdateAsync(DermaImg image, CancellationToken cancellationToken = default);
     Task DeleteAsync(Guid id, CancellationToken cancellationToken = default);

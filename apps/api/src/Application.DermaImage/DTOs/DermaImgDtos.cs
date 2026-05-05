@@ -108,3 +108,8 @@ public class ReviewImageUploadDto
     [MaxLength(500)]
     public string? Comment { get; set; }
 }
+
+public class DownloadImagesRequest
+{
+    public List<Guid> ImageIds { get; set; } = [];
+}

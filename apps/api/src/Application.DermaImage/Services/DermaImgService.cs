@@ -28,6 +28,16 @@ public class DermaImgService : IDermaImgService
         return await _repository.GetPagedFilteredAsync(page, pageSize, filter, cancellationToken);
     }
 
+    public async Task<IReadOnlyList<DermaImg>> GetFilteredAsync(DermaImgFilter? filter = null, CancellationToken cancellationToken = default)
+    {
+        return await _repository.GetFilteredAsync(filter, cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<DermaImg>> GetByIdsAsync(IReadOnlyCollection<Guid> ids, CancellationToken cancellationToken = default)
+    {
+        return await _repository.GetByIdsAsync(ids, cancellationToken);
+    }
+
     public async Task<DermaImg> CreateAsync(DermaImg image, CancellationToken cancellationToken = default)
     {
         image.PublicId = await _repository.GeneratePublicIdAsync(cancellationToken);
