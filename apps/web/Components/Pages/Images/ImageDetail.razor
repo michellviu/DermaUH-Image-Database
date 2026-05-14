@@ -1,7 +1,5 @@
 @page "/images/{Id:guid}"
 @rendermode InteractiveServer
-@using Microsoft.AspNetCore.Components.Authorization
-@using System.Security.Claims
 @inject HttpClient Http
 
 <PageTitle>Detalle de Imagen - DermaUH</PageTitle>
@@ -19,16 +17,11 @@ else
     <PageHeader Title="Detalle de imagen" Subtitle="@($"ID público: {image.PublicId}")">
         <Actions>
             <a href="images" class="btn btn-outline-primary">Volver al listado</a>
-            @if (canEdit)
-            {
-                <a href="images/@image.Id/edit" class="btn btn-primary">Editar</a>
-            }
         </Actions>
     </PageHeader>
 
     <section class="detail-summary-strip">
         <span class="summary-chip @(image.IsPublic ? "summary-chip--public" : "summary-chip--private")">@(image.IsPublic ? "Pública" : "Privada")</span>
-        <span class="summary-chip">Revisión: @MapApprovalStatus(image.ApprovalStatus)</span>
         @if (!string.IsNullOrWhiteSpace(image.DiagnosisCategory))
         {
             <span class="summary-chip">@LocalizeCategory(image.DiagnosisCategory)</span>
@@ -115,21 +108,14 @@ else
 
 @code {
     [Parameter] public Guid Id { get; set; }
-    [CascadingParameter] private Task<AuthenticationState>? AuthenticationStateTask { get; set; }
-
     private DermaImgDto? image;
     private bool loading = true;
-    private bool canEdit;
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
             image = await Http.GetFromJsonAsync<DermaImgDto>($"api/images/{Id}");
-            if (image is not null)
-            {
-                canEdit = await ResolveCanEditAsync(image);
-            }
         }
         catch
         {
@@ -152,35 +138,6 @@ else
         "Indeterminate" => "bg-warning text-dark",
         _ => "bg-secondary"
     };
-
-    private async Task<bool> ResolveCanEditAsync(DermaImgDto currentImage)
-    {
-        if (AuthenticationStateTask is null)
-        {
-            return false;
-        }
-
-        var authState = await AuthenticationStateTask;
-        var user = authState.User;
-
-        if (!(user.Identity?.IsAuthenticated ?? false))
-        {
-            return false;
-        }
-
-        if (user.IsInRole("Admin"))
-        {
-            return true;
-        }
-
-        var userIdText = user.FindFirst(ClaimTypes.NameIdentifier)?.Value
-            ?? user.FindFirst("sub")?.Value
-            ?? user.FindFirst(ClaimTypes.Name)?.Value;
-
-        return Guid.TryParse(userIdText, out var userId)
-            && currentImage.ContributorId.HasValue
-            && currentImage.ContributorId.Value == userId;
-    }
 
     private string FormatFileSize(long bytes)
     {
@@ -225,14 +182,6 @@ else
         "PalmsSoles" => "Palmas/Plantas",
         "OralGenital" => "Oral/Genital",
         _ => value ?? "—"
-    };
-
-    private static string MapApprovalStatus(string? status) => status switch
-    {
-        "Pending" => "Pendiente",
-        "Approved" => "Aprobada",
-        "Declined" => "Declinada",
-        _ => string.IsNullOrWhiteSpace(status) ? "Pendiente" : status,
     };
 
     private RenderFragment KeyValue(string label, string? value) => builder =>
