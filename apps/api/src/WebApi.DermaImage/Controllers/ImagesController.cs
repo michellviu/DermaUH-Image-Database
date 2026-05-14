@@ -57,7 +57,6 @@ public class ImagesController : ControllerBase
             Sexes = sexes,
             AnatomSites = anatomSites,
             IsPublic = true,
-            ApprovalStatuses = [ImageApprovalStatus.Approved],
             DiagnosisContains = diagnosisContains
         };
 
@@ -124,7 +123,10 @@ public class ImagesController : ControllerBase
 
     [AllowAnonymous]
     [HttpPost("download")]
-    public async Task<IActionResult> DownloadSelected([FromBody] DownloadImagesRequest request, CancellationToken cancellationToken)
+    public async Task<IActionResult> DownloadSelected(
+        [FromBody] DownloadImagesRequest request,
+        [FromQuery] ImageDownloadMode mode = ImageDownloadMode.ImagesAndMetadata,
+        CancellationToken cancellationToken = default)
     {
         if (request is null || request.ImageIds is null || request.ImageIds.Count == 0)
         {
@@ -139,8 +141,14 @@ public class ImagesController : ControllerBase
             return NotFound("No se encontraron imagenes disponibles para descargar.");
         }
 
-        var fileName = BuildZipFileName("seleccion");
-        return await BuildZipResultAsync(accessibleImages, fileName, cancellationToken);
+        var (includeImages, includeMetadata) = ResolveDownloadOptions(mode);
+        if (!includeImages && !includeMetadata)
+        {
+            return BadRequest("Debe seleccionar imagenes o metadatos para descargar.");
+        }
+
+        var fileName = BuildZipFileName("seleccion", mode);
+        return await BuildZipResultAsync(accessibleImages, fileName, includeImages, includeMetadata, cancellationToken);
     }
 
     [AllowAnonymous]
@@ -154,6 +162,7 @@ public class ImagesController : ControllerBase
         [FromQuery] List<AnatomSiteGeneral>? anatomSites = null,
         [FromQuery] Guid? contributorId = null,
         [FromQuery] string? diagnosisContains = null,
+        [FromQuery] ImageDownloadMode mode = ImageDownloadMode.ImagesAndMetadata,
         CancellationToken cancellationToken = default)
     {
         var filter = new DermaImgFilter
@@ -166,7 +175,6 @@ public class ImagesController : ControllerBase
             Sexes = sexes,
             AnatomSites = anatomSites,
             IsPublic = true,
-            ApprovalStatuses = [ImageApprovalStatus.Approved],
             DiagnosisContains = diagnosisContains
         };
 
@@ -178,8 +186,14 @@ public class ImagesController : ControllerBase
             return NotFound("No se encontraron imagenes para descargar con los filtros actuales.");
         }
 
-        var fileName = BuildZipFileName("galeria");
-        return await BuildZipResultAsync(accessibleImages, fileName, cancellationToken);
+        var (includeImages, includeMetadata) = ResolveDownloadOptions(mode);
+        if (!includeImages && !includeMetadata)
+        {
+            return BadRequest("Debe seleccionar imagenes o metadatos para descargar.");
+        }
+
+        var fileName = BuildZipFileName("galeria", mode);
+        return await BuildZipResultAsync(accessibleImages, fileName, includeImages, includeMetadata, cancellationToken);
     }
 
     [Authorize(Roles = "Admin,Contributor")]
@@ -206,12 +220,6 @@ public class ImagesController : ControllerBase
         if (userId is null)
         {
             return Unauthorized();
-        }
-
-        var activeReviewers = await _userManager.GetActiveUsersByRoleAsync(UserRole.Reviewer, cancellationToken);
-        if (activeReviewers.Count == 0)
-        {
-            return BadRequest(new { message = "No hay especialistas asignados con rol REVIEWER para revisar la subida. Contacta al administrador." });
         }
 
         // Contributors can only create images under their own identity.
@@ -278,14 +286,6 @@ public class ImagesController : ControllerBase
         var contributor = await _userManager.GetByIdAsync(existing.ContributorId, cancellationToken);
         dto.InstitutionId = contributor?.InstitutionId;
 
-        if (!isAdmin)
-        {
-            existing.ApprovalStatus = ImageApprovalStatus.Pending;
-            existing.ReviewedByUserId = null;
-            existing.ReviewedAt = null;
-            existing.ReviewComment = null;
-        }
-
         var businessValidationErrors = DermaImgValidationRules.Validate(dto);
         if (businessValidationErrors.Count > 0)
         {
@@ -326,98 +326,6 @@ public class ImagesController : ControllerBase
         return NoContent();
     }
 
-    [Authorize(Roles = "Admin,Contributor,Reviewer")]
-    [HttpGet("review-requests/mine")]
-    public async Task<ActionResult<PagedResponse<DermaImgResponseDto>>> GetMyReviewRequests(
-        [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 10,
-        [FromQuery] ImageApprovalStatus? status = null,
-        CancellationToken cancellationToken = default)
-    {
-        var userId = GetCurrentUserId();
-        if (userId is null)
-        {
-            return Unauthorized();
-        }
-
-        var validPage = Math.Max(1, page);
-        var validPageSize = Math.Clamp(pageSize, 1, 100);
-
-        var filter = new DermaImgFilter
-        {
-            ContributorId = userId.Value,
-            ApprovalStatuses = status.HasValue ? [status.Value] : null,
-        };
-
-        var (items, totalCount) = await _manager.GetPagedAsync(validPage, validPageSize, filter, cancellationToken);
-        return Ok(new PagedResponse<DermaImgResponseDto>
-        {
-            Items = items.Select(MapToResponseDto),
-            TotalCount = totalCount,
-            Page = validPage,
-            PageSize = validPageSize,
-        });
-    }
-
-    [Authorize(Roles = "Admin,Reviewer")]
-    [HttpGet("review-requests/inbox")]
-    public async Task<ActionResult<PagedResponse<DermaImgResponseDto>>> GetReviewInbox(
-        [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 10,
-        [FromQuery] bool includeReviewed = false,
-        CancellationToken cancellationToken = default)
-    {
-        var validPage = Math.Max(1, page);
-        var validPageSize = Math.Clamp(pageSize, 1, 100);
-
-        var filter = new DermaImgFilter
-        {
-            ApprovalStatuses = includeReviewed ? null : [ImageApprovalStatus.Pending],
-        };
-
-        var (items, totalCount) = await _manager.GetPagedAsync(validPage, validPageSize, filter, cancellationToken);
-        return Ok(new PagedResponse<DermaImgResponseDto>
-        {
-            Items = items.Select(MapToResponseDto),
-            TotalCount = totalCount,
-            Page = validPage,
-            PageSize = validPageSize,
-        });
-    }
-
-    [Authorize(Roles = "Admin,Reviewer")]
-    [HttpPost("{id:guid}/review")]
-    public async Task<ActionResult<DermaImgResponseDto>> ReviewUpload(Guid id, [FromBody] ReviewImageUploadDto dto, CancellationToken cancellationToken)
-    {
-        var userId = GetCurrentUserId();
-        if (userId is null)
-        {
-            return Unauthorized();
-        }
-
-        var image = await _manager.GetByIdAsync(id, cancellationToken);
-        if (image is null)
-        {
-            return NotFound();
-        }
-
-        if (image.ApprovalStatus != ImageApprovalStatus.Pending)
-        {
-            return BadRequest(new { message = "La imagen ya fue revisada previamente." });
-        }
-
-        var nextStatus = dto.Approve ? ImageApprovalStatus.Approved : ImageApprovalStatus.Declined;
-        await _manager.ReviewUploadAsync(id, userId.Value, nextStatus, dto.Comment, cancellationToken);
-
-        var reviewed = await _manager.GetByIdAsync(id, cancellationToken);
-        if (reviewed is null)
-        {
-            return NotFound();
-        }
-
-        return Ok(MapToResponseDto(reviewed));
-    }
-
     private static string BuildZipFileName(string suffix)
     {
         var safeSuffix = string.IsNullOrWhiteSpace(suffix)
@@ -426,9 +334,26 @@ public class ImagesController : ControllerBase
         return $"dermauh-{safeSuffix}-{DateTime.UtcNow:yyyyMMdd-HHmm}.zip";
     }
 
+    private static string BuildZipFileName(string suffix, ImageDownloadMode mode)
+    {
+        var baseName = BuildZipFileName(suffix);
+        if (mode == ImageDownloadMode.ImagesAndMetadata)
+        {
+            return baseName;
+        }
+
+        var modeSuffix = mode == ImageDownloadMode.MetadataOnly
+            ? "metadatos"
+            : "solo-imagenes";
+
+        return baseName.Replace(".zip", $"-{modeSuffix}.zip");
+    }
+
     private static async Task<FileContentResult> BuildZipResultAsync(
         IReadOnlyList<DermaImg> images,
         string fileName,
+        bool includeImages,
+        bool includeMetadata,
         CancellationToken cancellationToken)
     {
         var missingFiles = new List<string>();
@@ -436,32 +361,38 @@ public class ImagesController : ControllerBase
 
         using (var archive = new ZipArchive(archiveStream, ZipArchiveMode.Create, leaveOpen: true))
         {
-            var csvEntry = archive.CreateEntry("metadata.csv", CompressionLevel.Fastest);
-            await using (var entryStream = csvEntry.Open())
-            await using (var writer = new StreamWriter(entryStream, new UTF8Encoding(encoderShouldEmitUTF8Identifier: true)))
+            if (includeMetadata)
             {
-                var csv = ImageMetadataCatalog.BuildImagesCsv(images);
-                await writer.WriteAsync(csv);
-            }
-
-            foreach (var image in images)
-            {
-                if (string.IsNullOrWhiteSpace(image.FilePath) || !System.IO.File.Exists(image.FilePath))
+                var csvEntry = archive.CreateEntry("metadata.csv", CompressionLevel.Fastest);
+                await using (var entryStream = csvEntry.Open())
+                await using (var writer = new StreamWriter(entryStream, new UTF8Encoding(encoderShouldEmitUTF8Identifier: true)))
                 {
-                    missingFiles.Add($"{image.PublicId} | {image.FileName}");
-                    continue;
+                    var csv = ImageMetadataCatalog.BuildImagesCsv(images);
+                    await writer.WriteAsync(csv);
                 }
-
-                var extension = ResolveImageExtension(image);
-                var entryName = $"images/{SanitizeFileName(image.PublicId)}{extension}";
-                var entry = archive.CreateEntry(entryName, CompressionLevel.Fastest);
-
-                await using var fileStream = System.IO.File.OpenRead(image.FilePath);
-                await using var entryStream = entry.Open();
-                await fileStream.CopyToAsync(entryStream, cancellationToken);
             }
 
-            if (missingFiles.Count > 0)
+            if (includeImages)
+            {
+                foreach (var image in images)
+                {
+                    if (string.IsNullOrWhiteSpace(image.FilePath) || !System.IO.File.Exists(image.FilePath))
+                    {
+                        missingFiles.Add($"{image.PublicId} | {image.FileName}");
+                        continue;
+                    }
+
+                    var extension = ResolveImageExtension(image);
+                    var entryName = $"images/{SanitizeFileName(image.PublicId)}{extension}";
+                    var entry = archive.CreateEntry(entryName, CompressionLevel.Fastest);
+
+                    await using var fileStream = System.IO.File.OpenRead(image.FilePath);
+                    await using var entryStream = entry.Open();
+                    await fileStream.CopyToAsync(entryStream, cancellationToken);
+                }
+            }
+
+            if (includeImages && missingFiles.Count > 0)
             {
                 var errorsEntry = archive.CreateEntry("errores.txt", CompressionLevel.Fastest);
                 await using var errorStream = errorsEntry.Open();
@@ -478,6 +409,16 @@ public class ImagesController : ControllerBase
         return new FileContentResult(archiveStream.ToArray(), "application/zip")
         {
             FileDownloadName = fileName
+        };
+    }
+
+    private static (bool IncludeImages, bool IncludeMetadata) ResolveDownloadOptions(ImageDownloadMode mode)
+    {
+        return mode switch
+        {
+            ImageDownloadMode.MetadataOnly => (false, true),
+            ImageDownloadMode.ImagesOnly => (true, false),
+            _ => (true, true)
         };
     }
 
@@ -518,7 +459,7 @@ public class ImagesController : ControllerBase
 
     private bool CanAccessImage(DermaImg image)
     {
-        if (image.ApprovalStatus == ImageApprovalStatus.Approved && image.IsPublic)
+        if (image.IsPublic)
         {
             return true;
         }
@@ -557,13 +498,6 @@ public class ImagesController : ControllerBase
             ContentType = image.ContentType,
             FileSize = image.FileSize,
             IsPublic = image.IsPublic,
-            ApprovalStatus = image.ApprovalStatus,
-            ReviewComment = image.ReviewComment,
-            ReviewedAt = image.ReviewedAt,
-            ReviewedByUserId = image.ReviewedByUserId,
-            ReviewedByFullName = image.ReviewedByUser is null
-                ? null
-                : $"{image.ReviewedByUser.FirstName} {image.ReviewedByUser.LastName}".Trim(),
             ImageType = image.ImageType,
             ImageManipulation = image.ImageManipulation,
             DermoscopicType = image.DermoscopicType,
@@ -589,5 +523,12 @@ public class ImagesController : ControllerBase
             InstitutionId = image.InstitutionId,
             InstitutionName = image.Institution?.Name
         };
+    }
+
+    public enum ImageDownloadMode
+    {
+        ImagesAndMetadata,
+        MetadataOnly,
+        ImagesOnly
     }
 }
