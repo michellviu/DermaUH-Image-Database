@@ -24,8 +24,8 @@ public class DermaImg : BaseEntity
     /// <summary>Whether the image is visible to anonymous/public users.</summary>
     public bool IsPublic { get; set; } = false;
 
-    /// <summary>Review lifecycle status for publication workflow.</summary>
-    public ImageApprovalStatus ApprovalStatus { get; set; } = ImageApprovalStatus.Pending;
+    /// <summary>Legacy publication status retained for compatibility.</summary>
+    public ImageApprovalStatus ApprovalStatus { get; set; } = ImageApprovalStatus.Approved;
 
     /// <summary>Optional reviewer comment captured at decision time.</summary>
     public string? ReviewComment { get; set; }
