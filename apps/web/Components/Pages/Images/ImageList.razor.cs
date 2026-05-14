@@ -34,6 +34,7 @@ public partial class ImageList
     private bool isAuthenticated;
     private Guid? currentUserId;
     private bool isDownloading;
+    private ImageDownloadMode downloadMode = ImageDownloadMode.ImagesAndMetadata;
 
     private readonly HashSet<Guid> selectedImageIds = [];
 
@@ -312,9 +313,8 @@ public partial class ImageList
     private string BuildDownloadAllQuery()
     {
         var queryParams = BuildFilterQueryParams();
-        return queryParams.Count == 0
-            ? "api/images/download"
-            : $"api/images/download?{string.Join("&", queryParams)}";
+        queryParams.Add(BuildDownloadModeQuery());
+        return $"api/images/download?{string.Join("&", queryParams)}";
     }
 
     private async Task ToggleSelection(ChangeEventArgs args, string value, HashSet<string> selectedValues)
@@ -385,12 +385,12 @@ public partial class ImageList
             ImageIds = selectedImageIds.ToList()
         };
 
-        var request = new HttpRequestMessage(HttpMethod.Post, "api/images/download")
+        var request = new HttpRequestMessage(HttpMethod.Post, $"api/images/download?{BuildDownloadModeQuery()}")
         {
             Content = JsonContent.Create(payload)
         };
 
-        var fallbackName = $"dermauh-imagenes-seleccion-{DateTime.UtcNow:yyyyMMdd-HHmm}.zip";
+        var fallbackName = BuildDownloadFallbackName("seleccion");
         await StartDownloadAsync(request, fallbackName);
     }
 
@@ -402,8 +402,25 @@ public partial class ImageList
         }
 
         var request = new HttpRequestMessage(HttpMethod.Get, BuildDownloadAllQuery());
-        var fallbackName = $"dermauh-imagenes-{DateTime.UtcNow:yyyyMMdd-HHmm}.zip";
+        var fallbackName = BuildDownloadFallbackName("galeria");
         await StartDownloadAsync(request, fallbackName);
+    }
+
+    private string BuildDownloadModeQuery()
+    {
+        return $"mode={downloadMode}";
+    }
+
+    private string BuildDownloadFallbackName(string scope)
+    {
+        var modeSuffix = downloadMode switch
+        {
+            ImageDownloadMode.MetadataOnly => "metadatos",
+            ImageDownloadMode.ImagesOnly => "solo-imagenes",
+            _ => "imagenes-metadatos"
+        };
+
+        return $"dermauh-imagenes-{scope}-{modeSuffix}-{DateTime.UtcNow:yyyyMMdd-HHmm}.zip";
     }
 
     private async Task StartDownloadAsync(HttpRequestMessage request, string fallbackName)
@@ -465,4 +482,11 @@ public partial class ImageList
     }
 
     private sealed record FilterOption(string Value, string Label);
+
+    private enum ImageDownloadMode
+    {
+        ImagesAndMetadata,
+        MetadataOnly,
+        ImagesOnly
+    }
 }

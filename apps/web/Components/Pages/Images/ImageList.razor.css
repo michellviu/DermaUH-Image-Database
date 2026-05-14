@@ -169,6 +169,24 @@
     gap: 0.6rem;
 }
 
+.download-mode {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+}
+
+.download-mode .form-label {
+    margin: 0;
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--on-surface-variant);
+}
+
+.download-mode .form-select {
+    min-width: 200px;
+}
+
 .select-all-check {
     display: inline-flex;
     align-items: center;

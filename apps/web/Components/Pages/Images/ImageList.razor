@@ -16,11 +16,6 @@
         <p>Filtre casos por metadatos clínicos y navegue la colección de imágenes dermatológicas verificadas.</p>
     </div>
 
-    <AuthorizeView Roles="Admin,Contributor">
-        <Authorized>
-            <a href="images/create" class="btn btn-primary">Subir imagen</a>
-        </Authorized>
-    </AuthorizeView>
 </section>
 
 <div class="gallery-layout">
@@ -131,6 +126,14 @@
                            @onchange="ToggleSelectAllOnPage" />
                     <span>Seleccionar todo lo cargado</span>
                 </label>
+                <div class="download-mode">
+                    <label class="form-label" for="download-mode">Formato</label>
+                    <select id="download-mode" class="form-select form-select-sm" @bind="downloadMode">
+                        <option value="@ImageDownloadMode.ImagesAndMetadata">Imagenes y metadatos</option>
+                        <option value="@ImageDownloadMode.MetadataOnly">Solo metadatos</option>
+                        <option value="@ImageDownloadMode.ImagesOnly">Solo imagenes</option>
+                    </select>
+                </div>
                 <button type="button" class="btn btn-outline-secondary" @onclick="DownloadSelectedAsync" disabled="@(selectedImageIds.Count == 0 || isDownloading)">
                     @(isDownloading ? "Descargando..." : "Descargar seleccion")
                 </button>
