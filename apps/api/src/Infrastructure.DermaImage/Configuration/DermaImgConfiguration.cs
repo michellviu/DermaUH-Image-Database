@@ -38,7 +38,7 @@ public class DermaImgConfiguration : IEntityTypeConfiguration<DermaImg>
         builder.Property(e => e.ApprovalStatus)
             .HasConversion<string>()
             .HasMaxLength(20)
-            .HasDefaultValue(ImageApprovalStatus.Pending);
+            .HasDefaultValue(ImageApprovalStatus.Approved);
 
         // Soft delete filter
         builder.HasQueryFilter(e => !e.IsDeleted);
