@@ -1,5 +1,4 @@
 using Domain.DermaImage.Entities;
-using Domain.DermaImage.Entities.Enums;
 using Domain.DermaImage.Interfaces.Repository;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -23,8 +22,7 @@ public class DermaImgRepository : Repository<DermaImg>, IDermaImgRepository
     private IQueryable<DermaImg> BuildVisibilityQuery(bool includePrivate)
     {
         Logger.LogInformation("Building image visibility query. IncludePrivate: {IncludePrivate}", includePrivate);
-        var query = DbSet.AsNoTracking()
-            .Where(i => i.ApprovalStatus == ImageApprovalStatus.Approved);
+        var query = DbSet.AsNoTracking();
 
         if (!includePrivate)
         {
@@ -74,11 +72,6 @@ public class DermaImgRepository : Repository<DermaImg>, IDermaImgRepository
         if (filter.AnatomSites is { Count: > 0 })
         {
             query = query.Where(i => i.AnatomSiteGeneral.HasValue && filter.AnatomSites.Contains(i.AnatomSiteGeneral.Value));
-        }
-
-        if (filter.ApprovalStatuses is { Count: > 0 })
-        {
-            query = query.Where(i => filter.ApprovalStatuses.Contains(i.ApprovalStatus));
         }
 
         if (filter.IsPublic.HasValue)
