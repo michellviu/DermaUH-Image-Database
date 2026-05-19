@@ -18,11 +18,16 @@ public class CreateDermaImgDto
     public DermoscopicType? DermoscopicType { get; set; }
 
     // Patient
+    public string? PatientName { get; set; }
+    public string? ClinicalHistoryNumber { get; set; }
     public int? AgeApprox { get; set; }
     public Sex? Sex { get; set; }
+    public SkinColor? SkinColor { get; set; }
     public PhotoType? FotoType { get; set; }
+    public string? PersonalHistory { get; set; }
     public bool? PersonalHxMm { get; set; }
     public bool? FamilyHxMm { get; set; }
+    public bool? SunExposure { get; set; }
 
     // Lesion clinical
     public AnatomSiteGeneral? AnatomSiteGeneral { get; set; }
@@ -31,6 +36,7 @@ public class CreateDermaImgDto
 
     // Diagnostic
     public string? Diagnosis { get; set; }
+    public string? HistopathologicalDiagnosis { get; set; }
     public DiagnosisCategory? DiagnosisCategory { get; set; }
     public InjuryType? InjuryType { get; set; }
     public DiagnosisConfirmType? DiagnosisConfirmType { get; set; }
@@ -41,10 +47,16 @@ public class CreateDermaImgDto
     public bool? MelUlcer { get; set; }
 
     public string? ClinicalNotes { get; set; }
+    public string? DermoscopicComments { get; set; }
+    public bool? InformedConsent { get; set; }
+    public DateTime? InformedConsentDate { get; set; }
+    public string? InformedConsentText { get; set; }
 
     // Relationships
     public Guid ContributorId { get; set; }
-    public Guid? InstitutionId { get; set; }
+    public string? InstitutionName { get; set; }
+    public string? InstitutionDescription { get; set; }
+    public string? InstitutionCountry { get; set; }
 }
 
 public class DermaImgResponseDto
@@ -63,11 +75,16 @@ public class DermaImgResponseDto
     public DermoscopicType? DermoscopicType { get; set; }
 
     // Patient
+    public string? PatientName { get; set; }
+    public string? ClinicalHistoryNumber { get; set; }
     public int? AgeApprox { get; set; }
     public Sex? Sex { get; set; }
+    public SkinColor? SkinColor { get; set; }
     public PhotoType? FotoType { get; set; }
+    public string? PersonalHistory { get; set; }
     public bool? PersonalHxMm { get; set; }
     public bool? FamilyHxMm { get; set; }
+    public bool? SunExposure { get; set; }
 
     // Lesion clinical
     public AnatomSiteGeneral? AnatomSiteGeneral { get; set; }
@@ -76,6 +93,7 @@ public class DermaImgResponseDto
 
     // Diagnostic
     public string? Diagnosis { get; set; }
+    public string? HistopathologicalDiagnosis { get; set; }
     public DiagnosisCategory? DiagnosisCategory { get; set; }
     public InjuryType? InjuryType { get; set; }
     public DiagnosisConfirmType? DiagnosisConfirmType { get; set; }
@@ -86,13 +104,18 @@ public class DermaImgResponseDto
     public bool? MelUlcer { get; set; }
 
     public string? ClinicalNotes { get; set; }
+    public string? DermoscopicComments { get; set; }
+    public bool? InformedConsent { get; set; }
+    public DateTime? InformedConsentDate { get; set; }
+    public string? InformedConsentText { get; set; }
     public DateTime CreatedAt { get; set; }
 
     // Relationships
     public Guid ContributorId { get; set; }
     public string? ContributorFullName { get; set; }
-    public Guid? InstitutionId { get; set; }
     public string? InstitutionName { get; set; }
+    public string? InstitutionDescription { get; set; }
+    public string? InstitutionCountry { get; set; }
 }
 
 public class DownloadImagesRequest

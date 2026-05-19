@@ -101,8 +101,6 @@ public class UsersController : ControllerBase
             Email = user.Email ?? string.Empty,
             Role = roles?.FirstOrDefault() ?? string.Empty,
             IsActive = user.IsActive,
-            InstitutionId = user.InstitutionId,
-            InstitutionName = user.Institution?.Name,
             CreatedAt = user.CreatedAt
         };
     }

@@ -11,9 +11,6 @@ public class DermaImageDbContext : IdentityDbContext<User, IdentityRole<Guid>, G
     public DermaImageDbContext(DbContextOptions<DermaImageDbContext> options) : base(options) { }
 
     public DbSet<DermaImg> Images => Set<DermaImg>();
-    public DbSet<Institution> Institutions => Set<Institution>();
-    public DbSet<InstitutionResponsible> InstitutionResponsibles => Set<InstitutionResponsible>();
-    public DbSet<InstitutionJoinRequest> InstitutionJoinRequests => Set<InstitutionJoinRequest>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

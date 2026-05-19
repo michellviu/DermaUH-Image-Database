@@ -93,8 +93,6 @@ public class UserProfileDto
     public string Email { get; set; } = string.Empty;
     public string? PhoneNumber { get; set; }
     public bool EmailConfirmed { get; set; }
-    public Guid? InstitutionId { get; set; }
-    public string? InstitutionName { get; set; }
     public IList<string> Roles { get; set; } = new List<string>();
     public DateTime CreatedAt { get; set; }
 }
@@ -110,7 +108,6 @@ public class UpdateProfileDto
     [Phone]
     public string? PhoneNumber { get; set; }
 
-    public Guid? InstitutionId { get; set; }
 }
 
 public class ChangePasswordDto

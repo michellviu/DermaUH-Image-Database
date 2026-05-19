@@ -14,7 +14,6 @@ public class StatisticsOverviewDto
     public List<StatisticsBucketDto> SexDistribution { get; set; } = [];
     public List<StatisticsBucketDto> AnatomicalSiteDistribution { get; set; } = [];
     public List<MonthlyUploadDto> MonthlyUploads { get; set; } = [];
-    public List<TopInstitutionDto> TopInstitutions { get; set; } = [];
 }
 
 public class StatisticsBucketDto
@@ -30,11 +29,4 @@ public class MonthlyUploadDto
     public string MonthKey { get; set; } = string.Empty;
     public string Label { get; set; } = string.Empty;
     public int Count { get; set; }
-}
-
-public class TopInstitutionDto
-{
-    public Guid? InstitutionId { get; set; }
-    public string InstitutionName { get; set; } = string.Empty;
-    public int ImageCount { get; set; }
 }

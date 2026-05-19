@@ -14,7 +14,6 @@ public class DermaImgRepository : Repository<DermaImg>, IDermaImgRepository
         Logger.LogInformation("Fetching image by id with related entities: {ImageId}", id);
         return DbSet
             .Include(i => i.Contributor)
-            .Include(i => i.Institution)
             .Include(i => i.ReviewedByUser)
             .FirstOrDefaultAsync(i => i.Id == id, cancellationToken);
     }
@@ -93,7 +92,6 @@ public class DermaImgRepository : Repository<DermaImg>, IDermaImgRepository
         Logger.LogInformation("Fetching image by public id: {PublicId}", publicId);
         return DbSet
             .Include(i => i.Contributor)
-            .Include(i => i.Institution)
             .Include(i => i.ReviewedByUser)
             .FirstOrDefaultAsync(i => i.PublicId == publicId, cancellationToken);
     }
@@ -104,21 +102,11 @@ public class DermaImgRepository : Repository<DermaImg>, IDermaImgRepository
         return await DbSet
             .Where(i => i.ContributorId == contributorId)
             .Include(i => i.Contributor)
-            .Include(i => i.Institution)
             .OrderByDescending(i => i.CreatedAt)
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<IEnumerable<DermaImg>> GetByInstitutionIdAsync(Guid institutionId, CancellationToken cancellationToken = default)
-    {
-        Logger.LogInformation("Fetching images by institution id: {InstitutionId}", institutionId);
-        return await DbSet
-            .Where(i => i.InstitutionId == institutionId)
-            .Include(i => i.Contributor)
-            .Include(i => i.Institution)
-            .OrderByDescending(i => i.CreatedAt)
-            .ToListAsync(cancellationToken);
-    }
+
 
     public async Task<IReadOnlyList<DermaImg>> GetByIdsAsync(IReadOnlyCollection<Guid> ids, CancellationToken cancellationToken = default)
     {
@@ -133,7 +121,6 @@ public class DermaImgRepository : Repository<DermaImg>, IDermaImgRepository
         return await DbSet
             .Where(i => idList.Contains(i.Id))
             .Include(i => i.Contributor)
-            .Include(i => i.Institution)
             .Include(i => i.ReviewedByUser)
             .OrderByDescending(i => i.CreatedAt)
             .ToListAsync(cancellationToken);
@@ -156,7 +143,6 @@ public class DermaImgRepository : Repository<DermaImg>, IDermaImgRepository
         var items = await query
             .OrderByDescending(i => i.CreatedAt)
             .Include(i => i.Contributor)
-            .Include(i => i.Institution)
             .Include(i => i.ReviewedByUser)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
@@ -174,7 +160,6 @@ public class DermaImgRepository : Repository<DermaImg>, IDermaImgRepository
         var items = await query
             .OrderByDescending(i => i.CreatedAt)
             .Include(i => i.Contributor)
-            .Include(i => i.Institution)
             .Include(i => i.ReviewedByUser)
             .ToListAsync(cancellationToken);
 
@@ -281,29 +266,29 @@ public class DermaImgRepository : Repository<DermaImg>, IDermaImgRepository
         return grouped.Select(x => (x.Year, x.Month, x.Count)).ToList();
     }
 
-    public async Task<IReadOnlyList<(Guid InstitutionId, string InstitutionName, int Count)>> GetTopInstitutionsByImageCountAsync(int take, bool includePrivate, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<(string InstitutionName, string? InstitutionDescription, string? InstitutionCountry, int Count)>> GetDerivedInstitutionsAsync(bool includePrivate, CancellationToken cancellationToken = default)
     {
-        Logger.LogInformation("Fetching top institutions by image count. Take: {Take}, IncludePrivate: {IncludePrivate}", take, includePrivate);
-        take = Math.Clamp(take, 1, 20);
+        Logger.LogInformation("Fetching derived institutions. IncludePrivate: {IncludePrivate}", includePrivate);
 
         var grouped = await BuildVisibilityQuery(includePrivate)
-            .Where(i => i.InstitutionId.HasValue)
+            .Where(i => i.InstitutionName != null && i.InstitutionName != "")
             .GroupBy(i => new
             {
-                InstitutionId = i.InstitutionId!.Value,
-                InstitutionName = i.Institution != null ? i.Institution.Name : "Sin institución"
+                InstitutionName = i.InstitutionName,
+                InstitutionDescription = i.InstitutionDescription,
+                InstitutionCountry = i.InstitutionCountry
             })
             .Select(g => new
             {
-                g.Key.InstitutionId,
                 g.Key.InstitutionName,
+                g.Key.InstitutionDescription,
+                g.Key.InstitutionCountry,
                 Count = g.Count()
             })
             .OrderByDescending(x => x.Count)
-            .Take(take)
             .ToListAsync(cancellationToken);
 
-        return grouped.Select(x => (x.InstitutionId, x.InstitutionName, x.Count)).ToList();
+        return grouped.Select(x => (x.InstitutionName!, x.InstitutionDescription, x.InstitutionCountry, x.Count)).ToList();
     }
 
     public async Task<string> GeneratePublicIdAsync(CancellationToken cancellationToken = default)

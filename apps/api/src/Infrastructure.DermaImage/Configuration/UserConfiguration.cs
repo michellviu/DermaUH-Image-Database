@@ -16,10 +16,5 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Ignore(e => e.FullName);
 
         builder.HasQueryFilter(e => !e.IsDeleted);
-
-        builder.HasOne(e => e.Institution)
-            .WithMany(i => i.Users)
-            .HasForeignKey(e => e.InstitutionId)
-            .OnDelete(DeleteBehavior.SetNull);
     }
 }

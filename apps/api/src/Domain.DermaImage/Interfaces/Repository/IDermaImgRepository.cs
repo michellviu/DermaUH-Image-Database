@@ -6,7 +6,7 @@ public interface IDermaImgRepository : IRepository<DermaImg>
 {
     Task<DermaImg?> GetByPublicIdAsync(string publicId, CancellationToken cancellationToken = default);
     Task<IEnumerable<DermaImg>> GetByContributorIdAsync(Guid contributorId, CancellationToken cancellationToken = default);
-    Task<IEnumerable<DermaImg>> GetByInstitutionIdAsync(Guid institutionId, CancellationToken cancellationToken = default);
+
     Task<(IEnumerable<DermaImg> Items, int TotalCount)> GetPagedFilteredAsync(int page, int pageSize, DermaImgFilter? filter = null, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<DermaImg>> GetFilteredAsync(DermaImgFilter? filter = null, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<DermaImg>> GetByIdsAsync(IReadOnlyCollection<Guid> ids, CancellationToken cancellationToken = default);
@@ -18,6 +18,6 @@ public interface IDermaImgRepository : IRepository<DermaImg>
     Task<IReadOnlyList<(string Key, int Count)>> GetPhotoTypeCountsAsync(bool includePrivate, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<(string Key, int Count)>> GetInjuryTypeCountsAsync(bool includePrivate, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<(int Year, int Month, int Count)>> GetMonthlyUploadCountsAsync(int recentMonths, bool includePrivate, CancellationToken cancellationToken = default);
-    Task<IReadOnlyList<(Guid InstitutionId, string InstitutionName, int Count)>> GetTopInstitutionsByImageCountAsync(int take, bool includePrivate, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<(string InstitutionName, string? InstitutionDescription, string? InstitutionCountry, int Count)>> GetDerivedInstitutionsAsync(bool includePrivate, CancellationToken cancellationToken = default);
     Task<string> GeneratePublicIdAsync(CancellationToken cancellationToken = default);
 }

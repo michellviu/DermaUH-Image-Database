@@ -1,238 +1,53 @@
 @page "/institutions"
 @rendermode InteractiveServer
 @inject HttpClient Http
-@inject IJSRuntime JS
-@using System.Text.Json
-@using Microsoft.JSInterop
-@implements IAsyncDisposable
+@using Web.DermaImage.Shared.Models
 
-<PageTitle>Instituciones - DermaUH</PageTitle>
+<PageTitle>Instituciones Contribuyentes - DermaUH</PageTitle>
 
 <section class="institutions-hero">
     <div>
         <span class="institutions-kicker">Red colaborativa</span>
-        <h1>Instituciones médicas</h1>
-        <p>Conecte hospitales, universidades y centros de investigación en una red dermatológica interoperable.</p>
+        <h1>Instituciones Contribuyentes</h1>
+        <p>Instituciones que han aportado imágenes a la base de datos DermaUH.</p>
     </div>
-
-    <AuthorizeView Roles="Admin">
-        <Authorized>
-            <button class="btn btn-primary" @onclick="() => showForm = !showForm">
-                @(showForm ? "Cerrar formulario" : "Nueva institución")
-            </button>
-        </Authorized>
-    </AuthorizeView>
 </section>
-
-@if (showForm)
-{
-    <SectionCard Title="Registrar institución" Class="mb-4 institutions-form-card">
-        <EditForm Model="newInstitution" OnValidSubmit="HandleCreate" FormName="createInstitution">
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label class="form-label">Nombre *</label>
-                            <InputText @bind-Value="newInstitution.Name" class="form-control" />
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">País</label>
-                            <InputText @bind-Value="newInstitution.Country" class="form-control" />
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Ciudad</label>
-                            <InputText @bind-Value="newInstitution.City" class="form-control" />
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Dirección</label>
-                            <InputText @bind-Value="newInstitution.Address" class="form-control" />
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label class="form-label">Descripción</label>
-                            <InputTextArea @bind-Value="newInstitution.Description" class="form-control" rows="3" />
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Website</label>
-                            <InputText @bind-Value="newInstitution.Website" class="form-control" />
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Email de Contacto</label>
-                            <InputText @bind-Value="newInstitution.ContactEmail" class="form-control" />
-                        </div>
-                    </div>
-                </div>
-                <button type="submit" class="btn btn-primary" disabled="@submitting">
-                    @(submitting ? "Guardando..." : "Guardar")
-                </button>
-        </EditForm>
-    </SectionCard>
-}
-
-@if (!string.IsNullOrEmpty(errorMessage))
-{
-    <div class="alert alert-danger">@errorMessage</div>
-}
 
 @if (loading)
 {
     <p><em>Cargando...</em></p>
 }
-else if (response is null || !response.Items.Any())
+else if (institutions is null || !institutions.Any())
 {
-    <div class="alert alert-info">No se encontraron instituciones.</div>
+    <div class="alert alert-info">No se encontraron instituciones con imágenes aportadas.</div>
 }
 else
 {
     <div class="institutions-stats">
         <article>
-            <span class="value">@response.TotalCount</span>
-            <span class="label">Instituciones registradas</span>
+            <span class="value">@institutions.Count</span>
+            <span class="label">Instituciones</span>
         </article>
         <article>
-            <span class="value">@response.Items.Count(i => !string.IsNullOrWhiteSpace(i.ContactEmail))</span>
-            <span class="label">Con contacto definido</span>
+            <span class="value">@institutions.Sum(i => i.ImageCount)</span>
+            <span class="label">Imágenes Totales Aportadas</span>
         </article>
     </div>
 
-    <section id="@carouselRegionId" class="institutions-carousel" aria-label="Carrusel de instituciones">
-        <div id="@carouselTrackId" class="institutions-track" tabindex="0">
-            @foreach (var inst in response.Items)
+    <section class="institutions-carousel">
+        <div class="institutions-track d-flex flex-wrap gap-4 mt-4">
+            @foreach (var inst in institutions)
             {
-                <article class="institution-card">
-                <h3>@inst.Name</h3>
-                <p>@(inst.Description ?? "Sin descripción institucional.")</p>
+                <article class="institution-card p-4 border rounded shadow-sm flex-fill" style="min-width: 300px; max-width: 400px;">
+                    <h3>@inst.Name</h3>
+                    <p>@(inst.Description ?? "Sin descripción.")</p>
 
-                <div class="institution-meta">
-                    <span>@(inst.Country ?? "País no definido")</span>
-                    <span>@(inst.City ?? "Ciudad no definida")</span>
-                    <span>@(inst.ContactEmail ?? "Sin correo")</span>
-                </div>
-
-                <div class="institution-actions">
-                    @if (!string.IsNullOrWhiteSpace(inst.Website))
-                    {
-                        <a href="@inst.Website" target="_blank" rel="noopener noreferrer" class="btn btn-outline-primary">Sitio web</a>
-                    }
-
-                    <AuthorizeView Roles="Admin">
-                        <Authorized>
-                            <button type="button" class="btn btn-outline-secondary btn-sm" @onclick="() => BeginEditInstitution(inst)">
-                                Editar
-                            </button>
-                        </Authorized>
-                    </AuthorizeView>
-
-                    <span class="institution-date">Alta: @inst.CreatedAt.ToString("yyyy-MM-dd")</span>
-                </div>
-
-                @if (editingInstitutionId == inst.Id)
-                {
-                    <div class="mt-3 pt-3 border-top">
-                        <h6 class="mb-3">Editar institución</h6>
-
-                        <EditForm Model="editingInstitution" OnValidSubmit="() => HandleUpdateInstitution(inst.Id)" FormName="@($"editInstitution-{inst.Id}")">
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="mb-2">
-                                        <label class="form-label">Nombre *</label>
-                                        <InputText @bind-Value="editingInstitution.Name" class="form-control form-control-sm" />
-                                    </div>
-                                    <div class="mb-2">
-                                        <label class="form-label">País</label>
-                                        <InputText @bind-Value="editingInstitution.Country" class="form-control form-control-sm" />
-                                    </div>
-                                    <div class="mb-2">
-                                        <label class="form-label">Ciudad</label>
-                                        <InputText @bind-Value="editingInstitution.City" class="form-control form-control-sm" />
-                                    </div>
-                                    <div class="mb-2">
-                                        <label class="form-label">Dirección</label>
-                                        <InputText @bind-Value="editingInstitution.Address" class="form-control form-control-sm" />
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="mb-2">
-                                        <label class="form-label">Descripción</label>
-                                        <InputTextArea @bind-Value="editingInstitution.Description" class="form-control form-control-sm" rows="3" />
-                                    </div>
-                                    <div class="mb-2">
-                                        <label class="form-label">Website</label>
-                                        <InputText @bind-Value="editingInstitution.Website" class="form-control form-control-sm" />
-                                    </div>
-                                    <div class="mb-2">
-                                        <label class="form-label">Email de Contacto</label>
-                                        <InputText @bind-Value="editingInstitution.ContactEmail" class="form-control form-control-sm" />
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="d-flex gap-2">
-                                <button type="submit" class="btn btn-sm btn-primary" disabled="@(updatingInstitutionId == inst.Id)">
-                                    @(updatingInstitutionId == inst.Id ? "Guardando..." : "Guardar cambios")
-                                </button>
-                                <button type="button" class="btn btn-sm btn-outline-secondary" @onclick="CancelEditInstitution" disabled="@(updatingInstitutionId == inst.Id)">
-                                    Cancelar
-                                </button>
-                            </div>
-                        </EditForm>
+                    <div class="institution-meta mt-3 text-muted small">
+                        <div><strong>País:</strong> @(inst.Country ?? "No definido")</div>
+                        <div><strong>Imágenes Aportadas:</strong> @inst.ImageCount</div>
                     </div>
-                }
-
-                <AuthorizeView Roles="Admin">
-                    <Authorized>
-                        <div class="mt-3 pt-3 border-top">
-                            <h6 class="mb-2">Responsables de institución</h6>
-
-                            @if (GetResponsiblesForInstitution(inst.Id).Count == 0)
-                            {
-                                <p class="text-muted small mb-2">Sin responsables asignados.</p>
-                            }
-                            else
-                            {
-                                <div class="d-flex flex-wrap gap-2 mb-2">
-                                    @foreach (var responsible in GetResponsiblesForInstitution(inst.Id))
-                                    {
-                                        <span class="badge text-bg-light border">
-                                            @responsible.FullName
-                                            <button type="button"
-                                                    class="btn btn-sm p-0 ms-1"
-                                                    title="Quitar responsable"
-                                                    @onclick="() => HandleRemoveResponsible(inst.Id, responsible.UserId)">✕</button>
-                                        </span>
-                                    }
-                                </div>
-                            }
-
-                            <div class="d-flex gap-2 align-items-center">
-                                <select class="form-select form-select-sm"
-                                        style="min-width: 220px;"
-                                        value="@GetSelectedResponsibleUser(inst.Id)"
-                                        @onchange="e => OnResponsibleSelectionChanged(inst.Id, e)">
-                                    @if (GetAvailableResponsibleCandidates(inst.Id).Count == 0)
-                                    {
-                                        <option value="">Sin candidatos disponibles</option>
-                                    }
-                                    else
-                                    {
-                                        @foreach (var user in GetAvailableResponsibleCandidates(inst.Id))
-                                        {
-                                            <option value="@user.Id">@user.FirstName @user.LastName (@user.Email)</option>
-                                        }
-                                    }
-                                </select>
-                                <button class="btn btn-sm btn-primary"
-                                        disabled="@(GetAvailableResponsibleCandidates(inst.Id).Count == 0)"
-                                        @onclick="() => HandleAssignResponsible(inst.Id)">
-                                    Asignar responsable
-                                </button>
-                            </div>
-                        </div>
-                    </Authorized>
-                </AuthorizeView>
                 </article>
             }
         </div>
     </section>
 }
-

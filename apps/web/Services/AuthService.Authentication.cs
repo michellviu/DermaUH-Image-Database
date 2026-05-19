@@ -44,7 +44,6 @@ public partial class AuthService
                 request.LastName,
                 request.Email,
                 request.Password,
-                request.InstitutionId,
             });
 
             if (!response.IsSuccessStatusCode)

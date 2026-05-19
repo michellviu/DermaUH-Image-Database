@@ -58,9 +58,9 @@ public static class ImageCreateValidationRules
             errors.Add("Los campos histologicos solo aplican cuando el tipo de lesion es Melanoma.");
         }
 
-        if (requireInstitution && string.IsNullOrWhiteSpace(model.InstitutionId))
+        if (requireInstitution && string.IsNullOrWhiteSpace(model.InstitutionName))
         {
-            errors.Add("Debe seleccionar una institucion.");
+            errors.Add("Debe proveer un nombre de institución.");
         }
 
         return errors;

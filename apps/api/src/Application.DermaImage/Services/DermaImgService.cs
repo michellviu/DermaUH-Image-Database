@@ -59,8 +59,4 @@ public class DermaImgService : IDermaImgService
         return await _repository.GetByContributorIdAsync(contributorId, cancellationToken);
     }
 
-    public async Task<IEnumerable<DermaImg>> GetByInstitutionAsync(Guid institutionId, CancellationToken cancellationToken = default)
-    {
-        return await _repository.GetByInstitutionIdAsync(institutionId, cancellationToken);
-    }
 }

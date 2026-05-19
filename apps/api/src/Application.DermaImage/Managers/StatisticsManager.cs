@@ -7,14 +7,9 @@ namespace Application.DermaImage.Managers;
 public class StatisticsManager : IStatisticsManager
 {
     private readonly IDermaImgRepository _images;
-    private readonly IInstitutionRepository _institutions;
-
-    public StatisticsManager(
-        IDermaImgRepository images,
-        IInstitutionRepository institutions)
+    public StatisticsManager(IDermaImgRepository images)
     {
         _images = images;
-        _institutions = institutions;
     }
 
     public async Task<StatisticsOverviewDto> GetOverviewAsync(
@@ -31,7 +26,8 @@ public class StatisticsManager : IStatisticsManager
         var publicImages = includePrivate
             ? await _images.CountByVisibilityAsync(false, cancellationToken)
             : totalImages;
-        var institutionsCount = await _institutions.CountAsync(cancellationToken: cancellationToken);
+        var derivedInstitutions = await _images.GetDerivedInstitutionsAsync(includePrivate, cancellationToken);
+        var institutionsCount = derivedInstitutions.Count;
         var contributorsCount = await _images.CountDistinctContributorsAsync(includePrivate, cancellationToken);
 
         var diagnosis = await _images.GetDiagnosisCategoryCountsAsync(includePrivate, cancellationToken);
@@ -40,7 +36,7 @@ public class StatisticsManager : IStatisticsManager
         var sex = await _images.GetSexCountsAsync(includePrivate, cancellationToken);
         var site = await _images.GetAnatomicalSiteCountsAsync(includePrivate, cancellationToken);
         var monthly = await _images.GetMonthlyUploadCountsAsync(recentMonths, includePrivate, cancellationToken);
-        var topInstitutionsData = await _images.GetTopInstitutionsByImageCountAsync(topInstitutions, includePrivate, cancellationToken);
+
 
         return new StatisticsOverviewDto
         {
@@ -54,15 +50,7 @@ public class StatisticsManager : IStatisticsManager
             PhotoTypeDistribution = MapBuckets(photoType, MapPhotoTypeLabel),
             SexDistribution = MapBuckets(sex, MapSexLabel),
             AnatomicalSiteDistribution = MapBuckets(site, MapAnatomicalSiteLabel),
-            MonthlyUploads = BuildMonthlySeries(monthly, recentMonths),
-            TopInstitutions = topInstitutionsData
-                .Select(i => new TopInstitutionDto
-                {
-                    InstitutionId = i.InstitutionId,
-                    InstitutionName = i.InstitutionName,
-                    ImageCount = i.Count
-                })
-                .ToList()
+            MonthlyUploads = BuildMonthlySeries(monthly, recentMonths)
         };
     }
 

@@ -19,8 +19,14 @@ public class DermaImgConfiguration : IEntityTypeConfiguration<DermaImg>
         builder.Property(e => e.FileName).IsRequired().HasMaxLength(500);
         builder.Property(e => e.FilePath).IsRequired().HasMaxLength(1000);
         builder.Property(e => e.ContentType).IsRequired().HasMaxLength(100);
+        builder.Property(e => e.PatientName).HasMaxLength(200);
+        builder.Property(e => e.ClinicalHistoryNumber).HasMaxLength(100);
+        builder.Property(e => e.PersonalHistory).HasMaxLength(1000);
         builder.Property(e => e.Diagnosis).HasMaxLength(500);
+        builder.Property(e => e.HistopathologicalDiagnosis).HasMaxLength(500);
+        builder.Property(e => e.DermoscopicComments).HasMaxLength(2000);
         builder.Property(e => e.ClinicalNotes).HasMaxLength(2000);
+        builder.Property(e => e.InformedConsentText).HasMaxLength(4000);
         builder.Property(e => e.ReviewComment).HasMaxLength(500);
 
         // Enum conversions stored as strings
@@ -28,6 +34,7 @@ public class DermaImgConfiguration : IEntityTypeConfiguration<DermaImg>
         builder.Property(e => e.ImageManipulation).HasConversion<string>().HasMaxLength(50);
         builder.Property(e => e.DermoscopicType).HasConversion<string>().HasMaxLength(50);
         builder.Property(e => e.Sex).HasConversion<string>().HasMaxLength(20);
+        builder.Property(e => e.SkinColor).HasConversion<string>().HasMaxLength(30);
         builder.Property(e => e.AnatomSiteGeneral).HasConversion<string>().HasMaxLength(50);
         builder.Property(e => e.AnatomSiteSpecial).HasConversion<string>().HasMaxLength(50);
         builder.Property(e => e.DiagnosisCategory).HasConversion<string>().HasMaxLength(50);
@@ -49,10 +56,9 @@ public class DermaImgConfiguration : IEntityTypeConfiguration<DermaImg>
             .HasForeignKey(e => e.ContributorId)
             .OnDelete(DeleteBehavior.SetNull);
 
-        builder.HasOne(e => e.Institution)
-            .WithMany(i => i.Images)
-            .HasForeignKey(e => e.InstitutionId)
-            .OnDelete(DeleteBehavior.SetNull);
+        builder.Property(e => e.InstitutionName).HasMaxLength(200);
+        builder.Property(e => e.InstitutionDescription).HasMaxLength(1000);
+        builder.Property(e => e.InstitutionCountry).HasMaxLength(100);
 
         builder.HasOne(e => e.ReviewedByUser)
             .WithMany(u => u.ReviewedImages)

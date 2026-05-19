@@ -24,7 +24,6 @@ public class UserRepository : IUserRepository
     {
         _logger.LogInformation("Fetching user by ID: {UserId}", id);
         return await _context.Users
-            .Include(u => u.Institution)
             .Include(u => u.ContributedImages)
             .FirstOrDefaultAsync(u => u.Id == id, cancellationToken);
     }
@@ -33,7 +32,6 @@ public class UserRepository : IUserRepository
     {
         _logger.LogInformation("Fetching user by email: {UserEmail}", email);
         return await _context.Users
-            .Include(u => u.Institution)
             .Include(u => u.ContributedImages)
             .FirstOrDefaultAsync(u => u.Email == email, cancellationToken);
     }
@@ -42,7 +40,6 @@ public class UserRepository : IUserRepository
     {
         _logger.LogInformation("Fetching all users");
         return await _context.Users
-            .Include(u => u.Institution)
             .Include(u => u.ContributedImages)
             .ToListAsync(cancellationToken);
     }
@@ -53,7 +50,6 @@ public class UserRepository : IUserRepository
         var query = _context.Users.AsQueryable();
         var totalCount = await query.CountAsync(cancellationToken);
         var items = await query
-            .Include(u => u.Institution)
             .Include(u => u.ContributedImages)
             .OrderBy(u => u.LastName)
             .Skip((page - 1) * pageSize)

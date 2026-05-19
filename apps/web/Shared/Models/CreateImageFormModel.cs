@@ -9,6 +9,10 @@ public class CreateImageFormModel
     public bool IsPublic { get; set; }
     public string? ContributorId { get; set; }
 
+    public string? InstitutionName { get; set; }
+    public string? InstitutionDescription { get; set; }
+    public string? InstitutionCountry { get; set; }
+
     public string? ImageType { get; set; }
     public string? ImageManipulation { get; set; }
     public string? DermoscopicType { get; set; }
@@ -30,5 +34,6 @@ public class CreateImageFormModel
     public string? MelMitoticIndex { get; set; }
 
     public string? ClinicalNotes { get; set; }
-    public string? InstitutionId { get; set; }
+    public DateTime? InformedConsentDate { get; set; }
+    public string? InformedConsentText { get; set; }
 }

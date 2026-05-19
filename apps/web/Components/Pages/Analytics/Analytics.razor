@@ -76,10 +76,6 @@ else
             <HistogramChart Data="@ToChartPoints(overview.MonthlyUploads)" ColorClass="histogram-fill--secondary" />
         </article>
 
-        <article class="analytics-card analytics-card--wide">
-            <h2>Instituciones con mayor volumen</h2>
-            <HistogramChart Data="@ToChartPoints(overview.TopInstitutions)" />
-        </article>
     </section>
 }
 
@@ -126,10 +122,4 @@ else
             Value = x.Count
         }).ToList();
 
-    private static List<ChartPoint> ToChartPoints(IEnumerable<TopInstitutionDto> data)
-        => data.Select(x => new ChartPoint
-        {
-            Label = x.InstitutionName,
-            Value = x.ImageCount
-        }).ToList();
 }

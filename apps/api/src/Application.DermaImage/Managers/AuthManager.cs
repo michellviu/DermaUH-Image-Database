@@ -220,8 +220,6 @@ public class AuthManager : IAuthManager
             Email           = user.Email ?? string.Empty,
             PhoneNumber     = user.PhoneNumber,
             EmailConfirmed  = user.EmailConfirmed,
-            InstitutionId   = user.InstitutionId,
-            InstitutionName = user.Institution?.Name,
             Roles           = roles,
             CreatedAt       = user.CreatedAt,
         };

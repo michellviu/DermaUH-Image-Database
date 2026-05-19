@@ -12,13 +12,9 @@ public static class DependencyInjection
         // Services
         services.AddScoped<IDermaImgService, DermaImgService>();
         services.AddScoped<IUserService, UserService>();
-        services.AddScoped<IInstitutionService, InstitutionService>();
-
-        // Managers
         services.AddScoped<IDermaImgManager, DermaImgManager>();
         services.AddScoped<IUserManager, Managers.UserManager>();
         services.AddScoped<IInstitutionManager, InstitutionManager>();
-        services.AddScoped<IInstitutionMembershipManager, InstitutionMembershipManager>();
         services.AddScoped<IAuthManager, AuthManager>();
         services.AddScoped<IStatisticsManager, StatisticsManager>();
 

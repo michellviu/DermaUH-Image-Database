@@ -8,6 +8,5 @@ public class UserDto
     public string Email { get; set; } = string.Empty;
     public string Role { get; set; } = string.Empty;
     public bool IsActive { get; set; }
-    public Guid? InstitutionId { get; set; }
     public DateTime CreatedAt { get; set; }
 }

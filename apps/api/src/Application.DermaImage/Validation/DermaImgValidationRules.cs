@@ -9,6 +9,36 @@ public static class DermaImgValidationRules
     {
         var errors = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
 
+        AddIf(string.IsNullOrWhiteSpace(dto.PatientName),
+            nameof(dto.PatientName),
+            "El nombre del paciente es obligatorio.",
+            errors);
+
+        AddIf(!dto.AgeApprox.HasValue,
+            nameof(dto.AgeApprox),
+            "La edad es obligatoria.",
+            errors);
+
+        AddIf(!dto.Sex.HasValue,
+            nameof(dto.Sex),
+            "El sexo es obligatorio.",
+            errors);
+
+        AddIf(!dto.AnatomSiteGeneral.HasValue,
+            nameof(dto.AnatomSiteGeneral),
+            "La localizacion de la lesion es obligatoria.",
+            errors);
+
+        AddIf(string.IsNullOrWhiteSpace(dto.Diagnosis),
+            nameof(dto.Diagnosis),
+            "El diagnostico clinico es obligatorio.",
+            errors);
+
+        AddIf(!dto.SunExposure.HasValue,
+            nameof(dto.SunExposure),
+            "La exposicion al sol es obligatoria.",
+            errors);
+
         AddIf(dto.DiagnosisCategory is not DiagnosisCategory.Malignant && dto.InjuryType.HasValue,
             nameof(dto.InjuryType),
             "El tipo de lesion solo puede establecerse cuando la categoria diagnostica es Malignant.",

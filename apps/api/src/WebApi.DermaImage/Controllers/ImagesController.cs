@@ -239,8 +239,6 @@ public class ImagesController : ControllerBase
             return NotFound("No se encontró el contribuidor asociado a la carga.");
         }
 
-        dto.InstitutionId = contributor.InstitutionId;
-
         var businessValidationErrors = DermaImgValidationRules.Validate(dto);
         if (businessValidationErrors.Count > 0)
         {
@@ -284,7 +282,6 @@ public class ImagesController : ControllerBase
         dto.FileSize = existing.FileSize;
 
         var contributor = await _userManager.GetByIdAsync(existing.ContributorId, cancellationToken);
-        dto.InstitutionId = contributor?.InstitutionId;
 
         var businessValidationErrors = DermaImgValidationRules.Validate(dto);
         if (businessValidationErrors.Count > 0)
@@ -501,15 +498,21 @@ public class ImagesController : ControllerBase
             ImageType = image.ImageType,
             ImageManipulation = image.ImageManipulation,
             DermoscopicType = image.DermoscopicType,
+            PatientName = image.PatientName,
+            ClinicalHistoryNumber = image.ClinicalHistoryNumber,
             AgeApprox = image.AgeApprox,
             Sex = image.Sex,
+            SkinColor = image.SkinColor,
             FotoType = image.FotoType,
+            PersonalHistory = image.PersonalHistory,
             PersonalHxMm = image.PersonalHxMm,
             FamilyHxMm = image.FamilyHxMm,
+            SunExposure = image.SunExposure,
             AnatomSiteGeneral = image.AnatomSiteGeneral,
             AnatomSiteSpecial = image.AnatomSiteSpecial,
             ClinSizeLongDiamMm = image.ClinSizeLongDiamMm,
             Diagnosis = image.Diagnosis,
+            HistopathologicalDiagnosis = image.HistopathologicalDiagnosis,
             DiagnosisCategory = image.DiagnosisCategory,
             InjuryType = image.InjuryType,
             DiagnosisConfirmType = image.DiagnosisConfirmType,
@@ -517,11 +520,16 @@ public class ImagesController : ControllerBase
             MelMitoticIndex = image.MelMitoticIndex,
             MelUlcer = image.MelUlcer,
             ClinicalNotes = image.ClinicalNotes,
+            DermoscopicComments = image.DermoscopicComments,
+            InformedConsent = image.InformedConsent,
+            InformedConsentDate = image.InformedConsentDate,
+            InformedConsentText = image.InformedConsentText,
             CreatedAt = image.CreatedAt,
             ContributorId = image.ContributorId,
             ContributorFullName = image.Contributor?.FullName,
-            InstitutionId = image.InstitutionId,
-            InstitutionName = image.Institution?.Name
+            InstitutionName = image.InstitutionName,
+            InstitutionDescription = image.InstitutionDescription,
+            InstitutionCountry = image.InstitutionCountry
         };
     }
 

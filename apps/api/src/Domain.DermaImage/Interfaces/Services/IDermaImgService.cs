@@ -13,5 +13,4 @@ public interface IDermaImgService
     Task UpdateAsync(DermaImg image, CancellationToken cancellationToken = default);
     Task DeleteAsync(Guid id, CancellationToken cancellationToken = default);
     Task<IEnumerable<DermaImg>> GetByContributorAsync(Guid contributorId, CancellationToken cancellationToken = default);
-    Task<IEnumerable<DermaImg>> GetByInstitutionAsync(Guid institutionId, CancellationToken cancellationToken = default);
 }

@@ -75,15 +75,21 @@ public class DermaImgManager : IDermaImgManager
             ImageType = dto.ImageType,
             ImageManipulation = dto.ImageManipulation,
             DermoscopicType = dto.DermoscopicType,
+            PatientName = dto.PatientName,
+            ClinicalHistoryNumber = dto.ClinicalHistoryNumber,
             AgeApprox = dto.AgeApprox,
             Sex = dto.Sex,
+            SkinColor = dto.SkinColor,
             FotoType = dto.FotoType,
+            PersonalHistory = dto.PersonalHistory,
             PersonalHxMm = dto.PersonalHxMm,
             FamilyHxMm = dto.FamilyHxMm,
+            SunExposure = dto.SunExposure,
             AnatomSiteGeneral = dto.AnatomSiteGeneral,
             AnatomSiteSpecial = dto.AnatomSiteSpecial,
             ClinSizeLongDiamMm = dto.ClinSizeLongDiamMm,
             Diagnosis = dto.Diagnosis,
+            HistopathologicalDiagnosis = dto.HistopathologicalDiagnosis,
             DiagnosisCategory = dto.DiagnosisCategory,
             InjuryType = dto.InjuryType,
             DiagnosisConfirmType = dto.DiagnosisConfirmType,
@@ -91,8 +97,14 @@ public class DermaImgManager : IDermaImgManager
             MelMitoticIndex = dto.MelMitoticIndex,
             MelUlcer = dto.MelUlcer,
             ClinicalNotes = dto.ClinicalNotes,
+            DermoscopicComments = dto.DermoscopicComments,
+            InformedConsent = dto.InformedConsent,
+            InformedConsentDate = dto.InformedConsentDate,
+            InformedConsentText = dto.InformedConsentText,
             ContributorId = dto.ContributorId,
-            InstitutionId = dto.InstitutionId
+            InstitutionName = dto.InstitutionName,
+            InstitutionDescription = dto.InstitutionDescription,
+            InstitutionCountry = dto.InstitutionCountry
         };
     }
 
@@ -102,15 +114,21 @@ public class DermaImgManager : IDermaImgManager
         entity.ImageType = dto.ImageType;
         entity.ImageManipulation = dto.ImageManipulation;
         entity.DermoscopicType = dto.DermoscopicType;
+        entity.PatientName = dto.PatientName;
+        entity.ClinicalHistoryNumber = dto.ClinicalHistoryNumber;
         entity.AgeApprox = dto.AgeApprox;
         entity.Sex = dto.Sex;
+        entity.SkinColor = dto.SkinColor;
         entity.FotoType = dto.FotoType;
+        entity.PersonalHistory = dto.PersonalHistory;
         entity.PersonalHxMm = dto.PersonalHxMm;
         entity.FamilyHxMm = dto.FamilyHxMm;
+        entity.SunExposure = dto.SunExposure;
         entity.AnatomSiteGeneral = dto.AnatomSiteGeneral;
         entity.AnatomSiteSpecial = dto.AnatomSiteSpecial;
         entity.ClinSizeLongDiamMm = dto.ClinSizeLongDiamMm;
         entity.Diagnosis = dto.Diagnosis;
+        entity.HistopathologicalDiagnosis = dto.HistopathologicalDiagnosis;
         entity.DiagnosisCategory = dto.DiagnosisCategory;
         entity.InjuryType = dto.InjuryType;
         entity.DiagnosisConfirmType = dto.DiagnosisConfirmType;
@@ -118,5 +136,12 @@ public class DermaImgManager : IDermaImgManager
         entity.MelMitoticIndex = dto.MelMitoticIndex;
         entity.MelUlcer = dto.MelUlcer;
         entity.ClinicalNotes = dto.ClinicalNotes;
+        entity.DermoscopicComments = dto.DermoscopicComments;
+        entity.InformedConsent = dto.InformedConsent;
+        entity.InformedConsentDate = dto.InformedConsentDate;
+        entity.InformedConsentText = dto.InformedConsentText;
+        entity.InstitutionName = dto.InstitutionName;
+        entity.InstitutionDescription = dto.InstitutionDescription;
+        entity.InstitutionCountry = dto.InstitutionCountry;
     }
 }
