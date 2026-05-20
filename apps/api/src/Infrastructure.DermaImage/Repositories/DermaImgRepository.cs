@@ -13,7 +13,6 @@ public class DermaImgRepository : Repository<DermaImg>, IDermaImgRepository
     {
         Logger.LogInformation("Fetching image by id with related entities: {ImageId}", id);
         return DbSet
-            .Include(i => i.Contributor)
             .Include(i => i.ReviewedByUser)
             .FirstOrDefaultAsync(i => i.Id == id, cancellationToken);
     }
@@ -91,7 +90,6 @@ public class DermaImgRepository : Repository<DermaImg>, IDermaImgRepository
     {
         Logger.LogInformation("Fetching image by public id: {PublicId}", publicId);
         return DbSet
-            .Include(i => i.Contributor)
             .Include(i => i.ReviewedByUser)
             .FirstOrDefaultAsync(i => i.PublicId == publicId, cancellationToken);
     }
@@ -101,7 +99,6 @@ public class DermaImgRepository : Repository<DermaImg>, IDermaImgRepository
         Logger.LogInformation("Fetching images by contributor id: {ContributorId}", contributorId);
         return await DbSet
             .Where(i => i.ContributorId == contributorId)
-            .Include(i => i.Contributor)
             .OrderByDescending(i => i.CreatedAt)
             .ToListAsync(cancellationToken);
     }
@@ -120,7 +117,6 @@ public class DermaImgRepository : Repository<DermaImg>, IDermaImgRepository
 
         return await DbSet
             .Where(i => idList.Contains(i.Id))
-            .Include(i => i.Contributor)
             .Include(i => i.ReviewedByUser)
             .OrderByDescending(i => i.CreatedAt)
             .ToListAsync(cancellationToken);
@@ -142,7 +138,6 @@ public class DermaImgRepository : Repository<DermaImg>, IDermaImgRepository
 
         var items = await query
             .OrderByDescending(i => i.CreatedAt)
-            .Include(i => i.Contributor)
             .Include(i => i.ReviewedByUser)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
@@ -159,7 +154,6 @@ public class DermaImgRepository : Repository<DermaImg>, IDermaImgRepository
 
         var items = await query
             .OrderByDescending(i => i.CreatedAt)
-            .Include(i => i.Contributor)
             .Include(i => i.ReviewedByUser)
             .ToListAsync(cancellationToken);
 

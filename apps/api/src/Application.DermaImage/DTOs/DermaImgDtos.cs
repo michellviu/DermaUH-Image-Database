@@ -4,12 +4,17 @@ namespace Application.DermaImage.DTOs;
 
 // ── DermaImg DTOs ──────────────────────────────────────────────────────
 
+/// <summary>
+/// DTO para crear imágenes dermatológicas. Incluye propiedades internas del servidor.
+/// </summary>
 public class CreateDermaImgDto
 {
+    // ← These are set by the server, not by the client
     public string FileName { get; set; } = string.Empty;
     public string FilePath { get; set; } = string.Empty;
     public string ContentType { get; set; } = string.Empty;
     public long FileSize { get; set; }
+    
     public bool IsPublic { get; set; }
 
     // Acquisition

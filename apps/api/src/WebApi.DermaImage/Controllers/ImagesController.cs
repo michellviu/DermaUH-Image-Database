@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.IO.Compression;
 using System.Security.Claims;
 using System.Text;
+using WebApi.DermaImage.DTOs;
 using WebApi.DermaImage.Managers;
 using WebApi.DermaImage.Metadata;
 
@@ -200,43 +201,62 @@ public class ImagesController : ControllerBase
     [HttpPost]
     [Consumes("multipart/form-data")]
     public async Task<ActionResult<DermaImgResponseDto>> Create(
-        [FromForm] CreateDermaImgDto dto,
-        [FromForm] IFormFile? file,
+        [FromForm] CreateDermaImgFormDto formDto,
         CancellationToken cancellationToken)
     {
-        if (file is null || file.Length == 0)
+        if (formDto.File is null || formDto.File.Length == 0)
         {
             return BadRequest("Debe seleccionar una imagen para subir.");
         }
 
-        var savedFile = await _imageUploadManager.SaveUploadedFileAsync(file, cancellationToken);
+        var savedFile = await _imageUploadManager.SaveUploadedFileAsync(formDto.File, cancellationToken);
 
-        dto.FileName = savedFile.StoredFileName;
-        dto.FilePath = savedFile.FullPath;
-        dto.ContentType = savedFile.ContentType;
-        dto.FileSize = savedFile.FileSize;
+        // Map form DTO to internal DTO with server-calculated properties
+        var dto = new CreateDermaImgDto
+        {
+            FileName = savedFile.StoredFileName,
+            FilePath = savedFile.FullPath,
+            ContentType = savedFile.ContentType,
+            FileSize = savedFile.FileSize,
+            IsPublic = formDto.IsPublic,
+            ImageType = formDto.ImageType,
+            ImageManipulation = formDto.ImageManipulation,
+            DermoscopicType = formDto.DermoscopicType,
+            PatientName = formDto.PatientName,
+            ClinicalHistoryNumber = formDto.ClinicalHistoryNumber,
+            AgeApprox = formDto.AgeApprox,
+            Sex = formDto.Sex,
+            SkinColor = formDto.SkinColor,
+            FotoType = formDto.FotoType,
+            PersonalHistory = formDto.PersonalHistory,
+            PersonalHxMm = formDto.PersonalHxMm,
+            FamilyHxMm = formDto.FamilyHxMm,
+            SunExposure = formDto.SunExposure,
+            AnatomSiteGeneral = formDto.AnatomSiteGeneral,
+            AnatomSiteSpecial = formDto.AnatomSiteSpecial,
+            ClinSizeLongDiamMm = formDto.ClinSizeLongDiamMm,
+            Diagnosis = formDto.Diagnosis,
+            HistopathologicalDiagnosis = formDto.HistopathologicalDiagnosis,
+            DiagnosisCategory = formDto.DiagnosisCategory,
+            InjuryType = formDto.InjuryType,
+            DiagnosisConfirmType = formDto.DiagnosisConfirmType,
+            MelThickMm = formDto.MelThickMm,
+            MelMitoticIndex = formDto.MelMitoticIndex,
+            MelUlcer = formDto.MelUlcer,
+            ClinicalNotes = formDto.ClinicalNotes,
+            DermoscopicComments = formDto.DermoscopicComments,
+            InformedConsent = formDto.InformedConsent,
+            InformedConsentDate = formDto.InformedConsentDate,
+            InformedConsentText = formDto.InformedConsentText,
+            ContributorId = formDto.ContributorId,
+            InstitutionName = formDto.InstitutionName,
+            InstitutionDescription = formDto.InstitutionDescription,
+            InstitutionCountry = formDto.InstitutionCountry
+        };
 
-        var userId = GetCurrentUserId();
-        if (userId is null)
+        if (dto.ContributorId == Guid.Empty)
         {
-            return Unauthorized();
-        }
-
-        // Contributors can only create images under their own identity.
-        // Admins may optionally pass a specific contributor id.
-        if (User.IsInRole("Admin") && dto.ContributorId != Guid.Empty)
-        {
-            // keep provided contributor id
-        }
-        else
-        {
-            dto.ContributorId = userId.Value;
-        }
-
-        var contributor = await _userManager.GetByIdAsync(dto.ContributorId, cancellationToken);
-        if (contributor is null)
-        {
-            return NotFound("No se encontró el contribuidor asociado a la carga.");
+            return BadRequest("Debe proporcionar un ContributorId válido.");
         }
 
         var businessValidationErrors = DermaImgValidationRules.Validate(dto);
@@ -280,8 +300,6 @@ public class ImagesController : ControllerBase
         dto.FilePath = existing.FilePath;
         dto.ContentType = existing.ContentType;
         dto.FileSize = existing.FileSize;
-
-        var contributor = await _userManager.GetByIdAsync(existing.ContributorId, cancellationToken);
 
         var businessValidationErrors = DermaImgValidationRules.Validate(dto);
         if (businessValidationErrors.Count > 0)
@@ -526,7 +544,7 @@ public class ImagesController : ControllerBase
             InformedConsentText = image.InformedConsentText,
             CreatedAt = image.CreatedAt,
             ContributorId = image.ContributorId,
-            ContributorFullName = image.Contributor?.FullName,
+            ContributorFullName = null,
             InstitutionName = image.InstitutionName,
             InstitutionDescription = image.InstitutionDescription,
             InstitutionCountry = image.InstitutionCountry

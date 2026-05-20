@@ -133,11 +133,8 @@ public class DermaImg : BaseEntity
     public string? InformedConsentText { get; set; }
 
     // ── Relationships ──────────────────────────────────────────────────
-    /// <summary>User who contributed this image.</summary>
+    /// <summary>External contributor identifier (not linked to local users).</summary>
     public Guid ContributorId { get; set; }
-    
-    [ForeignKey("ContributorId")]
-    public User Contributor { get; set; } = null!;
 
     /// <summary>Name of the contributing institution.</summary>
     public string? InstitutionName { get; set; }

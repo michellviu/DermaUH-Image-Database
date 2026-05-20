@@ -51,11 +51,6 @@ public class DermaImgConfiguration : IEntityTypeConfiguration<DermaImg>
         builder.HasQueryFilter(e => !e.IsDeleted);
 
         // Relationships
-        builder.HasOne(e => e.Contributor)
-            .WithMany(u => u.ContributedImages)
-            .HasForeignKey(e => e.ContributorId)
-            .OnDelete(DeleteBehavior.SetNull);
-
         builder.Property(e => e.InstitutionName).HasMaxLength(200);
         builder.Property(e => e.InstitutionDescription).HasMaxLength(1000);
         builder.Property(e => e.InstitutionCountry).HasMaxLength(100);

@@ -48,6 +48,45 @@ builder.Services.Configure<ApiBehaviorOptions>(options =>
 
 builder.Services.AddOpenApi();
 
+// Add Swagger/OpenAPI services
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
+    {
+        Title = "DermaImage API",
+        Version = "v1",
+        Description = "API para gestión de imágenes dermatológicas",
+        Contact = new Microsoft.OpenApi.Models.OpenApiContact
+        {
+            Name = "DermaUH Team"
+        }
+    });
+
+    // Configure JWT authentication in Swagger
+    options.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+    {
+        Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        Description = "JWT Authorization header using the Bearer scheme"
+    });
+
+    options.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
+    {
+        {
+            new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+            {
+                Reference = new Microsoft.OpenApi.Models.OpenApiReference
+                {
+                    Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            new string[] { }
+        }
+    });
+});
+
 builder.Services.AddAuthorization(options =>
 {
     // Secure-by-default: every endpoint requires an authenticated user
@@ -97,6 +136,13 @@ using (var scope = app.Services.CreateScope())
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.UseSwagger();
+    app.UseSwaggerUI(options =>
+    {
+        options.SwaggerEndpoint("/swagger/v1/swagger.json", "DermaImage API v1");
+        options.RoutePrefix = "swagger";
+        options.DocExpansion(Swashbuckle.AspNetCore.SwaggerUI.DocExpansion.List);
+    });
 }
 
 app.UseApiRequestLogging();

@@ -353,7 +353,7 @@ public static class ImageMetadataCatalog
             null,
             false,
             null,
-            image => image.Contributor?.FullName),
+            image => null),
         new(
             "InstitutionName",
             "Institucion",

@@ -13,7 +13,6 @@ public class User : IdentityUser<Guid>
     public bool IsDeleted { get; set; } = false;
 
     // Navigation
-    public ICollection<DermaImg> ContributedImages { get; set; } = new List<DermaImg>();
     public ICollection<DermaImg> ReviewedImages { get; set; } = new List<DermaImg>();
 
     public string FullName => $"{FirstName} {LastName}";
