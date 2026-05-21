@@ -11,9 +11,8 @@ public class DermaImgRepository : Repository<DermaImg>, IDermaImgRepository
 
     public new Task<DermaImg?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        Logger.LogInformation("Fetching image by id with related entities: {ImageId}", id);
+        Logger.LogInformation("Fetching image by id: {ImageId}", id);
         return DbSet
-            .Include(i => i.ReviewedByUser)
             .FirstOrDefaultAsync(i => i.Id == id, cancellationToken);
     }
 
@@ -57,9 +56,9 @@ public class DermaImgRepository : Repository<DermaImg>, IDermaImgRepository
             query = query.Where(i => i.FotoType.HasValue && filter.FotoTypes.Contains(i.FotoType.Value));
         }
 
-        if (filter.ContributorId.HasValue)
+        if (filter.DiagnosisConfirmTypes is { Count: > 0 })
         {
-            query = query.Where(i => i.ContributorId == filter.ContributorId.Value);
+            query = query.Where(i => i.DiagnosisConfirmType.HasValue && filter.DiagnosisConfirmTypes.Contains(i.DiagnosisConfirmType.Value));
         }
 
         if (filter.Sexes is { Count: > 0 })
@@ -90,7 +89,6 @@ public class DermaImgRepository : Repository<DermaImg>, IDermaImgRepository
     {
         Logger.LogInformation("Fetching image by public id: {PublicId}", publicId);
         return DbSet
-            .Include(i => i.ReviewedByUser)
             .FirstOrDefaultAsync(i => i.PublicId == publicId, cancellationToken);
     }
 
@@ -117,7 +115,6 @@ public class DermaImgRepository : Repository<DermaImg>, IDermaImgRepository
 
         return await DbSet
             .Where(i => idList.Contains(i.Id))
-            .Include(i => i.ReviewedByUser)
             .OrderByDescending(i => i.CreatedAt)
             .ToListAsync(cancellationToken);
     }
@@ -138,7 +135,6 @@ public class DermaImgRepository : Repository<DermaImg>, IDermaImgRepository
 
         var items = await query
             .OrderByDescending(i => i.CreatedAt)
-            .Include(i => i.ReviewedByUser)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync(cancellationToken);
@@ -154,7 +150,6 @@ public class DermaImgRepository : Repository<DermaImg>, IDermaImgRepository
 
         var items = await query
             .OrderByDescending(i => i.CreatedAt)
-            .Include(i => i.ReviewedByUser)
             .ToListAsync(cancellationToken);
 
         Logger.LogInformation("Fetched filtered images. Returned: {Count}", items.Count);

@@ -4,7 +4,6 @@ using Application.DermaImage.Validation;
 using Domain.DermaImage.Entities;
 using Domain.DermaImage.Entities.Enums;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.IO.Compression;
 using System.Security.Claims;
@@ -44,7 +43,7 @@ public class ImagesController : ControllerBase
         [FromQuery] List<PhotoType>? fotoTypes = null,
         [FromQuery] List<Sex>? sexes = null,
         [FromQuery] List<AnatomSiteGeneral>? anatomSites = null,
-        [FromQuery] Guid? contributorId = null,
+        [FromQuery] List<DiagnosisConfirmType>? diagnosisConfirmTypes = null,
         [FromQuery] string? diagnosisContains = null,
         CancellationToken cancellationToken = default)
     {
@@ -54,7 +53,7 @@ public class ImagesController : ControllerBase
             DiagnosisCategories = diagnosisCategories,
             InjuryTypes = injuryTypes,
             FotoTypes = fotoTypes,
-            ContributorId = contributorId,
+            DiagnosisConfirmTypes = diagnosisConfirmTypes,
             Sexes = sexes,
             AnatomSites = anatomSites,
             IsPublic = true,
@@ -122,7 +121,7 @@ public class ImagesController : ControllerBase
         return PhysicalFile(image.FilePath, contentType, enableRangeProcessing: true);
     }
 
-    [AllowAnonymous]
+
     [HttpPost("download")]
     public async Task<IActionResult> DownloadSelected(
         [FromBody] DownloadImagesRequest request,
@@ -161,7 +160,7 @@ public class ImagesController : ControllerBase
         [FromQuery] List<PhotoType>? fotoTypes = null,
         [FromQuery] List<Sex>? sexes = null,
         [FromQuery] List<AnatomSiteGeneral>? anatomSites = null,
-        [FromQuery] Guid? contributorId = null,
+        [FromQuery] List<DiagnosisConfirmType>? diagnosisConfirmTypes = null,
         [FromQuery] string? diagnosisContains = null,
         [FromQuery] ImageDownloadMode mode = ImageDownloadMode.ImagesAndMetadata,
         CancellationToken cancellationToken = default)
@@ -172,7 +171,7 @@ public class ImagesController : ControllerBase
             DiagnosisCategories = diagnosisCategories,
             InjuryTypes = injuryTypes,
             FotoTypes = fotoTypes,
-            ContributorId = contributorId,
+            DiagnosisConfirmTypes = diagnosisConfirmTypes,
             Sexes = sexes,
             AnatomSites = anatomSites,
             IsPublic = true,
@@ -197,7 +196,7 @@ public class ImagesController : ControllerBase
         return await BuildZipResultAsync(accessibleImages, fileName, includeImages, includeMetadata, cancellationToken);
     }
 
-    [Authorize(Roles = "Admin,Contributor")]
+    [Authorize(Roles = "Admin")]
     [HttpPost]
     [Consumes("multipart/form-data")]
     public async Task<ActionResult<DermaImgResponseDto>> Create(
@@ -273,7 +272,7 @@ public class ImagesController : ControllerBase
         return CreatedAtAction(nameof(GetById), new { id = created.Id }, MapToResponseDto(created));
     }
 
-    [Authorize(Roles = "Admin,Contributor")]
+    [Authorize(Roles = "Admin")]
     [HttpPut("{id:guid}")]
     public async Task<IActionResult> Update(Guid id, [FromBody] CreateDermaImgDto dto, CancellationToken cancellationToken)
     {
@@ -290,7 +289,7 @@ public class ImagesController : ControllerBase
         }
 
         var isAdmin = User.IsInRole("Admin");
-        if (!isAdmin && existing.ContributorId != userId.Value)
+        if (!isAdmin)
         {
             return Forbid();
         }
@@ -315,7 +314,7 @@ public class ImagesController : ControllerBase
         return NoContent();
     }
 
-    [Authorize(Roles = "Admin,Contributor")]
+    [Authorize(Roles = "Admin")]
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
@@ -332,7 +331,7 @@ public class ImagesController : ControllerBase
         }
 
         var isAdmin = User.IsInRole("Admin");
-        if (!isAdmin && existing.ContributorId != userId.Value)
+        if (!isAdmin)
         {
             return Forbid();
         }
@@ -484,13 +483,17 @@ public class ImagesController : ControllerBase
             return false;
         }
 
-        if (User.IsInRole("Admin") || User.IsInRole("Reviewer"))
+        if (User.IsInRole("Admin"))
         {
             return true;
         }
 
-        var userId = GetCurrentUserId();
-        return userId.HasValue && image.ContributorId == userId.Value;
+        if(!image.IsPublic)
+        {
+            return false;
+        }
+
+        return true;
     }
 
     private Guid? GetCurrentUserId()
@@ -508,8 +511,6 @@ public class ImagesController : ControllerBase
         {
             Id = image.Id,
             PublicId = image.PublicId,
-            FileName = image.FileName,
-            FilePath = image.FilePath,
             ContentType = image.ContentType,
             FileSize = image.FileSize,
             IsPublic = image.IsPublic,

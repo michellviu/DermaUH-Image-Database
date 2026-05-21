@@ -27,7 +27,6 @@ public class DermaImgConfiguration : IEntityTypeConfiguration<DermaImg>
         builder.Property(e => e.DermoscopicComments).HasMaxLength(2000);
         builder.Property(e => e.ClinicalNotes).HasMaxLength(2000);
         builder.Property(e => e.InformedConsentText).HasMaxLength(4000);
-        builder.Property(e => e.ReviewComment).HasMaxLength(500);
 
         // Enum conversions stored as strings
         builder.Property(e => e.ImageType).HasConversion<string>().HasMaxLength(50);
@@ -42,10 +41,6 @@ public class DermaImgConfiguration : IEntityTypeConfiguration<DermaImg>
         builder.Property(e => e.MelMitoticIndex).HasConversion<string>().HasMaxLength(50);
         builder.Property(e => e.FotoType).HasConversion<string>().HasMaxLength(50);
         builder.Property(e => e.InjuryType).HasConversion<string>().HasMaxLength(50);
-        builder.Property(e => e.ApprovalStatus)
-            .HasConversion<string>()
-            .HasMaxLength(20)
-            .HasDefaultValue(ImageApprovalStatus.Approved);
 
         // Soft delete filter
         builder.HasQueryFilter(e => !e.IsDeleted);
@@ -55,9 +50,5 @@ public class DermaImgConfiguration : IEntityTypeConfiguration<DermaImg>
         builder.Property(e => e.InstitutionDescription).HasMaxLength(1000);
         builder.Property(e => e.InstitutionCountry).HasMaxLength(100);
 
-        builder.HasOne(e => e.ReviewedByUser)
-            .WithMany(u => u.ReviewedImages)
-            .HasForeignKey(e => e.ReviewedByUserId)
-            .OnDelete(DeleteBehavior.SetNull);
     }
 }

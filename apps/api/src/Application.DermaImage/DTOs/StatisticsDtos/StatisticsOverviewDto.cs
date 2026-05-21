@@ -15,20 +15,3 @@ public class StatisticsOverviewDto
     public IReadOnlyList<StatisticsBucketDto> AnatomicalSiteDistribution { get; set; } = [];
     public IReadOnlyList<MonthlyUploadDto> MonthlyUploads { get; set; } = [];
 }
-
-public class StatisticsBucketDto
-{
-    public string Key { get; set; } = string.Empty;
-    public string Label { get; set; } = string.Empty;
-    public int Count { get; set; }
-    public double Percentage { get; set; }
-}
-
-public class MonthlyUploadDto
-{
-    public string MonthKey { get; set; } = string.Empty;
-    public string Label { get; set; } = string.Empty;
-    public int Count { get; set; }
-}
-
-

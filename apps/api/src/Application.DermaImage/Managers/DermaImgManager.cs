@@ -1,6 +1,5 @@
 using Application.DermaImage.DTOs;
 using Domain.DermaImage.Entities;
-using Domain.DermaImage.Entities.Enums;
 using Domain.DermaImage.Interfaces.Services;
 
 namespace Application.DermaImage.Managers;
@@ -68,10 +67,6 @@ public class DermaImgManager : IDermaImgManager
             ContentType = dto.ContentType,
             FileSize = dto.FileSize,
             IsPublic = dto.IsPublic,
-            ApprovalStatus = ImageApprovalStatus.Approved,
-            ReviewedAt = null,
-            ReviewedByUserId = null,
-            ReviewComment = null,
             ImageType = dto.ImageType,
             ImageManipulation = dto.ImageManipulation,
             DermoscopicType = dto.DermoscopicType,

@@ -19,7 +19,6 @@ public class AuthController : ControllerBase
         _config = config;
     }
 
-    // ── Register ────────────────────────────────────────────────────────
 
     [AllowAnonymous]
     [HttpPost("register")]
@@ -42,7 +41,6 @@ public class AuthController : ControllerBase
         }
     }
 
-    // ── Login ───────────────────────────────────────────────────────────
 
     [AllowAnonymous]
     [HttpPost("login")]
@@ -55,7 +53,6 @@ public class AuthController : ControllerBase
         return Ok(response);
     }
 
-    // ── Google Login ────────────────────────────────────────────────────
 
     [AllowAnonymous]
     [HttpPost("google")]
@@ -68,7 +65,6 @@ public class AuthController : ControllerBase
         return Ok(response);
     }
 
-    // ── Confirm Email ───────────────────────────────────────────────────
 
     [AllowAnonymous]
     [HttpPost("confirm-email")]
@@ -81,7 +77,6 @@ public class AuthController : ControllerBase
         return Ok(new { message = "Correo confirmado correctamente. Ya puedes iniciar sesión." });
     }
 
-    // ── Forgot Password ─────────────────────────────────────────────────
 
     [AllowAnonymous]
     [HttpPost("forgot-password")]
@@ -94,7 +89,6 @@ public class AuthController : ControllerBase
         return Ok(new { message = "Si la cuenta existe, recibirás un correo con instrucciones." });
     }
 
-    // ── Reset Password ──────────────────────────────────────────────────
 
     [AllowAnonymous]
     [HttpPost("reset-password")]
@@ -107,7 +101,6 @@ public class AuthController : ControllerBase
         return Ok(new { message = "Contraseña restablecida correctamente." });
     }
 
-    // ── Profile (authenticated) ─────────────────────────────────────────
 
     [Authorize]
     [HttpGet("profile")]
@@ -155,7 +148,6 @@ public class AuthController : ControllerBase
         }
     }
 
-    // ── Helpers ─────────────────────────────────────────────────────────
 
     private Guid? GetCurrentUserId()
     {

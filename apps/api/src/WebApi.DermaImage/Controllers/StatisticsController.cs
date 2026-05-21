@@ -32,6 +32,6 @@ public class StatisticsController : ControllerBase
             return false;
         }
 
-        return User.IsInRole("Admin") || User.IsInRole("Reviewer") || User.IsInRole("Contributor");
+        return User.IsInRole("Admin");
     }
 }

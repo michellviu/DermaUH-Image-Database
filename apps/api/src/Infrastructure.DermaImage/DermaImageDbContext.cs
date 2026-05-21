@@ -30,8 +30,6 @@ public class DermaImageDbContext : IdentityDbContext<User, IdentityRole<Guid>, G
         // triggering PendingModelChangesWarning).
         modelBuilder.Entity<IdentityRole<Guid>>().HasData(
             new IdentityRole<Guid> { Id = Guid.Parse("a1b2c3d4-0001-0000-0000-000000000001"), Name = nameof(UserRole.Viewer),      NormalizedName = nameof(UserRole.Viewer).ToUpperInvariant(),      ConcurrencyStamp = "d3c8b1ea-f6a1-473b-ad63-b536b4cffcfc" },
-            new IdentityRole<Guid> { Id = Guid.Parse("a1b2c3d4-0002-0000-0000-000000000002"), Name = nameof(UserRole.Contributor), NormalizedName = nameof(UserRole.Contributor).ToUpperInvariant(), ConcurrencyStamp = "01e3e9e5-e364-44d9-9c43-49699c32cc19" },
-            new IdentityRole<Guid> { Id = Guid.Parse("a1b2c3d4-0003-0000-0000-000000000003"), Name = nameof(UserRole.Reviewer),    NormalizedName = nameof(UserRole.Reviewer).ToUpperInvariant(),    ConcurrencyStamp = "fb6c7b75-f57a-4665-9ada-f152f9907452" },
             new IdentityRole<Guid> { Id = Guid.Parse("a1b2c3d4-0004-0000-0000-000000000004"), Name = nameof(UserRole.Admin),       NormalizedName = nameof(UserRole.Admin).ToUpperInvariant(),       ConcurrencyStamp = "27804fd8-0e9d-4ea2-af30-e638e994c174" }
         );
 

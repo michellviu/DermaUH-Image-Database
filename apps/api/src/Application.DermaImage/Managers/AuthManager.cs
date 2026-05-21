@@ -20,12 +20,11 @@ public class AuthManager : IAuthManager
         _email = email;
     }
 
-    // ── Register ────────────────────────────────────────────────────────
 
     public async Task<(bool Success, string? Error)> RegisterAsync(
         RegisterDto dto, string confirmationBaseUrl, CancellationToken ct = default)
     {
-        // Check duplicate email
+
         var existing = await _users.GetByEmailAsync(dto.Email, ct);
         if (existing is not null)
             return (false, "Ya existe una cuenta con ese correo electrónico.");
@@ -33,9 +32,9 @@ public class AuthManager : IAuthManager
         var user = new User
         {
             FirstName = dto.FirstName,
-            LastName  = dto.LastName,
-            Email     = dto.Email,
-            UserName  = BuildUserName(dto.Email),
+            LastName = dto.LastName,
+            Email = dto.Email,
+            UserName = BuildUserName(dto.Email),
             EmailConfirmed = false,
         };
 
@@ -50,7 +49,6 @@ public class AuthManager : IAuthManager
             return (false, SimplifyRepositoryError(ex.Message));
         }
 
-        // Send confirmation email
         var token = await _users.GenerateEmailConfirmationTokenAsync(created);
         var encodedToken = Uri.EscapeDataString(token);
         var link = $"{confirmationBaseUrl}?userId={created.Id}&token={encodedToken}";
@@ -59,7 +57,6 @@ public class AuthManager : IAuthManager
         return (true, null);
     }
 
-    // ── Login ───────────────────────────────────────────────────────────
 
     public async Task<(LoginResponseDto? Response, string? Error)> LoginAsync(
         LoginDto dto, CancellationToken ct = default)
@@ -82,16 +79,15 @@ public class AuthManager : IAuthManager
 
         return (new LoginResponseDto
         {
-            Token          = token,
-            UserId         = user.Id,
-            Email          = user.Email!,
-            FullName       = user.FullName,
-            Roles          = roles,
+            Token = token,
+            UserId = user.Id,
+            Email = user.Email!,
+            FullName = user.FullName,
+            Roles = roles,
             EmailConfirmed = user.EmailConfirmed,
         }, null);
     }
 
-    // ── Google Login ────────────────────────────────────────────────────
 
     public async Task<(LoginResponseDto? Response, string? Error)> GoogleLoginAsync(
         GoogleLoginDto dto, CancellationToken ct = default)
@@ -115,12 +111,12 @@ public class AuthManager : IAuthManager
         {
             user = new User
             {
-                FirstName      = payload.GivenName ?? string.Empty,
-                LastName       = payload.FamilyName ?? string.Empty,
-                Email          = payload.Email,
-                UserName       = BuildUserName(payload.Email),
+                FirstName = payload.GivenName ?? string.Empty,
+                LastName = payload.FamilyName ?? string.Empty,
+                Email = payload.Email,
+                UserName = BuildUserName(payload.Email),
                 EmailConfirmed = true,
-                IsActive       = true,
+                IsActive = true,
             };
             user = await _users.CreateExternalAsync(user, ct);
             await _users.AddToRoleAsync(user, nameof(UserRole.Viewer));
@@ -139,16 +135,15 @@ public class AuthManager : IAuthManager
 
         return (new LoginResponseDto
         {
-            Token          = token,
-            UserId         = user.Id,
-            Email          = user.Email!,
-            FullName       = user.FullName,
-            Roles          = roles,
+            Token = token,
+            UserId = user.Id,
+            Email = user.Email!,
+            FullName = user.FullName,
+            Roles = roles,
             EmailConfirmed = user.EmailConfirmed,
         }, null);
     }
 
-    // ── Confirm Email ───────────────────────────────────────────────────
 
     public async Task<(bool Success, string? Error)> ConfirmEmailAsync(
         ConfirmEmailDto dto, CancellationToken ct = default)
@@ -167,7 +162,6 @@ public class AuthManager : IAuthManager
         return (true, null);
     }
 
-    // ── Forgot Password ─────────────────────────────────────────────────
 
     public async Task<(bool Success, string? Error)> ForgotPasswordAsync(
         ForgotPasswordDto dto, string resetBaseUrl, CancellationToken ct = default)
@@ -185,7 +179,6 @@ public class AuthManager : IAuthManager
         return (true, null);
     }
 
-    // ── Reset Password ──────────────────────────────────────────────────
 
     public async Task<(bool Success, string? Error)> ResetPasswordAsync(
         ResetPasswordDto dto, CancellationToken ct = default)
@@ -204,7 +197,6 @@ public class AuthManager : IAuthManager
         return (true, null);
     }
 
-    // ── Profile ─────────────────────────────────────────────────────────
 
     public async Task<UserProfileDto?> GetProfileAsync(Guid userId, CancellationToken ct = default)
     {
@@ -214,14 +206,14 @@ public class AuthManager : IAuthManager
         var roles = await _users.GetRolesAsync(user);
         return new UserProfileDto
         {
-            Id              = user.Id,
-            FirstName       = user.FirstName,
-            LastName        = user.LastName,
-            Email           = user.Email ?? string.Empty,
-            PhoneNumber     = user.PhoneNumber,
-            EmailConfirmed  = user.EmailConfirmed,
-            Roles           = roles,
-            CreatedAt       = user.CreatedAt,
+            Id = user.Id,
+            FirstName = user.FirstName,
+            LastName = user.LastName,
+            Email = user.Email ?? string.Empty,
+            PhoneNumber = user.PhoneNumber,
+            EmailConfirmed = user.EmailConfirmed,
+            Roles = roles,
+            CreatedAt = user.CreatedAt,
         };
     }
 
@@ -232,8 +224,8 @@ public class AuthManager : IAuthManager
         if (user is null)
             return (false, "Usuario no encontrado.");
 
-        user.FirstName     = dto.FirstName;
-        user.LastName      = dto.LastName;
+        user.FirstName = dto.FirstName;
+        user.LastName = dto.LastName;
         user.PhoneNumber = dto.PhoneNumber;
 
         await _users.UpdateAsync(user, ct);

@@ -1,7 +1,5 @@
 namespace Application.DermaImage.DTOs;
 
-// ── Institution DTOs ───────────────────────────────────────────────────
-
 public class InstitutionResponseDto
 {
     public string Name { get; set; } = string.Empty;

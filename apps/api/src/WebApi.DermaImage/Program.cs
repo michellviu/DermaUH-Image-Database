@@ -53,7 +53,7 @@ builder.Services.AddSwaggerGen(options =>
 {
     options.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
     {
-        Title = "DermaImage API",
+        Title = "DermaUHImages API",
         Version = "v1",
         Description = "API para gestión de imágenes dermatológicas",
         Contact = new Microsoft.OpenApi.Models.OpenApiContact
@@ -139,7 +139,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI(options =>
     {
-        options.SwaggerEndpoint("/swagger/v1/swagger.json", "DermaImage API v1");
+        options.SwaggerEndpoint("/swagger/v1/swagger.json", "DermaUHImages API v1");
         options.RoutePrefix = "swagger";
         options.DocExpansion(Swashbuckle.AspNetCore.SwaggerUI.DocExpansion.List);
     });

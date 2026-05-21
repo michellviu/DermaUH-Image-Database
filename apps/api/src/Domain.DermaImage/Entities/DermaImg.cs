@@ -24,21 +24,6 @@ public class DermaImg : BaseEntity
     /// <summary>Whether the image is visible to anonymous/public users.</summary>
     public bool IsPublic { get; set; } = false;
 
-    /// <summary>Legacy publication status retained for compatibility.</summary>
-    public ImageApprovalStatus ApprovalStatus { get; set; } = ImageApprovalStatus.Approved;
-
-    /// <summary>Optional reviewer comment captured at decision time.</summary>
-    public string? ReviewComment { get; set; }
-
-    /// <summary>Timestamp when the review decision was made.</summary>
-    public DateTime? ReviewedAt { get; set; }
-
-    /// <summary>Reviewer user who made the decision.</summary>
-    public Guid? ReviewedByUserId { get; set; }
-
-    [ForeignKey("ReviewedByUserId")]
-    public User? ReviewedByUser { get; set; }
-
     // ── Acquisition / Technologic ──────────────────────────────────────
     /// <summary>Dermatologic image type (dermoscopic, clinical, etc.).</summary>
     public ImageType? ImageType { get; set; }
@@ -56,10 +41,10 @@ public class DermaImg : BaseEntity
     /// <summary>Clinical history record identifier.</summary>
     public string? ClinicalHistoryNumber { get; set; }
 
-    /// <summary>Approximate age of the patient at time of capture (binned to 5-year intervals).</summary>
+    /// <summary>Approximate age of the patient at time of capture.</summary>
     public int? AgeApprox { get; set; }
 
-    /// <summary>Biologic sex of the imaged person.</summary>
+    /// <summary>Biologic sex of the person.</summary>
     public Sex? Sex { get; set; }
 
     /// <summary>Skin color classification.</summary>
