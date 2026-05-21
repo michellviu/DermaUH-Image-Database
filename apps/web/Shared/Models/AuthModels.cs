@@ -66,7 +66,7 @@ public class UserProfile
 
     public string FullName => $"{FirstName} {LastName}".Trim();
     public bool IsAdmin => Roles.Contains("Admin");
-    public bool IsContributor => Roles.Contains("Contributor") || Roles.Contains("Admin");
+    public bool IsViewer => Roles.Contains("Viewer") || Roles.Contains("Admin");
 }
 
 public class UpdateProfileRequest
