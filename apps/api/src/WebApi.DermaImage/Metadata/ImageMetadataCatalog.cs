@@ -33,57 +33,12 @@ public static class ImageMetadataCatalog
         new(
             "PublicId",
             "ID publico",
-            "Identificador publico unico de la imagen.",
+            "Identificador público único de la imagen.",
             "texto",
             null,
             true,
             "Formato DERM_0000001",
             image => image.PublicId),
-        new(
-            "FileName",
-            "Nombre de archivo original",
-            "Nombre con el que la imagen fue subida por el contribuidor.",
-            "texto",
-            null,
-            true,
-            null,
-            image => image.FileName),
-        new(
-            "ContentType",
-            "Tipo de contenido",
-            "MIME type del archivo (ej. image/jpeg).",
-            "texto",
-            "image/jpeg, image/png, image/webp",
-            true,
-            null,
-            image => image.ContentType),
-        new(
-            "FileSizeBytes",
-            "Tamano del archivo (bytes)",
-            "Peso del archivo en bytes.",
-            "numero",
-            null,
-            true,
-            null,
-            image => image.FileSize > 0 ? image.FileSize.ToString(CultureInfo.InvariantCulture) : null),
-        new(
-            "CreatedAtUtc",
-            "Fecha de carga (UTC)",
-            "Fecha de creacion del registro en UTC.",
-            "fecha",
-            null,
-            true,
-            "Formato ISO 8601",
-            image => image.CreatedAt.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ", CultureInfo.InvariantCulture)),
-        new(
-            "IsPublic",
-            "Visible publicamente",
-            "Indica si la imagen es visible para usuarios anonimos.",
-            "booleano",
-            "true, false",
-            true,
-            null,
-            image => FormatBool(image.IsPublic)),
         new(
             "ImageType",
             "Tipo de imagen",
@@ -95,8 +50,8 @@ public static class ImageMetadataCatalog
             image => image.ImageType?.ToString()),
         new(
             "ImageManipulation",
-            "Manipulacion de imagen",
-            "Nivel de manipulacion o sintetizacion de la imagen.",
+            "Manipulación de imagen",
+            "Nivel de manipulación o sintetización de la imagen.",
             "enum",
             "InstrumentOnly, Altered, Synthetic, Unknown",
             false,
@@ -104,7 +59,7 @@ public static class ImageMetadataCatalog
             image => image.ImageManipulation?.ToString()),
         new(
             "DermoscopicType",
-            "Tipo dermatoscopico",
+            "Tipo dermatoscópico",
             "Solo aplica cuando el tipo de imagen es Dermoscopic.",
             "enum",
             "ContactPolarized, ContactNonPolarized, NonContactPolarized",
@@ -122,8 +77,8 @@ public static class ImageMetadataCatalog
             image => image.PatientName),
         new(
             "ClinicalHistoryNumber",
-            "Historia clinica",
-            "Numero de historia clinica del paciente.",
+            "Historia clínica",
+            "Número de historia clínica del paciente.",
             "texto",
             null,
             false,
@@ -132,8 +87,8 @@ public static class ImageMetadataCatalog
         new(
             "AgeApprox",
             "Edad aproximada",
-            "Edad aproximada del paciente en intervalos de 5 anos.",
-            "numero",
+            "Edad aproximada del paciente.",
+            "entero",
             null,
             true,
             null,
@@ -141,7 +96,7 @@ public static class ImageMetadataCatalog
         new(
             "Sex",
             "Sexo",
-            "Sexo biologico del paciente.",
+            "Sexo biológico del paciente.",
             "enum",
             "Male, Female",
             true,
@@ -150,7 +105,7 @@ public static class ImageMetadataCatalog
         new(
             "SkinColor",
             "Color de piel",
-            "Clasificacion de color de piel.",
+            "Clasificación de color de piel.",
             "enum",
             "White, Mixed_Race, Black",
             false,
@@ -159,7 +114,7 @@ public static class ImageMetadataCatalog
         new(
             "FotoType",
             "Fototipo",
-            "Clasificacion de fototipo cutaneo.",
+            "Clasificación de fototipo cutaneo.",
             "enum",
             "I, II, III, IV, V, VI",
             false,
@@ -194,8 +149,8 @@ public static class ImageMetadataCatalog
             image => FormatNullableBool(image.FamilyHxMm)),
         new(
             "SunExposure",
-            "Exposicion al sol",
-            "Indica si hay exposicion solar relevante.",
+            "Exposición al sol",
+            "Indica si hay exposición solar relevante.",
             "booleano",
             "true, false",
             true,
@@ -203,8 +158,8 @@ public static class ImageMetadataCatalog
             image => FormatNullableBool(image.SunExposure)),
         new(
             "AnatomSiteGeneral",
-            "Sitio anatomico general",
-            "Region anatomica general de la lesion.",
+            "Sitio anatómico general",
+            "Región anatómica general de la lesión.",
             "enum",
             "HeadNeck, UpperExtremity, LowerExtremity, AnteriorTorso, LateralTorso, PosteriorTorso, PalmsSoles, OralGenital",
             true,
@@ -212,7 +167,7 @@ public static class ImageMetadataCatalog
             image => image.AnatomSiteGeneral?.ToString()),
         new(
             "AnatomSiteSpecial",
-            "Sitio anatomico especial",
+            "Sitio anatómico especial",
             "Sitio especial (acral, ungueal, etc.).",
             "enum",
             "AcralNOS, NailNOS, Fingernail, Toenail, AcralPalmsOrSoles, OralOrGenital",
@@ -221,17 +176,17 @@ public static class ImageMetadataCatalog
             image => image.AnatomSiteSpecial?.ToString()),
         new(
             "ClinSizeLongDiamMm",
-            "Diametro mayor (mm)",
-            "Diametro mayor de la lesion en milimetros.",
-            "numero",
+            "Diámetro mayor (mm)",
+            "Diámetro mayor de la lesión en milímetros.",
+            "decimal",
             null,
             false,
             "Unidad: mm",
             image => FormatNullableNumber(image.ClinSizeLongDiamMm)),
         new(
             "Diagnosis",
-            "Diagnostico",
-            "Diagnostico textual del caso.",
+            "Diagnóstico",
+            "Diagnóstico textual del caso.",
             "texto",
             null,
             true,
@@ -239,8 +194,8 @@ public static class ImageMetadataCatalog
             image => image.Diagnosis),
         new(
             "HistopathologicalDiagnosis",
-            "Diagnostico histopatologico",
-            "Diagnostico histopatologico del caso.",
+            "Diagnóstico histopatológico",
+            "Diagnóstico histopatológico del caso.",
             "texto",
             null,
             false,
@@ -248,8 +203,8 @@ public static class ImageMetadataCatalog
             image => image.HistopathologicalDiagnosis),
         new(
             "DiagnosisCategory",
-            "Categoria diagnostica",
-            "Categoria general de malignidad.",
+            "Categoría diagnóstica",
+            "Categoría general de malignidad.",
             "enum",
             "Benign, Indeterminate, Malignant",
             false,
@@ -257,8 +212,8 @@ public static class ImageMetadataCatalog
             image => image.DiagnosisCategory?.ToString()),
         new(
             "InjuryType",
-            "Tipo de lesion",
-            "Tipo de lesion clinica.",
+            "Tipo de lesión",
+            "Tipo de lesión clinica.",
             "enum",
             "Melanoma, BasalCellCarcinoma, SquamousCellCarcinoma, Others",
             false,
@@ -266,8 +221,8 @@ public static class ImageMetadataCatalog
             image => image.InjuryType?.ToString()),
         new(
             "DiagnosisConfirmType",
-            "Metodo de confirmacion",
-            "Metodo utilizado para confirmar el diagnostico.",
+            "Método de confirmación",
+            "Método utilizado para confirmar el diagnóstico.",
             "enum",
             "Histopathology, SingleContributorClinicalAssessment, SerialImagingShowingNoChange, SingleImageExpertConsensus, ConfocalMicroscopyWithConsensusDermoscopy",
             false,
@@ -277,15 +232,15 @@ public static class ImageMetadataCatalog
             "MelThickMm",
             "Espesor de melanoma (mm)",
             "Profundidad de Breslow.",
-            "numero",
+            "decimal",
             null,
             false,
             "Unidad: mm",
             image => FormatNullableNumber(image.MelThickMm, "F2")),
         new(
             "MelMitoticIndex",
-            "Indice mitotico",
-            "Indice mitotico para melanoma.",
+            "Índice mitótico",
+            "Índice mitótico para melanoma.",
             "enum",
             "Zero, LessThanOne, One, Two, Three, Four, MoreThanFour",
             false,
@@ -293,8 +248,8 @@ public static class ImageMetadataCatalog
             image => image.MelMitoticIndex?.ToString()),
         new(
             "MelUlcer",
-            "Ulceracion",
-            "Ulceracion histopatologica.",
+            "Ulceración",
+            "Ulceración histopatológica.",
             "booleano",
             "true, false",
             false,
@@ -302,8 +257,8 @@ public static class ImageMetadataCatalog
             image => FormatNullableBool(image.MelUlcer)),
         new(
             "ClinicalNotes",
-            "Notas clinicas",
-            "Observaciones clinicas adicionales.",
+            "Notas clínicas",
+            "Observaciones clínicas adicionales.",
             "texto",
             null,
             false,
@@ -311,8 +266,8 @@ public static class ImageMetadataCatalog
             image => image.ClinicalNotes),
         new(
             "DermoscopicComments",
-            "Comentarios dermatoscopicos",
-            "Observaciones dermatoscopicas adicionales.",
+            "Comentarios dermatoscópicos",
+            "Observaciones dermatoscópicas adicionales.",
             "texto",
             null,
             false,
@@ -356,8 +311,8 @@ public static class ImageMetadataCatalog
             image => null),
         new(
             "InstitutionName",
-            "Institucion",
-            "Institucion que aporto la imagen.",
+            "Institución",
+            "Institución que aportó la imagen.",
             "texto",
             null,
             false,
@@ -385,7 +340,7 @@ public static class ImageMetadataCatalog
 
     public static string BuildDefinitionsCsv()
     {
-        var headers = new[] { "Campo", "Etiqueta", "Descripcion", "Tipo", "ValoresPermitidos", "Requerido", "Notas" };
+        var headers = new[] { "Campo", "Etiqueta", "Descripción", "Tipo", "Valores Permitidos", "Requerido", "Notas" };
         var rows = Definitions.Select(def => new[]
         {
             def.Key,
@@ -393,7 +348,7 @@ public static class ImageMetadataCatalog
             def.Description,
             def.DataType,
             def.AllowedValues ?? string.Empty,
-            def.Required ? "Si" : "No",
+            def.Required ? "Sí" : "No",
             def.Notes ?? string.Empty
         });
 
