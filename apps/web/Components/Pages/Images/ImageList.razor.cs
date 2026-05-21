@@ -1,8 +1,6 @@
 using System.Net.Http;
 using System.Net.Http.Json;
-using System.Security.Claims;
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.JSInterop;
 using Web.DermaImage.Services;
 using Web.DermaImage.Shared.Models;
@@ -11,8 +9,6 @@ namespace Web.DermaImage.Components.Pages.Images;
 
 public partial class ImageList
 {
-    [CascadingParameter] private Task<AuthenticationState>? AuthenticationStateTask { get; set; }
-
     private List<DermaImgDto> images = [];
     private bool hasLoaded;
     private int totalCount;
@@ -30,9 +26,6 @@ public partial class ImageList
     private const int DefaultPageSize = 10;
 
     private string? diagnosisContains;
-    private bool onlyMyContributions;
-    private bool isAuthenticated;
-    private Guid? currentUserId;
     private bool isDownloading;
     private ImageDownloadMode downloadMode = ImageDownloadMode.ImagesAndMetadata;
 
@@ -41,6 +34,7 @@ public partial class ImageList
     private readonly HashSet<string> selectedImageTypes = [];
     private readonly HashSet<string> selectedDiagnosisCategories = [];
     private readonly HashSet<string> selectedInjuryTypes = [];
+    private readonly HashSet<string> selectedDiagnosisConfirmTypes = [];
     private readonly HashSet<string> selectedFotoTypes = [];
     private readonly HashSet<string> selectedSexes = [];
     private readonly HashSet<string> selectedAnatomSites = [];
@@ -70,6 +64,15 @@ public partial class ImageList
         new("BasalCellCarcinoma", "Carcinoma Basocelular"),
         new("SquamousCellCarcinoma", "Carcinoma Escamocelular"),
         new("Others", "Otros"),
+    ];
+
+    private static readonly IReadOnlyList<FilterOption> diagnosisConfirmOptions =
+    [
+        new("Histopathology", "Histopatologia"),
+        new("SingleContributorClinicalAssessment", "Evaluacion clinica individual"),
+        new("SerialImagingShowingNoChange", "Imagenes seriadas sin cambio"),
+        new("SingleImageExpertConsensus", "Consenso de expertos"),
+        new("ConfocalMicroscopyWithConsensusDermoscopy", "Microscopia confocal"),
     ];
 
     private static readonly IReadOnlyList<FilterOption> photoTypeOptions =
@@ -102,7 +105,6 @@ public partial class ImageList
 
     protected override async Task OnInitializedAsync()
     {
-        await ResolveUserContextAsync();
         await ResetAndLoadImagesAsync();
     }
 
@@ -144,43 +146,16 @@ public partial class ImageList
     {
         diagnosisContains = null;
         diagnosisInputVersion++;
-        onlyMyContributions = false;
         selectedImageTypes.Clear();
         selectedDiagnosisCategories.Clear();
         selectedInjuryTypes.Clear();
+        selectedDiagnosisConfirmTypes.Clear();
         selectedFotoTypes.Clear();
         selectedSexes.Clear();
         selectedAnatomSites.Clear();
 
         await ResetAndLoadImagesAsync();
         await diagnosisInputRef.FocusAsync();
-    }
-
-    private async Task ToggleOnlyMyContributionsAsync(ChangeEventArgs args)
-    {
-        onlyMyContributions = args.Value as bool? ?? false;
-        await ApplyFiltersAsync();
-    }
-
-    private async Task ResolveUserContextAsync()
-    {
-        if (AuthenticationStateTask is null)
-        {
-            return;
-        }
-
-        var authState = await AuthenticationStateTask;
-        var user = authState.User;
-        isAuthenticated = user.Identity?.IsAuthenticated ?? false;
-
-        var idValue = user.FindFirst(ClaimTypes.NameIdentifier)?.Value
-            ?? user.FindFirst("sub")?.Value
-            ?? user.FindFirst(ClaimTypes.Name)?.Value;
-
-        if (Guid.TryParse(idValue, out var parsedId))
-        {
-            currentUserId = parsedId;
-        }
     }
 
     private async Task ResetAndLoadImagesAsync()
@@ -282,6 +257,11 @@ public partial class ImageList
             queryParams.Add($"injuryTypes={Uri.EscapeDataString(value)}");
         }
 
+        foreach (var value in selectedDiagnosisConfirmTypes)
+        {
+            queryParams.Add($"diagnosisConfirmTypes={Uri.EscapeDataString(value)}");
+        }
+
         foreach (var value in selectedFotoTypes)
         {
             queryParams.Add($"fotoTypes={Uri.EscapeDataString(value)}");
@@ -300,11 +280,6 @@ public partial class ImageList
         if (!string.IsNullOrWhiteSpace(diagnosisContains))
         {
             queryParams.Add($"diagnosisContains={Uri.EscapeDataString(diagnosisContains.Trim())}");
-        }
-
-        if (onlyMyContributions && currentUserId.HasValue)
-        {
-            queryParams.Add($"contributorId={currentUserId.Value}");
         }
 
         return queryParams;

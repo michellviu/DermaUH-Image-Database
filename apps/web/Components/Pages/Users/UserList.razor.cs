@@ -18,7 +18,7 @@ public partial class UserList
     private readonly Dictionary<Guid, List<string>> userRoles = new();
     private readonly Dictionary<Guid, string> selectedAssignRoles = new();
     private readonly Dictionary<Guid, string> selectedRemoveRoles = new();
-    private readonly string[] assignableRoles = ["Viewer", "Contributor", "Reviewer", "Admin"];
+    private readonly string[] assignableRoles = ["Viewer", "Admin"];
 
     protected override async Task OnInitializedAsync()
     {

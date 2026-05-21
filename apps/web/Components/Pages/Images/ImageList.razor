@@ -1,7 +1,5 @@
 @page "/images"
 @rendermode InteractiveServer
-@using System.Security.Claims
-@using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.JSInterop
 @implements IAsyncDisposable
 @inject HttpClient Http
@@ -29,16 +27,6 @@
             <label class="form-label">Diagnóstico</label>
             <input @ref="diagnosisInputRef" type="text" value="@diagnosisContains" @oninput="OnDiagnosisInputChangedAsync" class="form-control" placeholder="Buscar por término clínico" />
         </section>
-
-        @if (isAuthenticated)
-        {
-            <section>
-                <label class="filter-check" for="mine-only">
-                    <input class="form-check-input" type="checkbox" checked="@onlyMyContributions" @onchange="ToggleOnlyMyContributionsAsync" id="mine-only" />
-                    <span>Solo mis contribuciones</span>
-                </label>
-            </section>
-        }
 
         <section>
             <h3>Tipo de imagen</h3>
@@ -68,6 +56,17 @@
             {
                 <label class="filter-check" for="@($"injury-{option.Value}")">
                     <input class="form-check-input" type="checkbox" checked="@selectedInjuryTypes.Contains(option.Value)" @onchange="(e) => ToggleSelection(e, option.Value, selectedInjuryTypes)" id="@($"injury-{option.Value}")" />
+                    <span>@option.Label</span>
+                </label>
+            }
+        </section>
+
+        <section>
+            <h3>Confirmación diagnóstica</h3>
+            @foreach (var option in diagnosisConfirmOptions)
+            {
+                <label class="filter-check" for="@($"confirm-{option.Value}")">
+                    <input class="form-check-input" type="checkbox" checked="@selectedDiagnosisConfirmTypes.Contains(option.Value)" @onchange="(e) => ToggleSelection(e, option.Value, selectedDiagnosisConfirmTypes)" id="@($"confirm-{option.Value}")" />
                     <span>@option.Label</span>
                 </label>
             }
