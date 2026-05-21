@@ -152,7 +152,7 @@ public static class ImageMetadataCatalog
             "Color de piel",
             "Clasificacion de color de piel.",
             "enum",
-            "Blanca, Mestiza, Oscura",
+            "White, Mixed_Race, Black",
             false,
             null,
             image => image.SkinColor?.ToString()),
