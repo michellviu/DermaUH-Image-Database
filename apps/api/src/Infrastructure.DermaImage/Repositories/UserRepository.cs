@@ -44,7 +44,9 @@ public class UserRepository : IUserRepository
     public async Task<(IEnumerable<User> Items, int TotalCount)> GetPagedAsync(int page, int pageSize, CancellationToken cancellationToken = default)
     {
         _logger.LogInformation("Fetching paged users");
-        var query = _context.Users.AsQueryable();
+        var query = _context.Users
+            .Where(u => !u.IsDeleted)
+            .AsQueryable();
         var totalCount = await query.CountAsync(cancellationToken);
         var items = await query
             .OrderBy(u => u.LastName)

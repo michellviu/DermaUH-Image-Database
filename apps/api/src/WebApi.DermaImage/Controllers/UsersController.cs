@@ -3,6 +3,7 @@ using Application.DermaImage.Managers;
 using Domain.DermaImage.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using WebApi.DermaImage.DTOs;
 
 namespace WebApi.DermaImage.Controllers;
 
@@ -12,10 +13,14 @@ namespace WebApi.DermaImage.Controllers;
 public class UsersController : ControllerBase
 {
     private readonly IUserManager _manager;
+    private readonly IAuthManager _auth;
+    private readonly IConfiguration _config;
 
-    public UsersController(IUserManager manager)
+    public UsersController(IUserManager manager, IAuthManager auth, IConfiguration config)
     {
         _manager = manager;
+        _auth = auth;
+        _config = config;
     }
 
     [HttpGet]
@@ -58,7 +63,28 @@ public class UsersController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<UserResponseDto>> Create([FromBody] CreateUserDto dto, CancellationToken cancellationToken)
     {
-        var created = await _manager.CreateAsync(dto, cancellationToken);
+        var frontendBase = _config["FrontendBaseUrl"] ?? "http://localhost:5262";
+        var confirmationUrl = $"{frontendBase}/account/confirm-email";
+
+        var register = new RegisterDto
+        {
+            FirstName = dto.FirstName,
+            LastName = dto.LastName,
+            Email = dto.Email,
+            Password = dto.Password,
+        };
+
+        var (success, error) = await _auth.RegisterAsync(register, confirmationUrl, cancellationToken);
+        if (!success)
+        {
+            return BadRequest(new { message = error });
+        }
+
+        var created = await _manager.GetByEmailAsync(dto.Email, cancellationToken);
+        if (created is null)
+        {
+            return StatusCode(500, new { message = "No fue posible recuperar el usuario creado." });
+        }
         var roles = await _manager.GetRolesAsync(created.Id, cancellationToken);
         return CreatedAtAction(nameof(GetById), new { id = created.Id }, MapToResponseDto(created, roles));
     }
@@ -88,6 +114,13 @@ public class UsersController : ControllerBase
     public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
     {
         await _manager.DeleteAsync(id, cancellationToken);
+        return NoContent();
+    }
+
+    [HttpPut("{id:guid}/status")]
+    public async Task<IActionResult> SetStatus(Guid id, [FromBody] UpdateUserStatusDto dto, CancellationToken cancellationToken)
+    {
+        await _manager.SetActiveAsync(id, dto.IsActive, cancellationToken);
         return NoContent();
     }
 

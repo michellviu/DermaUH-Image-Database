@@ -46,6 +46,49 @@
     gap: 0.25rem;
 }
 
+.nav-submenu {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+
+.nav-submenu-toggle {
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.nav-submenu-chevron {
+    font-size: 0.7rem;
+    opacity: 0.7;
+}
+
+.nav-submenu-list {
+    position: absolute;
+    top: calc(100% + 0.4rem);
+    left: 0;
+    min-width: 180px;
+    display: none;
+    flex-direction: column;
+    gap: 0.2rem;
+    padding: 0.5rem;
+    border-radius: 0.9rem;
+    border: 1px solid color-mix(in srgb, var(--outline-variant) 40%, transparent);
+    background: color-mix(in srgb, var(--surface-container-lowest) 92%, transparent);
+    box-shadow: 0 16px 32px color-mix(in srgb, var(--primary) 14%, transparent);
+    z-index: 20;
+}
+
+.nav-submenu:hover .nav-submenu-list,
+.nav-submenu:focus-within .nav-submenu-list,
+.nav-submenu-list.is-open {
+    display: flex;
+}
+
+.nav-links .nav-link,
 .nav-links ::deep .nav-link {
     color: var(--on-surface-variant);
     text-decoration: none;
@@ -59,6 +102,7 @@
     white-space: nowrap;
 }
 
+.nav-links .nav-link:hover,
 .nav-links ::deep .nav-link:hover {
     background: color-mix(in srgb, var(--surface-container-lowest) 70%, transparent);
     color: var(--primary);
@@ -119,6 +163,31 @@
         width: 100%;
         border-radius: 12px;
         padding: 0.7rem 0.85rem;
+    }
+
+    .nav-submenu {
+        width: 100%;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.35rem;
+    }
+
+    .nav-submenu-toggle {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .nav-submenu-list {
+        position: static;
+        display: none;
+        width: 100%;
+        box-shadow: none;
+        padding: 0.35rem;
+        background: color-mix(in srgb, var(--surface-container-lowest) 95%, transparent);
+    }
+
+    .nav-submenu-list.is-open {
+        display: flex;
     }
 
     .nav-toggle:checked ~ .nav-toggle-label span:nth-child(1) {

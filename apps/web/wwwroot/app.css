@@ -7,19 +7,19 @@
     --surface-container-highest: #e1e3e4;
     --surface-variant: #e1e3e4;
 
-    --primary: #530c73;
-    --primary-container: #6c2b8c;
-    --primary-fixed: #f7d9ff;
-    --secondary: #894c5a;
-    --secondary-container: #ffb1c1;
-    --secondary-fixed: #ffd9df;
-    --tertiary: #291d8f;
+    --primary: #d679a0;
+    --primary-container: #c45f8b;
+    --primary-fixed: #f8d0df;
+    --secondary: #a8617c;
+    --secondary-container: #eea9c2;
+    --secondary-fixed: #f6cddc;
+    --tertiary: #7e4a79;
 
     --on-primary: #ffffff;
     --on-surface: #191c1d;
     --on-surface-variant: #4d4350;
-    --on-secondary-container: #7b404f;
-    --outline-variant: #d0c2d1;
+    --on-secondary-container: #8b4a64;
+    --outline-variant: #d8c3cc;
 
     --font-display: "Manrope", "Segoe UI", sans-serif;
     --font-body: "Public Sans", "Segoe UI", sans-serif;
@@ -108,14 +108,14 @@ a:hover,
 
 /* Shared cards */
 .content-card {
-    border: 1px solid color-mix(in srgb, var(--outline-variant) 34%, transparent);
+    border: 1px solid color-mix(in srgb, var(--outline-variant) 46%, transparent);
     border-radius: var(--radius-lg);
-    background: color-mix(in srgb, var(--surface-container-lowest) 88%, transparent);
-    box-shadow: 0 10px 34px color-mix(in srgb, var(--primary) 8%, transparent);
+    background: color-mix(in srgb, var(--surface-container-lowest) 94%, transparent);
+    box-shadow: 0 12px 36px color-mix(in srgb, var(--primary) 12%, transparent);
 }
 
 .content-card__header {
-    border-bottom: 1px solid color-mix(in srgb, var(--outline-variant) 20%, transparent);
+    border-bottom: 1px solid color-mix(in srgb, var(--outline-variant) 30%, transparent);
     padding: 1rem 1.15rem;
     display: flex;
     align-items: center;
@@ -153,37 +153,37 @@ a:hover,
 
 .btn-primary {
     color: var(--on-primary);
-    background: linear-gradient(130deg, var(--primary), var(--primary-container));
-    border-color: color-mix(in srgb, var(--primary-container) 60%, transparent);
-    box-shadow: 0 10px 26px color-mix(in srgb, var(--primary) 20%, transparent);
+    background: linear-gradient(130deg, var(--primary-container), var(--primary));
+    border-color: color-mix(in srgb, var(--primary) 75%, transparent);
+    box-shadow: 0 12px 30px color-mix(in srgb, var(--primary) 26%, transparent);
 }
 
 .btn-primary:hover {
     color: var(--on-primary);
     transform: translateY(-1px);
-    box-shadow: 0 14px 30px color-mix(in srgb, var(--primary) 24%, transparent);
+    box-shadow: 0 16px 34px color-mix(in srgb, var(--primary) 30%, transparent);
 }
 
 .btn-outline-primary {
     color: var(--primary);
-    background: color-mix(in srgb, var(--surface-container-lowest) 88%, transparent);
-    border-color: color-mix(in srgb, var(--primary) 25%, transparent);
+    background: color-mix(in srgb, var(--surface-container-low) 90%, transparent);
+    border-color: color-mix(in srgb, var(--primary) 35%, transparent);
 }
 
 .btn-outline-primary:hover {
     color: var(--primary-container);
-    background: color-mix(in srgb, var(--primary-fixed) 65%, transparent);
+    background: color-mix(in srgb, var(--primary-fixed) 75%, transparent);
 }
 
 .btn-outline-secondary {
     color: var(--on-surface-variant);
-    background: color-mix(in srgb, var(--surface-container-lowest) 88%, transparent);
-    border-color: color-mix(in srgb, var(--outline-variant) 45%, transparent);
+    background: color-mix(in srgb, var(--surface-container-low) 90%, transparent);
+    border-color: color-mix(in srgb, var(--outline-variant) 55%, transparent);
 }
 
 .btn-outline-secondary:hover {
     color: var(--on-surface);
-    background: color-mix(in srgb, var(--surface-container-low) 86%, transparent);
+    background: color-mix(in srgb, var(--surface-container-high) 85%, transparent);
 }
 
 .btn-outline-danger {

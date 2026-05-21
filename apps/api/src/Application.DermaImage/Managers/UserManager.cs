@@ -23,6 +23,11 @@ public class UserManager : IUserManager
     {
         return await _service.GetByIdAsync(id, cancellationToken);
     }
+    
+    public async Task<User?> GetByEmailAsync(string email, CancellationToken cancellationToken = default)
+    {
+        return await _service.GetByEmailAsync(email, cancellationToken);
+    }
 
     public async Task<User> CreateAsync(CreateUserDto dto, CancellationToken cancellationToken = default)
     {
@@ -69,6 +74,15 @@ public class UserManager : IUserManager
             ?? throw new KeyNotFoundException($"User with id '{userId}' was not found.");
 
         await _service.RemoveFromRoleAsync(user, role.ToString());
+    }
+
+    public async Task SetActiveAsync(Guid userId, bool isActive, CancellationToken cancellationToken = default)
+    {
+        var user = await _service.GetByIdAsync(userId, cancellationToken)
+            ?? throw new KeyNotFoundException($"User with id '{userId}' was not found.");
+
+        user.IsActive = isActive;
+        await _service.UpdateAsync(user, cancellationToken);
     }
 
     public async Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)

@@ -44,11 +44,6 @@ public static class DermaImgValidationRules
             "El tipo de lesion solo puede establecerse cuando la categoria diagnostica es Malignant.",
             errors);
 
-        AddIf(dto.DiagnosisCategory == DiagnosisCategory.Malignant && !dto.InjuryType.HasValue,
-            nameof(dto.InjuryType),
-            "Cuando la categoria diagnostica es Malignant, debe especificar el tipo de lesion.",
-            errors);
-
         AddIf(dto.ImageType is not ImageType.Dermoscopic && dto.DermoscopicType.HasValue,
             nameof(dto.DermoscopicType),
             "DermoscopicType solo aplica cuando ImageType es Dermoscopic.",

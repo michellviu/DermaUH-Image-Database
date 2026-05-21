@@ -1,4 +1,5 @@
 using System.Net.Http.Json;
+using System.Text.Json;
 using Microsoft.AspNetCore.Components;
 using Web.DermaImage.Shared.Models;
 
@@ -14,11 +15,19 @@ public partial class UserList
     private bool submitting;
     private int currentPage = 1;
     private string? errorMessage;
+    private string? successMessage;
     private UserFormModel newUser = new();
     private readonly Dictionary<Guid, List<string>> userRoles = new();
     private readonly Dictionary<Guid, string> selectedAssignRoles = new();
     private readonly Dictionary<Guid, string> selectedRemoveRoles = new();
     private readonly string[] assignableRoles = ["Viewer", "Admin"];
+    private string emailFilter = string.Empty;
+    private string roleFilter = string.Empty;
+    private string statusFilter = string.Empty;
+
+    private IReadOnlyList<UserDto> FilteredUsers => response?.Items is null
+        ? []
+        : response.Items.Where(MatchesFilter).ToList();
 
     protected override async Task OnInitializedAsync()
     {
@@ -89,6 +98,7 @@ public partial class UserList
     {
         submitting = true;
         errorMessage = null;
+        successMessage = null;
 
         try
         {
@@ -104,11 +114,12 @@ public partial class UserList
             {
                 newUser = new();
                 showForm = false;
+                successMessage = "Usuario creado. Se envió un correo para confirmar la cuenta.";
                 await LoadData(1);
             }
             else
             {
-                errorMessage = $"Error: {result.StatusCode}";
+                errorMessage = await ReadApiErrorAsync(result);
             }
         }
         catch (Exception ex)
@@ -148,9 +159,8 @@ public partial class UserList
             : string.Empty;
     }
 
-    private void OnAssignRoleSelectionChanged(Guid userId, ChangeEventArgs e)
+    private void OnAssignRoleSelectionChanged(Guid userId, string? role)
     {
-        var role = e.Value?.ToString();
         if (string.IsNullOrWhiteSpace(role))
         {
             return;
@@ -166,9 +176,8 @@ public partial class UserList
             : string.Empty;
     }
 
-    private void OnRemoveRoleSelectionChanged(Guid userId, ChangeEventArgs e)
+    private void OnRemoveRoleSelectionChanged(Guid userId, string? role)
     {
-        var role = e.Value?.ToString();
         if (string.IsNullOrWhiteSpace(role))
         {
             return;
@@ -180,6 +189,7 @@ public partial class UserList
     private async Task HandleAssignRole(Guid userId)
     {
         errorMessage = null;
+        successMessage = null;
         var role = GetSelectedAssignRole(userId);
         var currentRoles = response?.Items
             .Where(x => x.Id == userId)
@@ -203,10 +213,7 @@ public partial class UserList
             var result = await Http.PostAsJsonAsync($"api/users/{userId}/roles", new AssignRoleRequest { Role = role });
             if (!result.IsSuccessStatusCode)
             {
-                var detail = await result.Content.ReadAsStringAsync();
-                errorMessage = string.IsNullOrWhiteSpace(detail)
-                    ? $"Error al asignar rol: {result.StatusCode}"
-                    : $"Error al asignar rol: {detail}";
+                errorMessage = await ReadApiErrorAsync(result);
                 return;
             }
 
@@ -221,6 +228,7 @@ public partial class UserList
     private async Task HandleRemoveRole(Guid userId)
     {
         errorMessage = null;
+        successMessage = null;
         var role = GetSelectedRemoveRole(userId);
 
         if (string.IsNullOrWhiteSpace(role))
@@ -239,10 +247,7 @@ public partial class UserList
             var result = await Http.SendAsync(request);
             if (!result.IsSuccessStatusCode)
             {
-                var detail = await result.Content.ReadAsStringAsync();
-                errorMessage = string.IsNullOrWhiteSpace(detail)
-                    ? $"Error al quitar rol: {result.StatusCode}"
-                    : $"Error al quitar rol: {detail}";
+                errorMessage = await ReadApiErrorAsync(result);
                 return;
             }
 
@@ -272,6 +277,138 @@ public partial class UserList
         }
 
         return LoadData(currentPage + 1);
+    }
+
+    private async Task HandleToggleStatusAsync(UserDto user)
+    {
+        errorMessage = null;
+        successMessage = null;
+
+        var actionLabel = user.IsActive ? "desactivar" : "activar";
+        var confirmed = await JS.InvokeAsync<bool>("confirm", new object?[] { $"¿Deseas {actionLabel} este usuario?" });
+        if (!confirmed)
+        {
+            return;
+        }
+
+        try
+        {
+            var result = await Http.PutAsJsonAsync($"api/users/{user.Id}/status", new { IsActive = !user.IsActive });
+            if (!result.IsSuccessStatusCode)
+            {
+                errorMessage = await ReadApiErrorAsync(result);
+                return;
+            }
+
+            successMessage = user.IsActive
+                ? "Usuario desactivado correctamente."
+                : "Usuario activado correctamente.";
+            await LoadData(currentPage);
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+    }
+
+    private async Task HandleDeleteUserAsync(UserDto user)
+    {
+        errorMessage = null;
+        successMessage = null;
+
+        var confirmed = await JS.InvokeAsync<bool>("confirm", new object?[] { "¿Deseas eliminar este usuario? Esta acción no se puede deshacer." });
+        if (!confirmed)
+        {
+            return;
+        }
+
+        try
+        {
+            var result = await Http.DeleteAsync($"api/users/{user.Id}");
+            if (!result.IsSuccessStatusCode)
+            {
+                errorMessage = await ReadApiErrorAsync(result);
+                return;
+            }
+
+            successMessage = "Usuario eliminado correctamente.";
+            await LoadData(currentPage);
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+    }
+
+    private bool MatchesFilter(UserDto user)
+    {
+        if (!string.IsNullOrWhiteSpace(emailFilter)
+            && (string.IsNullOrWhiteSpace(user.Email)
+                || !user.Email.Contains(emailFilter, StringComparison.OrdinalIgnoreCase)))
+        {
+            return false;
+        }
+
+        if (!string.IsNullOrWhiteSpace(roleFilter))
+        {
+            var roles = GetRolesForUser(user);
+            if (string.Equals(roleFilter, "none", StringComparison.OrdinalIgnoreCase))
+            {
+                if (roles.Count > 0)
+                {
+                    return false;
+                }
+            }
+            else if (!roles.Any(r => r.Equals(roleFilter, StringComparison.OrdinalIgnoreCase)))
+            {
+                return false;
+            }
+        }
+
+        if (!string.IsNullOrWhiteSpace(statusFilter))
+        {
+            var isActive = user.IsActive;
+            if (string.Equals(statusFilter, "active", StringComparison.OrdinalIgnoreCase) && !isActive)
+            {
+                return false;
+            }
+
+            if (string.Equals(statusFilter, "inactive", StringComparison.OrdinalIgnoreCase) && isActive)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static async Task<string> ReadApiErrorAsync(HttpResponseMessage response)
+    {
+        var content = await response.Content.ReadAsStringAsync();
+        if (string.IsNullOrWhiteSpace(content))
+        {
+            return $"No se pudo completar la operación (HTTP {(int)response.StatusCode}).";
+        }
+
+        try
+        {
+            using var json = JsonDocument.Parse(content);
+            if (json.RootElement.TryGetProperty("message", out var messageNode)
+                && messageNode.ValueKind == JsonValueKind.String)
+            {
+                var message = messageNode.GetString();
+                if (!string.IsNullOrWhiteSpace(message))
+                {
+                    return message;
+                }
+            }
+        }
+        catch
+        {
+            // Ignore parsing errors.
+        }
+
+        return content;
     }
 
     private class UserFormModel

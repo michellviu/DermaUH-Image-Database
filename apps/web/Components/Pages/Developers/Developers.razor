@@ -1,0 +1,603 @@
+@page "/developers"
+@page "/developers/{Section}"
+@rendermode InteractiveServer
+@using Web.DermaImage.Components.Pages.Metadata
+
+<PageTitle>Desarrolladores - DermaUH</PageTitle>
+
+<section class="developers-hero">
+    <div class="developers-hero-text">
+        <span class="developers-kicker">Integraciones seguras</span>
+        <h1>Desarrolladores</h1>
+        <p>
+            Espacio para equipos que integran aplicaciones clínicas con DermaUH. Aquí se concentra
+            la documentación de metadatos y la API para contribuir imágenes verificadas.
+        </p>
+        <div class="developers-hero-actions">
+            <a class="btn btn-primary" href="developers/api">Guía de API</a>
+            <a class="btn btn-outline-primary" href="developers/metadata">Diccionario de metadatos</a>
+        </div>
+    </div>
+
+    <div class="developers-hero-card">
+        <div class="developers-hero-card-header">
+            <span class="developers-hero-title">Contribución verificada</span>
+            <span class="developers-hero-tag">API v1</span>
+        </div>
+        <div class="developers-hero-list">
+            <div>
+                <span class="developers-hero-value">1</span>
+                <span class="developers-hero-label">Endpoint de carga activo</span>
+            </div>
+            <div>
+                <span class="developers-hero-value">35</span>
+                <span class="developers-hero-label">Campos en payload</span>
+            </div>
+            <div>
+                <span class="developers-hero-value">100%</span>
+                <span class="developers-hero-label">Trazabilidad en metadatos</span>
+            </div>
+        </div>
+        <p class="developers-hero-note">Requiere autenticación con rol Admin para subir imágenes.</p>
+    </div>
+</section>
+
+<nav class="developers-tabs" aria-label="Opciones para desarrolladores">
+    <a class="developers-tab @(IsMetadata ? "developers-tab--active" : string.Empty)" href="developers/metadata">Metadatos</a>
+    <a class="developers-tab @(IsApi ? "developers-tab--active" : string.Empty)" href="developers/api">API</a>
+</nav>
+
+@if (IsApi)
+{
+    <section class="developers-api">
+        <div class="developers-api-grid">
+            <SectionCard Title="Endpoint Create" Class="developers-card">
+                <div class="developers-endpoint">
+                    <span class="developers-method">POST</span>
+                    <span class="developers-route">/api/images</span>
+                </div>
+                <p class="developers-card-text">
+                    Sube una imagen dermatológica con sus metadatos clínicos. El servidor calcula
+                    nombre, contenido y ruta del archivo; solo se envían los campos del formulario.
+                </p>
+                <div class="developers-meta-grid">
+                    <div>
+                        <span class="developers-meta-label">Autenticación</span>
+                        <span class="developers-meta-value">Bearer token con rol Admin</span>
+                    </div>
+                    <div>
+                        <span class="developers-meta-label">Content-Type</span>
+                        <span class="developers-meta-value">multipart/form-data</span>
+                    </div>
+                </div>
+            </SectionCard>
+
+            <SectionCard Title="Respuesta" Class="developers-card">
+                <div class="developers-response">
+                    <span class="developers-response-code">201</span>
+                    <span class="developers-response-text">Created</span>
+                </div>
+                <p class="developers-card-text">
+                    Devuelve un <span class="developers-inline-code">DermaImgResponseDto</span> con la imagen creada
+                    y su identificador público.
+                </p>
+                <div class="developers-meta-grid">
+                    <div>
+                        <span class="developers-meta-label">Errores comunes</span>
+                        <span class="developers-meta-value">400 validación, 401/403 permisos</span>
+                    </div>
+                    <div>
+                        <span class="developers-meta-label">Formato de enums</span>
+                        <span class="developers-meta-value">String con valores exactos</span>
+                    </div>
+                </div>
+            </SectionCard>
+        </div>
+
+        <SectionCard Title="CreateDermaImgFormDto (multipart/form-data)" Class="developers-card developers-card--full">
+            <p class="developers-card-text">
+                Campos esperados en el formulario. Los valores enum deben coincidir con las opciones listadas.
+            </p>
+            <div class="developers-field-table">
+                <div class="developers-field-head">
+                    <span>Campo</span>
+                    <span>Tipo</span>
+                    <span>Obligatorio</span>
+                    <span>Opciones / notas</span>
+                </div>
+
+                <div class="developers-field-group">Archivo y visibilidad</div>
+                <div class="developers-field-row">
+                    <div class="developers-field-cell" data-label="Campo">
+                        <span class="developers-field-name">File</span>
+                        <span class="developers-field-caption">Archivo binario</span>
+                    </div>
+                    <div class="developers-field-cell" data-label="Tipo">
+                        <span class="developers-field-type">file</span>
+                    </div>
+                    <div class="developers-field-cell" data-label="Obligatorio">
+                        <span class="developers-pill developers-pill--required">Sí</span>
+                    </div>
+                    <div class="developers-field-cell" data-label="Opciones / notas">
+                        Imagen dermatológica (jpg, png, gif, webp, bmp, tiff).
+                    </div>
+                </div>
+                <div class="developers-field-row">
+                    <div class="developers-field-cell" data-label="Campo">
+                        <span class="developers-field-name">IsPublic</span>
+                    </div>
+                    <div class="developers-field-cell" data-label="Tipo">
+                        bool
+                    </div>
+                    <div class="developers-field-cell" data-label="Obligatorio">
+                        <span class="developers-pill developers-pill--optional">No</span>
+                    </div>
+                    <div class="developers-field-cell" data-label="Opciones / notas">
+                        <span class="developers-option-chip">true</span>
+                        <span class="developers-option-chip">false</span>
+                        <span class="developers-muted">(por defecto false)</span>
+                    </div>
+                </div>
+
+                <div class="developers-field-group">Adquisición</div>
+                <div class="developers-field-row">
+                    <div class="developers-field-cell" data-label="Campo">
+                        <span class="developers-field-name">ImageType</span>
+                    </div>
+                    <div class="developers-field-cell" data-label="Tipo">enum</div>
+                    <div class="developers-field-cell" data-label="Obligatorio">
+                        <span class="developers-pill developers-pill--optional">No</span>
+                    </div>
+                    <div class="developers-field-cell" data-label="Opciones / notas">
+                        <span class="developers-option-chip">Dermoscopic</span>
+                        <span class="developers-option-chip">ClinicalOverview</span>
+                        <span class="developers-option-chip">ClinicalCloseUp</span>
+                        <span class="developers-option-chip">TBPTileOverview</span>
+                        <span class="developers-option-chip">TBPTileCloseUp</span>
+                        <span class="developers-option-chip">RCMMacroscopic</span>
+                        <span class="developers-option-chip">RCMTile</span>
+                        <span class="developers-option-chip">RCMMosaic</span>
+                    </div>
+                </div>
+                <div class="developers-field-row">
+                    <div class="developers-field-cell" data-label="Campo">
+                        <span class="developers-field-name">ImageManipulation</span>
+                    </div>
+                    <div class="developers-field-cell" data-label="Tipo">enum</div>
+                    <div class="developers-field-cell" data-label="Obligatorio">
+                        <span class="developers-pill developers-pill--optional">No</span>
+                    </div>
+                    <div class="developers-field-cell" data-label="Opciones / notas">
+                        <span class="developers-option-chip">InstrumentOnly</span>
+                        <span class="developers-option-chip">Altered</span>
+                        <span class="developers-option-chip">Synthetic</span>
+                        <span class="developers-option-chip">Unknown</span>
+                    </div>
+                </div>
+                <div class="developers-field-row">
+                    <div class="developers-field-cell" data-label="Campo">
+                        <span class="developers-field-name">DermoscopicType</span>
+                    </div>
+                    <div class="developers-field-cell" data-label="Tipo">enum</div>
+                    <div class="developers-field-cell" data-label="Obligatorio">
+                        <span class="developers-pill developers-pill--optional">No</span>
+                    </div>
+                    <div class="developers-field-cell" data-label="Opciones / notas">
+                        <span class="developers-option-chip">ContactPolarized</span>
+                        <span class="developers-option-chip">ContactNonPolarized</span>
+                        <span class="developers-option-chip">NonContactPolarized</span>
+                        <span class="developers-muted">Solo si ImageType = Dermoscopic.</span>
+                    </div>
+                </div>
+
+                <div class="developers-field-group">Paciente</div>
+                <div class="developers-field-row">
+                    <div class="developers-field-cell" data-label="Campo">
+                        <span class="developers-field-name">PatientName</span>
+                    </div>
+                    <div class="developers-field-cell" data-label="Tipo">string</div>
+                    <div class="developers-field-cell" data-label="Obligatorio">
+                        <span class="developers-pill developers-pill--required">Sí</span>
+                    </div>
+                    <div class="developers-field-cell" data-label="Opciones / notas">Nombre del paciente.</div>
+                </div>
+                <div class="developers-field-row">
+                    <div class="developers-field-cell" data-label="Campo">
+                        <span class="developers-field-name">ClinicalHistoryNumber</span>
+                    </div>
+                    <div class="developers-field-cell" data-label="Tipo">string</div>
+                    <div class="developers-field-cell" data-label="Obligatorio">
+                        <span class="developers-pill developers-pill--optional">No</span>
+                    </div>
+                    <div class="developers-field-cell" data-label="Opciones / notas">Texto libre.</div>
+                </div>
+                <div class="developers-field-row">
+                    <div class="developers-field-cell" data-label="Campo">
+                        <span class="developers-field-name">AgeApprox</span>
+                    </div>
+                    <div class="developers-field-cell" data-label="Tipo">int</div>
+                    <div class="developers-field-cell" data-label="Obligatorio">
+                        <span class="developers-pill developers-pill--required">Sí</span>
+                    </div>
+                    <div class="developers-field-cell" data-label="Opciones / notas">Rango 0-120.</div>
+                </div>
+                <div class="developers-field-row">
+                    <div class="developers-field-cell" data-label="Campo">
+                        <span class="developers-field-name">Sex</span>
+                    </div>
+                    <div class="developers-field-cell" data-label="Tipo">enum</div>
+                    <div class="developers-field-cell" data-label="Obligatorio">
+                        <span class="developers-pill developers-pill--required">Sí</span>
+                    </div>
+                    <div class="developers-field-cell" data-label="Opciones / notas">
+                        <span class="developers-option-chip">Male</span>
+                        <span class="developers-option-chip">Female</span>
+                    </div>
+                </div>
+                <div class="developers-field-row">
+                    <div class="developers-field-cell" data-label="Campo">
+                        <span class="developers-field-name">SkinColor</span>
+                    </div>
+                    <div class="developers-field-cell" data-label="Tipo">enum</div>
+                    <div class="developers-field-cell" data-label="Obligatorio">
+                        <span class="developers-pill developers-pill--optional">No</span>
+                    </div>
+                    <div class="developers-field-cell" data-label="Opciones / notas">
+                        <span class="developers-option-chip">White</span>
+                        <span class="developers-option-chip">Mixed_Race</span>
+                        <span class="developers-option-chip">Black</span>
+                    </div>
+                </div>
+                <div class="developers-field-row">
+                    <div class="developers-field-cell" data-label="Campo">
+                        <span class="developers-field-name">FotoType</span>
+                    </div>
+                    <div class="developers-field-cell" data-label="Tipo">enum</div>
+                    <div class="developers-field-cell" data-label="Obligatorio">
+                        <span class="developers-pill developers-pill--optional">No</span>
+                    </div>
+                    <div class="developers-field-cell" data-label="Opciones / notas">
+                        <span class="developers-option-chip">I</span>
+                        <span class="developers-option-chip">II</span>
+                        <span class="developers-option-chip">III</span>
+                        <span class="developers-option-chip">IV</span>
+                        <span class="developers-option-chip">V</span>
+                        <span class="developers-option-chip">VI</span>
+                    </div>
+                </div>
+                <div class="developers-field-row">
+                    <div class="developers-field-cell" data-label="Campo">
+                        <span class="developers-field-name">PersonalHistory</span>
+                    </div>
+                    <div class="developers-field-cell" data-label="Tipo">string</div>
+                    <div class="developers-field-cell" data-label="Obligatorio">
+                        <span class="developers-pill developers-pill--optional">No</span>
+                    </div>
+                    <div class="developers-field-cell" data-label="Opciones / notas">Texto libre.</div>
+                </div>
+                <div class="developers-field-row">
+                    <div class="developers-field-cell" data-label="Campo">
+                        <span class="developers-field-name">PersonalHxMm</span>
+                    </div>
+                    <div class="developers-field-cell" data-label="Tipo">bool</div>
+                    <div class="developers-field-cell" data-label="Obligatorio">
+                        <span class="developers-pill developers-pill--optional">No</span>
+                    </div>
+                    <div class="developers-field-cell" data-label="Opciones / notas">
+                        <span class="developers-option-chip">true</span>
+                        <span class="developers-option-chip">false</span>
+                    </div>
+                </div>
+                <div class="developers-field-row">
+                    <div class="developers-field-cell" data-label="Campo">
+                        <span class="developers-field-name">FamilyHxMm</span>
+                    </div>
+                    <div class="developers-field-cell" data-label="Tipo">bool</div>
+                    <div class="developers-field-cell" data-label="Obligatorio">
+                        <span class="developers-pill developers-pill--optional">No</span>
+                    </div>
+                    <div class="developers-field-cell" data-label="Opciones / notas">
+                        <span class="developers-option-chip">true</span>
+                        <span class="developers-option-chip">false</span>
+                    </div>
+                </div>
+                <div class="developers-field-row">
+                    <div class="developers-field-cell" data-label="Campo">
+                        <span class="developers-field-name">SunExposure</span>
+                    </div>
+                    <div class="developers-field-cell" data-label="Tipo">bool</div>
+                    <div class="developers-field-cell" data-label="Obligatorio">
+                        <span class="developers-pill developers-pill--required">Sí</span>
+                    </div>
+                    <div class="developers-field-cell" data-label="Opciones / notas">
+                        <span class="developers-option-chip">true</span>
+                        <span class="developers-option-chip">false</span>
+                    </div>
+                </div>
+
+                <div class="developers-field-group">Lesión clínica</div>
+                <div class="developers-field-row">
+                    <div class="developers-field-cell" data-label="Campo">
+                        <span class="developers-field-name">AnatomSiteGeneral</span>
+                    </div>
+                    <div class="developers-field-cell" data-label="Tipo">enum</div>
+                    <div class="developers-field-cell" data-label="Obligatorio">
+                        <span class="developers-pill developers-pill--required">Sí</span>
+                    </div>
+                    <div class="developers-field-cell" data-label="Opciones / notas">
+                        <span class="developers-option-chip">HeadNeck</span>
+                        <span class="developers-option-chip">UpperExtremity</span>
+                        <span class="developers-option-chip">LowerExtremity</span>
+                        <span class="developers-option-chip">AnteriorTorso</span>
+                        <span class="developers-option-chip">LateralTorso</span>
+                        <span class="developers-option-chip">PosteriorTorso</span>
+                        <span class="developers-option-chip">PalmsSoles</span>
+                        <span class="developers-option-chip">OralGenital</span>
+                    </div>
+                </div>
+                <div class="developers-field-row">
+                    <div class="developers-field-cell" data-label="Campo">
+                        <span class="developers-field-name">AnatomSiteSpecial</span>
+                    </div>
+                    <div class="developers-field-cell" data-label="Tipo">enum</div>
+                    <div class="developers-field-cell" data-label="Obligatorio">
+                        <span class="developers-pill developers-pill--optional">No</span>
+                    </div>
+                    <div class="developers-field-cell" data-label="Opciones / notas">
+                        <span class="developers-option-chip">AcralNOS</span>
+                        <span class="developers-option-chip">NailNOS</span>
+                        <span class="developers-option-chip">Fingernail</span>
+                        <span class="developers-option-chip">Toenail</span>
+                        <span class="developers-option-chip">AcralPalmsOrSoles</span>
+                        <span class="developers-option-chip">OralOrGenital</span>
+                    </div>
+                </div>
+                <div class="developers-field-row">
+                    <div class="developers-field-cell" data-label="Campo">
+                        <span class="developers-field-name">ClinSizeLongDiamMm</span>
+                    </div>
+                    <div class="developers-field-cell" data-label="Tipo">double</div>
+                    <div class="developers-field-cell" data-label="Obligatorio">
+                        <span class="developers-pill developers-pill--optional">No</span>
+                    </div>
+                    <div class="developers-field-cell" data-label="Opciones / notas">Si se envia, debe ser mayor que 0.</div>
+                </div>
+
+                <div class="developers-field-group">Diagnóstico</div>
+                <div class="developers-field-row">
+                    <div class="developers-field-cell" data-label="Campo">
+                        <span class="developers-field-name">Diagnosis</span>
+                    </div>
+                    <div class="developers-field-cell" data-label="Tipo">string</div>
+                    <div class="developers-field-cell" data-label="Obligatorio">
+                        <span class="developers-pill developers-pill--required">Sí</span>
+                    </div>
+                    <div class="developers-field-cell" data-label="Opciones / notas">Diagnóstico clínico principal.</div>
+                </div>
+                <div class="developers-field-row">
+                    <div class="developers-field-cell" data-label="Campo">
+                        <span class="developers-field-name">HistopathologicalDiagnosis</span>
+                    </div>
+                    <div class="developers-field-cell" data-label="Tipo">string</div>
+                    <div class="developers-field-cell" data-label="Obligatorio">
+                        <span class="developers-pill developers-pill--optional">No</span>
+                    </div>
+                    <div class="developers-field-cell" data-label="Opciones / notas">Texto libre.</div>
+                </div>
+                <div class="developers-field-row">
+                    <div class="developers-field-cell" data-label="Campo">
+                        <span class="developers-field-name">DiagnosisCategory</span>
+                    </div>
+                    <div class="developers-field-cell" data-label="Tipo">enum</div>
+                    <div class="developers-field-cell" data-label="Obligatorio">
+                        <span class="developers-pill developers-pill--optional">No</span>
+                    </div>
+                    <div class="developers-field-cell" data-label="Opciones / notas">
+                        <span class="developers-option-chip">Benign</span>
+                        <span class="developers-option-chip">Indeterminate</span>
+                        <span class="developers-option-chip">Malignant</span>
+                    </div>
+                </div>
+                <div class="developers-field-row">
+                    <div class="developers-field-cell" data-label="Campo">
+                        <span class="developers-field-name">InjuryType</span>
+                    </div>
+                    <div class="developers-field-cell" data-label="Tipo">enum</div>
+                    <div class="developers-field-cell" data-label="Obligatorio">
+                        <span class="developers-pill developers-pill--optional">Condicional</span>
+                    </div>
+                    <div class="developers-field-cell" data-label="Opciones / notas">
+                        <span class="developers-option-chip">Melanoma</span>
+                        <span class="developers-option-chip">BasalCellCarcinoma</span>
+                        <span class="developers-option-chip">SquamousCellCarcinoma</span>
+                        <span class="developers-option-chip">Others</span>
+                        <span class="developers-muted">Requerido si DiagnosisCategory = Malignant.</span>
+                    </div>
+                </div>
+                <div class="developers-field-row">
+                    <div class="developers-field-cell" data-label="Campo">
+                        <span class="developers-field-name">DiagnosisConfirmType</span>
+                    </div>
+                    <div class="developers-field-cell" data-label="Tipo">enum</div>
+                    <div class="developers-field-cell" data-label="Obligatorio">
+                        <span class="developers-pill developers-pill--optional">No</span>
+                    </div>
+                    <div class="developers-field-cell" data-label="Opciones / notas">
+                        <span class="developers-option-chip">Histopathology</span>
+                        <span class="developers-option-chip">SingleContributorClinicalAssessment</span>
+                        <span class="developers-option-chip">SerialImagingShowingNoChange</span>
+                        <span class="developers-option-chip">SingleImageExpertConsensus</span>
+                        <span class="developers-option-chip">ConfocalMicroscopyWithConsensusDermoscopy</span>
+                    </div>
+                </div>
+
+                <div class="developers-field-group">Histología (melanoma)</div>
+                <div class="developers-field-row">
+                    <div class="developers-field-cell" data-label="Campo">
+                        <span class="developers-field-name">MelThickMm</span>
+                    </div>
+                    <div class="developers-field-cell" data-label="Tipo">double</div>
+                    <div class="developers-field-cell" data-label="Obligatorio">
+                        <span class="developers-pill developers-pill--optional">Condicional</span>
+                    </div>
+                    <div class="developers-field-cell" data-label="Opciones / notas">Solo si InjuryType = Melanoma. Mayor que 0.</div>
+                </div>
+                <div class="developers-field-row">
+                    <div class="developers-field-cell" data-label="Campo">
+                        <span class="developers-field-name">MelMitoticIndex</span>
+                    </div>
+                    <div class="developers-field-cell" data-label="Tipo">enum</div>
+                    <div class="developers-field-cell" data-label="Obligatorio">
+                        <span class="developers-pill developers-pill--optional">Condicional</span>
+                    </div>
+                    <div class="developers-field-cell" data-label="Opciones / notas">
+                        <span class="developers-option-chip">Zero</span>
+                        <span class="developers-option-chip">LessThanOne</span>
+                        <span class="developers-option-chip">One</span>
+                        <span class="developers-option-chip">Two</span>
+                        <span class="developers-option-chip">Three</span>
+                        <span class="developers-option-chip">Four</span>
+                        <span class="developers-option-chip">MoreThanFour</span>
+                        <span class="developers-muted">Solo si InjuryType = Melanoma.</span>
+                    </div>
+                </div>
+                <div class="developers-field-row">
+                    <div class="developers-field-cell" data-label="Campo">
+                        <span class="developers-field-name">MelUlcer</span>
+                    </div>
+                    <div class="developers-field-cell" data-label="Tipo">bool</div>
+                    <div class="developers-field-cell" data-label="Obligatorio">
+                        <span class="developers-pill developers-pill--optional">Condicional</span>
+                    </div>
+                    <div class="developers-field-cell" data-label="Opciones / notas">
+                        <span class="developers-option-chip">true</span>
+                        <span class="developers-option-chip">false</span>
+                        <span class="developers-muted">Solo si InjuryType = Melanoma.</span>
+                    </div>
+                </div>
+
+                <div class="developers-field-group">Notas y consentimiento</div>
+                <div class="developers-field-row">
+                    <div class="developers-field-cell" data-label="Campo">
+                        <span class="developers-field-name">ClinicalNotes</span>
+                    </div>
+                    <div class="developers-field-cell" data-label="Tipo">string</div>
+                    <div class="developers-field-cell" data-label="Obligatorio">
+                        <span class="developers-pill developers-pill--optional">No</span>
+                    </div>
+                    <div class="developers-field-cell" data-label="Opciones / notas">Texto libre.</div>
+                </div>
+                <div class="developers-field-row">
+                    <div class="developers-field-cell" data-label="Campo">
+                        <span class="developers-field-name">DermoscopicComments</span>
+                    </div>
+                    <div class="developers-field-cell" data-label="Tipo">string</div>
+                    <div class="developers-field-cell" data-label="Obligatorio">
+                        <span class="developers-pill developers-pill--optional">No</span>
+                    </div>
+                    <div class="developers-field-cell" data-label="Opciones / notas">Texto libre.</div>
+                </div>
+                <div class="developers-field-row">
+                    <div class="developers-field-cell" data-label="Campo">
+                        <span class="developers-field-name">InformedConsent</span>
+                    </div>
+                    <div class="developers-field-cell" data-label="Tipo">bool</div>
+                    <div class="developers-field-cell" data-label="Obligatorio">
+                        <span class="developers-pill developers-pill--optional">No</span>
+                    </div>
+                    <div class="developers-field-cell" data-label="Opciones / notas">
+                        <span class="developers-option-chip">true</span>
+                        <span class="developers-option-chip">false</span>
+                    </div>
+                </div>
+                <div class="developers-field-row">
+                    <div class="developers-field-cell" data-label="Campo">
+                        <span class="developers-field-name">InformedConsentDate</span>
+                    </div>
+                    <div class="developers-field-cell" data-label="Tipo">date</div>
+                    <div class="developers-field-cell" data-label="Obligatorio">
+                        <span class="developers-pill developers-pill--optional">No</span>
+                    </div>
+                    <div class="developers-field-cell" data-label="Opciones / notas">Formato ISO 8601 (YYYY-MM-DD).</div>
+                </div>
+                <div class="developers-field-row">
+                    <div class="developers-field-cell" data-label="Campo">
+                        <span class="developers-field-name">InformedConsentText</span>
+                    </div>
+                    <div class="developers-field-cell" data-label="Tipo">string</div>
+                    <div class="developers-field-cell" data-label="Obligatorio">
+                        <span class="developers-pill developers-pill--optional">No</span>
+                    </div>
+                    <div class="developers-field-cell" data-label="Opciones / notas">Texto libre.</div>
+                </div>
+
+                <div class="developers-field-group">Relación y origen</div>
+                <div class="developers-field-row">
+                    <div class="developers-field-cell" data-label="Campo">
+                        <span class="developers-field-name">ContributorId</span>
+                    </div>
+                    <div class="developers-field-cell" data-label="Tipo">guid</div>
+                    <div class="developers-field-cell" data-label="Obligatorio">
+                        <span class="developers-pill developers-pill--required">Sí</span>
+                    </div>
+                    <div class="developers-field-cell" data-label="Opciones / notas">No puede ser Guid.Empty.</div>
+                </div>
+                <div class="developers-field-row">
+                    <div class="developers-field-cell" data-label="Campo">
+                        <span class="developers-field-name">InstitutionName</span>
+                    </div>
+                    <div class="developers-field-cell" data-label="Tipo">string</div>
+                    <div class="developers-field-cell" data-label="Obligatorio">
+                        <span class="developers-pill developers-pill--optional">No</span>
+                    </div>
+                    <div class="developers-field-cell" data-label="Opciones / notas">Texto libre.</div>
+                </div>
+                <div class="developers-field-row">
+                    <div class="developers-field-cell" data-label="Campo">
+                        <span class="developers-field-name">InstitutionDescription</span>
+                    </div>
+                    <div class="developers-field-cell" data-label="Tipo">string</div>
+                    <div class="developers-field-cell" data-label="Obligatorio">
+                        <span class="developers-pill developers-pill--optional">No</span>
+                    </div>
+                    <div class="developers-field-cell" data-label="Opciones / notas">Texto libre.</div>
+                </div>
+                <div class="developers-field-row">
+                    <div class="developers-field-cell" data-label="Campo">
+                        <span class="developers-field-name">InstitutionCountry</span>
+                    </div>
+                    <div class="developers-field-cell" data-label="Tipo">string</div>
+                    <div class="developers-field-cell" data-label="Obligatorio">
+                        <span class="developers-pill developers-pill--optional">No</span>
+                    </div>
+                    <div class="developers-field-cell" data-label="Opciones / notas">Texto libre.</div>
+                </div>
+            </div>
+        </SectionCard>
+
+        <SectionCard Title="Reglas y validaciones" Class="developers-card developers-card--full">
+            <ul class="developers-rule-list">
+                <li>File es obligatorio y no puede venir vacío.</li>
+                <li>ContributorId debe ser un GUID válido distinto de Guid.Empty.</li>
+                <li>PatientName, AgeApprox, Sex, AnatomSiteGeneral, Diagnosis y SunExposure son obligatorios.</li>
+                <li>AgeApprox debe estar entre 0 y 120.</li>
+                <li>ClinSizeLongDiamMm y MelThickMm solo son válidos si son mayores que 0.</li>
+                <li>DermoscopicType solo puede enviarse cuando ImageType = Dermoscopic.</li>
+                <li>MelThickMm, MelMitoticIndex y MelUlcer solo aplican cuando InjuryType = Melanoma.</li>
+            </ul>
+        </SectionCard>
+    </section>
+}
+else
+{
+    <section class="developers-metadata">
+        <ImageMetadataView />
+    </section>
+}
+
+@code {
+    [Parameter] public string? Section { get; set; }
+
+    private bool IsApi => string.Equals(Section, "api", StringComparison.OrdinalIgnoreCase);
+    private bool IsMetadata => !IsApi;
+}
