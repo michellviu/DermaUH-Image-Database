@@ -151,7 +151,6 @@ public class ImagesController : ControllerBase
         return await BuildZipResultAsync(accessibleImages, fileName, includeImages, includeMetadata, cancellationToken);
     }
 
-    [AllowAnonymous]
     [HttpGet("download")]
     public async Task<IActionResult> DownloadAll(
         [FromQuery] List<ImageType>? imageTypes = null,
