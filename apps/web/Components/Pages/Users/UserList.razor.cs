@@ -20,7 +20,7 @@ public partial class UserList
     private readonly Dictionary<Guid, List<string>> userRoles = new();
     private readonly Dictionary<Guid, string> selectedAssignRoles = new();
     private readonly Dictionary<Guid, string> selectedRemoveRoles = new();
-    private readonly string[] assignableRoles = ["Viewer", "Admin"];
+    private readonly string[] assignableRoles = ["Viewer", "Contributor", "Admin"];
     private string emailFilter = string.Empty;
     private string roleFilter = string.Empty;
     private string statusFilter = string.Empty;

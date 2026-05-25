@@ -196,7 +196,7 @@ public class ImagesController : ControllerBase
         return await BuildZipResultAsync(accessibleImages, fileName, includeImages, includeMetadata, cancellationToken);
     }
 
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin, Contributor")]
     [HttpPost]
     [Consumes("multipart/form-data")]
     public async Task<ActionResult<DermaImgResponseDto>> Create(
