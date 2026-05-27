@@ -20,4 +20,13 @@ public interface IDermaImgRepository : IRepository<DermaImg>
     Task<IReadOnlyList<(int Year, int Month, int Count)>> GetMonthlyUploadCountsAsync(int recentMonths, bool includePrivate, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<(string InstitutionName, string? InstitutionDescription, string? InstitutionCountry, int Count)>> GetDerivedInstitutionsAsync(bool includePrivate, CancellationToken cancellationToken = default);
     Task<string> GeneratePublicIdAsync(CancellationToken cancellationToken = default);
+
+    // ── New statistical queries ────────────────────────────────────────
+    Task<IReadOnlyList<(string Key, int Count)>> GetSkinColorCountsAsync(bool includePrivate, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<(string Key, int Count)>> GetDiagnosisConfirmCountsAsync(bool includePrivate, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<(string Key, int Count)>> GetImageTypeCountsAsync(bool includePrivate, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<int>> GetAgeValuesAsync(bool includePrivate, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<(string RowKey, string ColKey, int Count)>> GetCrossTabAsync(string rowField, string colField, bool includePrivate, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<(string SiteKey, int MelanomaCount, int TotalCount)>> GetMelanomaByAnatomicalSiteAsync(bool includePrivate, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<(string FieldName, int FilledCount, int TotalCount)>> GetDataCompletenessAsync(bool includePrivate, CancellationToken cancellationToken = default);
 }

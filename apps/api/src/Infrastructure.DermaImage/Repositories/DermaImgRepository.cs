@@ -1,4 +1,5 @@
 using Domain.DermaImage.Entities;
+using Domain.DermaImage.Entities.Enums;
 using Domain.DermaImage.Interfaces.Repository;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -288,4 +289,155 @@ public class DermaImgRepository : Repository<DermaImg>, IDermaImgRepository
             .CountAsync(cancellationToken);
         return $"DERM_{(count + 1):D7}";
     }
+
+    // ── New statistical queries ────────────────────────────────────────
+
+    public async Task<IReadOnlyList<(string Key, int Count)>> GetSkinColorCountsAsync(bool includePrivate, CancellationToken cancellationToken = default)
+    {
+        Logger.LogInformation("Fetching skin color counts. IncludePrivate: {IncludePrivate}", includePrivate);
+        var grouped = await BuildVisibilityQuery(includePrivate)
+            .Where(i => i.SkinColor.HasValue)
+            .GroupBy(i => i.SkinColor)
+            .Select(g => new { Key = g.Key!.Value.ToString(), Count = g.Count() })
+            .OrderByDescending(x => x.Count)
+            .ToListAsync(cancellationToken);
+
+        return grouped.Select(x => (x.Key, x.Count)).ToList();
+    }
+
+    public async Task<IReadOnlyList<(string Key, int Count)>> GetDiagnosisConfirmCountsAsync(bool includePrivate, CancellationToken cancellationToken = default)
+    {
+        Logger.LogInformation("Fetching diagnosis confirm type counts. IncludePrivate: {IncludePrivate}", includePrivate);
+        var grouped = await BuildVisibilityQuery(includePrivate)
+            .Where(i => i.DiagnosisConfirmType.HasValue)
+            .GroupBy(i => i.DiagnosisConfirmType)
+            .Select(g => new { Key = g.Key!.Value.ToString(), Count = g.Count() })
+            .OrderByDescending(x => x.Count)
+            .ToListAsync(cancellationToken);
+
+        return grouped.Select(x => (x.Key, x.Count)).ToList();
+    }
+
+    public async Task<IReadOnlyList<(string Key, int Count)>> GetImageTypeCountsAsync(bool includePrivate, CancellationToken cancellationToken = default)
+    {
+        Logger.LogInformation("Fetching image type counts. IncludePrivate: {IncludePrivate}", includePrivate);
+        var grouped = await BuildVisibilityQuery(includePrivate)
+            .Where(i => i.ImageType.HasValue)
+            .GroupBy(i => i.ImageType)
+            .Select(g => new { Key = g.Key!.Value.ToString(), Count = g.Count() })
+            .OrderByDescending(x => x.Count)
+            .ToListAsync(cancellationToken);
+
+        return grouped.Select(x => (x.Key, x.Count)).ToList();
+    }
+
+    public async Task<IReadOnlyList<int>> GetAgeValuesAsync(bool includePrivate, CancellationToken cancellationToken = default)
+    {
+        Logger.LogInformation("Fetching age values for statistics. IncludePrivate: {IncludePrivate}", includePrivate);
+        return await BuildVisibilityQuery(includePrivate)
+            .Where(i => i.AgeApprox.HasValue && i.AgeApprox.Value > 0 && i.AgeApprox.Value < 120)
+            .Select(i => i.AgeApprox!.Value)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<(string RowKey, string ColKey, int Count)>> GetCrossTabAsync(
+        string rowField, string colField, bool includePrivate, CancellationToken cancellationToken = default)
+    {
+        Logger.LogInformation("Fetching cross-tab: {RowField} × {ColField}. IncludePrivate: {IncludePrivate}", rowField, colField, includePrivate);
+
+        var query = BuildVisibilityQuery(includePrivate);
+
+        // We build this dynamically based on field names
+        var items = await query.ToListAsync(cancellationToken);
+
+        var results = items
+            .Select(i => new
+            {
+                Row = GetFieldValue(i, rowField),
+                Col = GetFieldValue(i, colField)
+            })
+            .Where(x => x.Row != null && x.Col != null)
+            .GroupBy(x => new { x.Row, x.Col })
+            .Select(g => (RowKey: g.Key.Row!, ColKey: g.Key.Col!, Count: g.Count()))
+            .OrderByDescending(x => x.Count)
+            .ToList();
+
+        return results;
+    }
+
+    public async Task<IReadOnlyList<(string SiteKey, int MelanomaCount, int TotalCount)>> GetMelanomaByAnatomicalSiteAsync(
+        bool includePrivate, CancellationToken cancellationToken = default)
+    {
+        Logger.LogInformation("Fetching melanoma by anatomical site. IncludePrivate: {IncludePrivate}", includePrivate);
+
+        var query = BuildVisibilityQuery(includePrivate)
+            .Where(i => i.AnatomSiteGeneral.HasValue);
+
+        var grouped = await query
+            .GroupBy(i => i.AnatomSiteGeneral)
+            .Select(g => new
+            {
+                Site = g.Key!.Value.ToString(),
+                MelanomaCount = g.Count(i => i.InjuryType == InjuryType.Melanoma),
+                TotalCount = g.Count()
+            })
+            .ToListAsync(cancellationToken);
+
+        return grouped.Select(x => (x.Site, x.MelanomaCount, x.TotalCount)).ToList();
+    }
+
+    public async Task<IReadOnlyList<(string FieldName, int FilledCount, int TotalCount)>> GetDataCompletenessAsync(
+        bool includePrivate, CancellationToken cancellationToken = default)
+    {
+        Logger.LogInformation("Fetching data completeness. IncludePrivate: {IncludePrivate}", includePrivate);
+
+        var items = await BuildVisibilityQuery(includePrivate).ToListAsync(cancellationToken);
+        var total = items.Count;
+        if (total == 0) return [];
+
+        var fields = new List<(string FieldName, int FilledCount, int TotalCount)>
+        {
+            ("AgeApprox", items.Count(i => i.AgeApprox.HasValue), total),
+            ("Sex", items.Count(i => i.Sex.HasValue), total),
+            ("SkinColor", items.Count(i => i.SkinColor.HasValue), total),
+            ("FotoType", items.Count(i => i.FotoType.HasValue), total),
+            ("AnatomSiteGeneral", items.Count(i => i.AnatomSiteGeneral.HasValue), total),
+            ("DiagnosisCategory", items.Count(i => i.DiagnosisCategory.HasValue), total),
+            ("InjuryType", items.Count(i => i.InjuryType.HasValue), total),
+            ("DiagnosisConfirmType", items.Count(i => i.DiagnosisConfirmType.HasValue), total),
+            ("ImageType", items.Count(i => i.ImageType.HasValue), total),
+            ("Diagnosis", items.Count(i => !string.IsNullOrWhiteSpace(i.Diagnosis)), total),
+            ("ClinSizeLongDiamMm", items.Count(i => i.ClinSizeLongDiamMm.HasValue), total),
+            ("PersonalHxMm", items.Count(i => i.PersonalHxMm.HasValue), total),
+            ("FamilyHxMm", items.Count(i => i.FamilyHxMm.HasValue), total),
+            ("SunExposure", items.Count(i => i.SunExposure.HasValue), total),
+        };
+
+        return fields;
+    }
+
+    private static string? GetFieldValue(DermaImg img, string field) => field switch
+    {
+        "DiagnosisCategory" => img.DiagnosisCategory?.ToString(),
+        "Sex" => img.Sex?.ToString(),
+        "AnatomSiteGeneral" => img.AnatomSiteGeneral?.ToString(),
+        "InjuryType" => img.InjuryType?.ToString(),
+        "SkinColor" => img.SkinColor?.ToString(),
+        "FotoType" => img.FotoType?.ToString(),
+        "PhotoType" => img.FotoType?.ToString(),
+        "AgeGroup" => img.AgeApprox.HasValue ? GetAgeGroup(img.AgeApprox.Value) : null,
+        _ => null
+    };
+
+    private static string GetAgeGroup(int age) => age switch
+    {
+        < 18 => "0-17",
+        < 30 => "18-29",
+        < 40 => "30-39",
+        < 50 => "40-49",
+        < 60 => "50-59",
+        < 70 => "60-69",
+        < 80 => "70-79",
+        _ => "80+"
+    };
 }
