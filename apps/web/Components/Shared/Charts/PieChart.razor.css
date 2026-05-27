@@ -9,43 +9,18 @@
 
 .pie-layout {
     display: grid;
-    grid-template-columns: minmax(150px, 190px) minmax(0, 1fr);
+    grid-template-columns: 200px minmax(0, 1fr);
     gap: 0.9rem;
     align-items: center;
 }
 
-.pie-donut {
-    width: 180px;
-    height: 180px;
-    border-radius: 50%;
-    display: grid;
-    place-items: center;
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--outline-variant) 25%, transparent);
-}
-
-.pie-center {
-    width: 92px;
-    height: 92px;
-    border-radius: 50%;
-    background: color-mix(in srgb, var(--surface-container-lowest) 94%, transparent);
+.pie-donut-wrapper {
+    position: relative;
+    width: 200px;
+    height: 200px;
     display: flex;
-    flex-direction: column;
-    align-items: center;
     justify-content: center;
-    border: 1px solid color-mix(in srgb, var(--outline-variant) 26%, transparent);
-}
-
-.pie-center strong {
-    color: var(--on-surface);
-    font-family: var(--font-display);
-    font-size: 1.1rem;
-}
-
-.pie-center span {
-    color: var(--on-surface-variant);
-    font-size: 0.7rem;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
+    align-items: center;
 }
 
 .pie-legend {
@@ -72,6 +47,9 @@
 .pie-label {
     color: var(--on-surface);
     font-size: 0.82rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .pie-value {

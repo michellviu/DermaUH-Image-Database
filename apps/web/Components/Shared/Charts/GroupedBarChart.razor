@@ -1,0 +1,96 @@
+@using Web.DermaImage.Shared.Models
+
+@if (Data.Count == 0)
+{
+    <div class="chart-empty">@EmptyMessage</div>
+}
+else
+{
+    <div class="grouped-bar-wrapper">
+        <div class="grouped-bar-apex">
+            <ApexChart TItem="SeriesPoint" Options="chartOptions" Height="320">
+                @foreach (var series in seriesData)
+                {
+                    <ApexPointSeries TItem="SeriesPoint"
+                                     Items="series.Items"
+                                     Name="@series.Name"
+                                     SeriesType="SeriesType.Bar"
+                                     XValue="@(x => x.Label)"
+                                     YValue="@(x => (decimal?)x.Value)" />
+                }
+            </ApexChart>
+        </div>
+
+        @if (MinSampleSize > 0 && totalSamples < MinSampleSize)
+        {
+            <div class="grouped-bar-warning">
+                <span class="material-symbols-outlined" style="font-size:0.9rem;">info</span>
+                Muestra reducida (@totalSamples registros). Los resultados pueden no ser estadísticamente significativos.
+            </div>
+        }
+    </div>
+}
+
+@code {
+    [Parameter] public IReadOnlyList<CrossTabBucketDto> Data { get; set; } = [];
+    [Parameter] public string EmptyMessage { get; set; } = "Sin datos disponibles.";
+    [Parameter] public int MinSampleSize { get; set; } = 30;
+
+    private List<string> rows = [];
+    private List<string> columns = [];
+    private List<string> rowLabels = [];
+    private List<SeriesDefinition> seriesData = [];
+    private Dictionary<(string, string), int> matrix = new();
+    private Dictionary<string, string> rowLabelMap = new();
+    private Dictionary<string, string> colLabelMap = new();
+    private int maxCount;
+    private int totalSamples;
+    private ApexChartOptions<SeriesPoint> chartOptions = new();
+
+    protected override void OnParametersSet()
+    {
+        matrix.Clear();
+        rowLabelMap.Clear();
+        colLabelMap.Clear();
+
+        foreach (var item in Data)
+        {
+            matrix[(item.RowKey, item.ColKey)] = item.Count;
+            rowLabelMap.TryAdd(item.RowKey, item.RowLabel);
+            colLabelMap.TryAdd(item.ColKey, item.ColLabel);
+        }
+
+        rows = rowLabelMap.Keys.ToList();
+        columns = colLabelMap.Keys.ToList();
+        rowLabels = rows.Select(row => rowLabelMap.GetValueOrDefault(row, row)).ToList();
+        maxCount = matrix.Count > 0 ? matrix.Values.Max() : 0;
+        totalSamples = matrix.Values.Sum();
+
+        seriesData = columns
+            .Select(col => new SeriesDefinition
+            {
+                Name = colLabelMap.GetValueOrDefault(col, col),
+                Items = rows.Select(row => new SeriesPoint
+                {
+                    Label = rowLabelMap.GetValueOrDefault(row, row),
+                    Value = matrix.GetValueOrDefault((row, col), 0)
+                }).ToList()
+            })
+            .ToList();
+
+        var colors = ChartTheme.BuildSeriesColors(columns.Count);
+        chartOptions = ChartTheme.BuildBarOptions<SeriesPoint>(colors, rowLabels, showLegend: true);
+    }
+
+    private sealed class SeriesDefinition
+    {
+        public string Name { get; set; } = string.Empty;
+        public List<SeriesPoint> Items { get; set; } = [];
+    }
+
+    private sealed class SeriesPoint
+    {
+        public string Label { get; set; } = string.Empty;
+        public double Value { get; set; }
+    }
+}

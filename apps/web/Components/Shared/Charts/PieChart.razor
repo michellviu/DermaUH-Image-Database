@@ -1,17 +1,26 @@
 @using Web.DermaImage.Shared.Models
+@using ApexCharts
+@using Web.DermaImage.Components.Shared.Charts
 
-@if (total <= 0)
+@if (Data.Count == 0 || total <= 0)
 {
     <div class="chart-empty">@EmptyMessage</div>
 }
 else
 {
     <div class="pie-layout">
-        <div class="pie-donut" style="background: @gradientCss;" role="img" aria-label="Grafico de pastel">
-            <div class="pie-center">
-                <strong>@total.ToString("0")</strong>
-                <span>Total</span>
-            </div>
+        <div class="pie-donut-wrapper">
+            <ApexChart TItem="ChartPoint"
+                       Options="options"
+                       Height="200"
+                       Width="200">
+                <ApexPointSeries TItem="ChartPoint"
+                                 Items="Data"
+                                 Name="Distribución"
+                                 SeriesType="SeriesType.Donut"
+                                 XValue="@(e => e.Label)"
+                                 YValue="@(e => (decimal)e.Value)" />
+            </ApexChart>
         </div>
 
         <ul class="pie-legend">
@@ -32,58 +41,62 @@ else
     [Parameter] public IReadOnlyList<ChartPoint> Data { get; set; } = [];
     [Parameter] public string EmptyMessage { get; set; } = "Sin datos disponibles.";
 
-    private readonly string[] palette =
-    [
-        "#530c73",
-        "#894c5a",
-        "#291d8f",
-        "#8d2b5b",
-        "#3c5d7a",
-        "#95710f",
-        "#2a7f62",
-        "#7060b3"
-    ];
-
+    private double total;
+    private ApexChartOptions<ChartPoint> options = new();
     private List<ChartPointView> points = [];
     private List<string> colors = [];
-    private double total;
-    private string gradientCss = "conic-gradient(#ddd 0% 100%)";
 
     protected override void OnParametersSet()
     {
         total = Data.Sum(x => x.Value);
-        points = [];
-        colors = [];
+        points.Clear();
+        
+        if (total <= 0) return;
 
-        if (total <= 0)
-        {
-            gradientCss = "conic-gradient(#ddd 0% 100%)";
-            return;
-        }
-
-        var start = 0d;
-        var gradientParts = new List<string>();
-
+        var labels = Data.Select(x => x.Label).ToList();
+        colors = ChartTheme.BuildSeriesColors(Data.Count);
+        
         for (var i = 0; i < Data.Count; i++)
         {
-            var source = Data[i];
-            var percentage = (source.Value / total) * 100d;
-            var end = start + percentage;
-            var color = palette[i % palette.Length];
-
-            gradientParts.Add($"{color} {start:F2}% {end:F2}%");
             points.Add(new ChartPointView
             {
-                Label = source.Label,
-                Value = source.Value,
-                Percentage = percentage
+                Label = Data[i].Label,
+                Value = Data[i].Value,
+                Percentage = (Data[i].Value / total) * 100d
             });
-            colors.Add(color);
-
-            start = end;
         }
 
-        gradientCss = $"conic-gradient({string.Join(", ", gradientParts)})";
+        options = ChartTheme.BuildDonutOptions<ChartPoint>(colors, labels, "Total");
+        options.Legend.Show = false; // Maintain our custom HTML legend
+        options.DataLabels = new DataLabels 
+        { 
+            Enabled = true,
+            Formatter = "function (val, opts) { return opts.w.config.series[opts.seriesIndex]; }",
+            Style = new DataLabelsStyle { FontSize = "14px", FontFamily = "var(--font-display)", FontWeight = "800" },
+            DropShadow = new DropShadow { Enabled = true, Top = 1, Left = 0, Blur = 2, Opacity = 0.5 }
+        };
+        options.PlotOptions.Pie = new PlotOptionsPie
+        {
+            Donut = new PlotOptionsDonut
+            {
+                Size = "60%",
+                Labels = new DonutLabels
+                {
+                    Show = true,
+                    Name = new DonutLabelName { Show = false },
+                    Value = new DonutLabelValue { Show = true, FontSize = "22px", FontWeight = "bold", Color = "var(--on-surface)" },
+                    Total = new DonutLabelTotal
+                    {
+                        Show = true,
+                        ShowAlways = true,
+                        Label = "Total",
+                        FontSize = "12px",
+                        Color = "var(--on-surface-variant)",
+                        Formatter = "function (w) { return w.globals.seriesTotals.reduce((a, b) => a + b, 0).toFixed(0); }"
+                    }
+                }
+            }
+        };
     }
 
     private sealed class ChartPointView

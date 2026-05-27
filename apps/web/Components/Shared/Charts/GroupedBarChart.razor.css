@@ -1,0 +1,32 @@
+.grouped-bar-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    height: 100%;
+}
+
+.grouped-bar-apex {
+    min-height: 320px;
+    height: 100%;
+}
+
+.grouped-bar-apex ::deep .apexcharts-canvas {
+    margin: 0 auto;
+}
+
+.grouped-bar-apex ::deep .apexcharts-tooltip {
+    font-family: var(--font-body);
+}
+
+.grouped-bar-warning {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.74rem;
+    color: var(--on-surface-variant);
+    background: color-mix(in srgb, var(--surface-container-high) 60%, transparent);
+    border: 1px dashed color-mix(in srgb, var(--outline-variant) 50%, transparent);
+    border-radius: 0.6rem;
+    padding: 0.55rem 0.75rem;
+    margin-top: auto;
+}

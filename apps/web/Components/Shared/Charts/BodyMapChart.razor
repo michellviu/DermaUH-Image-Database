@@ -1,0 +1,134 @@
+@using Web.DermaImage.Shared.Models
+
+@* SVG body mannequin with melanoma counts overlaid on each body region *@
+@if (Data.Count == 0)
+{
+    <div class="chart-empty">@EmptyMessage</div>
+}
+else
+{
+    <div class="bodymap-layout">
+        <div class="bodymap-svg-container">
+            <svg viewBox="0 0 220 480" xmlns="http://www.w3.org/2000/svg" class="bodymap-svg" role="img" aria-label="Mapa corporal de melanoma">
+                <!-- Head / Neck -->
+                <ellipse cx="110" cy="42" rx="28" ry="32" class="bodymap-region" style="fill: @GetFill("HeadNeck");" />
+                <rect x="100" y="74" width="20" height="18" rx="4" class="bodymap-region" style="fill: @GetFill("HeadNeck");" />
+
+                <!-- Anterior Torso -->
+                <path d="M72 92 L148 92 L155 180 L65 180 Z" class="bodymap-region" style="fill: @GetFill("AnteriorTorso");" />
+
+                <!-- Lateral Torso (left strip) -->
+                <rect x="60" y="100" width="14" height="75" rx="4" class="bodymap-region" style="fill: @GetFill("LateralTorso");" />
+
+                <!-- Lateral Torso (right strip) -->
+                <rect x="146" y="100" width="14" height="75" rx="4" class="bodymap-region" style="fill: @GetFill("LateralTorso");" />
+
+                <!-- Posterior Torso (shown as a shadow behind anterior) -->
+                <path d="M68 182 L152 182 L152 200 L68 200 Z" class="bodymap-region" style="fill: @GetFill("PosteriorTorso");" />
+
+                <!-- Upper Extremity Left -->
+                <path d="M60 92 L42 92 L24 160 L34 164 L48 110 L60 110 Z" class="bodymap-region" style="fill: @GetFill("UpperExtremity");" />
+
+                <!-- Upper Extremity Right -->
+                <path d="M160 92 L178 92 L196 160 L186 164 L172 110 L160 110 Z" class="bodymap-region" style="fill: @GetFill("UpperExtremity");" />
+
+                <!-- Lower Extremity Left -->
+                <path d="M72 202 L100 202 L96 340 L68 340 Z" class="bodymap-region" style="fill: @GetFill("LowerExtremity");" />
+
+                <!-- Lower Extremity Right -->
+                <path d="M120 202 L148 202 L152 340 L124 340 Z" class="bodymap-region" style="fill: @GetFill("LowerExtremity");" />
+
+                <!-- Palms / Soles Left -->
+                <path d="M18 162 L36 162 L32 185 L14 185 Z" class="bodymap-region" style="fill: @GetFill("PalmsSoles");" />
+
+                <!-- Palms / Soles Right -->
+                <path d="M184 162 L202 162 L206 185 L188 185 Z" class="bodymap-region" style="fill: @GetFill("PalmsSoles");" />
+
+                <!-- Feet Left -->
+                <path d="M66 340 L98 340 L96 370 L64 370 Z" class="bodymap-region" style="fill: @GetFill("PalmsSoles");" />
+
+                <!-- Feet Right -->
+                <path d="M122 340 L154 340 L156 370 L124 370 Z" class="bodymap-region" style="fill: @GetFill("PalmsSoles");" />
+
+                <!-- Oral / Genital -->
+                <ellipse cx="110" cy="210" rx="14" ry="9" class="bodymap-region" style="fill: @GetFill("OralGenital");" />
+
+                <!-- Count labels -->
+                @foreach (var entry in Data)
+                {
+                    var pos = GetLabelPosition(entry.SiteKey);
+                    <svg:text x="@pos.x" y="@pos.y" class="bodymap-text" text-anchor="middle" dominant-baseline="central">
+                        @entry.MelanomaCount
+                    </svg:text>
+                }
+            </svg>
+        </div>
+
+        <div class="bodymap-detail">
+            <table class="bodymap-table">
+                <thead>
+                    <tr>
+                        <th>Sitio anatómico</th>
+                        <th>Melanoma</th>
+                        <th>Total</th>
+                        <th>%</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var entry in Data.OrderByDescending(e => e.MelanomaCount))
+                    {
+                        <tr>
+                            <td>
+                                <span class="bodymap-site-dot" style="background: @GetFillForEntry(entry);"></span>
+                                @entry.SiteLabel
+                            </td>
+                            <td class="bodymap-num">@entry.MelanomaCount</td>
+                            <td class="bodymap-num">@entry.TotalCount</td>
+                            <td class="bodymap-num">@entry.MelanomaPercentage.ToString("0.0")%</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public IReadOnlyList<BodyMapEntryDto> Data { get; set; } = [];
+    [Parameter] public string EmptyMessage { get; set; } = "Sin datos disponibles.";
+
+    private int maxMelanoma => Data.Count > 0 ? Math.Max(1, Data.Max(e => e.MelanomaCount)) : 1;
+
+    private string GetFill(string siteKey)
+    {
+        var entry = Data.FirstOrDefault(e => e.SiteKey == siteKey);
+        if (entry == null || entry.MelanomaCount == 0)
+            return "color-mix(in srgb, var(--surface-container-high) 70%, transparent)";
+
+        var intensity = Math.Max(0.18, (double)entry.MelanomaCount / maxMelanoma);
+        var alpha = (int)(intensity * 220 + 35);
+        // Deep rose → vivid red scale
+        return $"rgba(180, 30, 70, {(alpha / 255.0):F2})";
+    }
+
+    private string GetFillForEntry(BodyMapEntryDto entry)
+    {
+        if (entry.MelanomaCount == 0) return "#e0e0e0";
+        var intensity = Math.Max(0.18, (double)entry.MelanomaCount / maxMelanoma);
+        var alpha = (int)(intensity * 220 + 35);
+        return $"rgba(180, 30, 70, {(alpha / 255.0):F2})";
+    }
+
+    private (int x, int y) GetLabelPosition(string siteKey) => siteKey switch
+    {
+        "HeadNeck" => (110, 50),
+        "AnteriorTorso" => (110, 136),
+        "LateralTorso" => (50, 138),
+        "PosteriorTorso" => (110, 191),
+        "UpperExtremity" => (30, 120),
+        "LowerExtremity" => (85, 275),
+        "PalmsSoles" => (27, 173),
+        "OralGenital" => (110, 220),
+        _ => (110, 250)
+    };
+}

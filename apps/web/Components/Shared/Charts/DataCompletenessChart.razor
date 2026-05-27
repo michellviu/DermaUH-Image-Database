@@ -1,0 +1,83 @@
+@using Web.DermaImage.Shared.Models
+@using ApexCharts
+
+@if (Data.Count == 0 || maxValue <= 0)
+{
+    <div class="chart-empty">@EmptyMessage</div>
+}
+else
+{
+    <div class="completeness-apex">
+        <ApexChart @ref="apexChart" TItem="DataCompletenessDto" Options="chartOptions" Height="@(Math.Max(300, Data.Count * 28))">
+            <ApexPointSeries TItem="DataCompletenessDto"
+                             Items="Data.OrderByDescending(x => x.Percentage)"
+                             Name="Completitud (%)"
+                             SeriesType="SeriesType.Bar"
+                             XValue="@(x => x.FieldLabel)"
+                             YValue="@(x => (decimal)x.Percentage)" />
+        </ApexChart>
+    </div>
+}
+
+@code {
+    [Parameter] public IReadOnlyList<DataCompletenessDto> Data { get; set; } = [];
+    [Parameter] public string EmptyMessage { get; set; } = "Sin datos disponibles.";
+
+    private ApexChart<DataCompletenessDto> apexChart = null!;
+    private ApexChartOptions<DataCompletenessDto> chartOptions = new();
+    private double maxValue => Data.Count == 0 ? 0 : Data.Max(x => x.Percentage);
+
+    protected override void OnParametersSet()
+    {
+        var categories = Data.OrderByDescending(x => x.Percentage).Select(x => x.FieldLabel).ToList();
+        
+        chartOptions = new ApexChartOptions<DataCompletenessDto>
+        {
+            Chart = new Chart
+            {
+                Toolbar = new Toolbar { Show = false },
+                Zoom = new Zoom { Enabled = false },
+                Type = ChartType.Bar,
+                FontFamily = "var(--font-sans)"
+            },
+            PlotOptions = new PlotOptions
+            {
+                Bar = new PlotOptionsBar
+                {
+                    Horizontal = true,
+                    BorderRadius = 4
+                }
+            },
+            DataLabels = new DataLabels 
+            { 
+                Enabled = true,
+                Formatter = "function (val) { return val.toFixed(1) + '%'; }",
+                Style = new DataLabelsStyle { Colors = new List<string> { "#fff" }, FontSize = "11px", FontWeight = "700" }
+            },
+            Xaxis = new XAxis
+            {
+                Categories = categories,
+                Max = 100,
+                AxisBorder = new AxisBorder { Show = false },
+                AxisTicks = new AxisTicks { Show = false },
+                Labels = new XAxisLabels { Show = false }
+            },
+            Yaxis = new List<YAxis>
+            {
+                new YAxis
+                {
+                    AxisBorder = new AxisBorder { Show = false },
+                    AxisTicks = new AxisTicks { Show = false }
+                }
+            },
+            Colors = new List<string> { "#3c5d7a" },
+            Tooltip = new Tooltip { Theme = Mode.Light },
+            Legend = new Legend { Show = false },
+            Grid = new Grid
+            {
+                Xaxis = new GridXAxis { Lines = new Lines { Show = false } },
+                Yaxis = new GridYAxis { Lines = new Lines { Show = false } }
+            }
+        };
+    }
+}

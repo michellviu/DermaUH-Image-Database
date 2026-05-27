@@ -1,0 +1,95 @@
+.bodymap-layout {
+    display: grid;
+    grid-template-columns: 240px minmax(0, 1fr);
+    gap: 1.2rem;
+    align-items: start;
+}
+
+.bodymap-svg-container {
+    display: flex;
+    justify-content: center;
+}
+
+.bodymap-svg {
+    width: 100%;
+    max-width: 220px;
+    height: auto;
+}
+
+.bodymap-region {
+    stroke: color-mix(in srgb, var(--outline-variant) 50%, transparent);
+    stroke-width: 1;
+    transition: fill 0.3s ease;
+    cursor: default;
+}
+
+.bodymap-region:hover {
+    stroke: var(--primary);
+    stroke-width: 2;
+    filter: brightness(1.15);
+}
+
+.bodymap-text {
+    font-size: 11px;
+    font-weight: 800;
+    fill: #fff;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+    pointer-events: none;
+    font-family: var(--font-display);
+}
+
+.bodymap-detail {
+    overflow-x: auto;
+}
+
+.bodymap-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 0.8rem;
+}
+
+.bodymap-table thead th {
+    text-align: left;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--on-surface-variant);
+    border-bottom: 1px solid color-mix(in srgb, var(--outline-variant) 30%, transparent);
+    padding: 0.5rem 0.6rem;
+}
+
+.bodymap-table tbody td {
+    padding: 0.5rem 0.6rem;
+    color: var(--on-surface);
+    border-bottom: 1px solid color-mix(in srgb, var(--outline-variant) 15%, transparent);
+}
+
+.bodymap-num {
+    text-align: center;
+    font-weight: 700;
+    font-family: var(--font-display);
+}
+
+.bodymap-site-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 0.35rem;
+    vertical-align: middle;
+}
+
+@media (max-width: 640px) {
+    .bodymap-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .bodymap-svg-container {
+        justify-content: center;
+    }
+
+    .bodymap-svg {
+        max-width: 180px;
+    }
+}
