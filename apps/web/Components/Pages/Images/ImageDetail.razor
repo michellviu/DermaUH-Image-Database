@@ -65,9 +65,12 @@ else
                 <div class="detail-list">
                     @KeyValue("Edad Aproximada", image.AgeApprox?.ToString())
                     @KeyValue("Sexo", LocalizeSex(image.Sex))
+                    @KeyValue("Color de Piel", image.SkinColor)
                     @KeyValue("Fototipo", image.FotoType)
-                    @KeyValue("Historial Personal MM", FormatBool(image.PersonalHxMm))
-                    @KeyValue("Historial Familiar MM", FormatBool(image.FamilyHxMm))
+                    @KeyValue("Historial Personal", image.PersonalHistory)
+                    @KeyValue("Antecedente Personal MM", FormatBool(image.PersonalHxMm))
+                    @KeyValue("Antecedente Familiar MM", FormatBool(image.FamilyHxMm))
+                    @KeyValue("Exposición Solar", FormatBool(image.SunExposure))
                 </div>
             </SectionCard>
 
@@ -82,6 +85,7 @@ else
             <SectionCard Title="Diagnóstico">
                 <div class="detail-list">
                     @KeyValue("Diagnóstico", image.Diagnosis)
+                    @KeyValue("Diag. Histopatológico", image.HistopathologicalDiagnosis)
                     @KeyValue("Categoría", image.DiagnosisCategory)
                     @KeyValue("Tipo de lesión", image.InjuryType)
                     @KeyValue("Confirmación", image.DiagnosisConfirmType)
@@ -98,10 +102,17 @@ else
         </section>
     </div>
 
+    @if (!string.IsNullOrEmpty(image.DermoscopicComments))
+    {
+        <SectionCard Title="Comentarios Dermatoscópicos" Class="mt-4">
+            <p class="whitespace-pre-wrap leading-relaxed text-sm text-[var(--on-surface-variant)]">@image.DermoscopicComments</p>
+        </SectionCard>
+    }
+
     @if (!string.IsNullOrEmpty(image.ClinicalNotes))
     {
         <SectionCard Title="Notas Clínicas" Class="mt-4">
-            <p class="whitespace-pre-wrap leading-relaxed">@image.ClinicalNotes</p>
+            <p class="whitespace-pre-wrap leading-relaxed text-sm text-[var(--on-surface-variant)]">@image.ClinicalNotes</p>
         </SectionCard>
     }
 }

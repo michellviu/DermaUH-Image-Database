@@ -7,14 +7,14 @@
 <section class="analytics-hero">
     <div>
         <span class="analytics-kicker">Inteligencia clínica dermatológica</span>
-        <h1>Análisis estadístico</h1>
-        <p>Panel de distribución clínica para diagnóstico, localización anatómica y comportamiento mensual del repositorio.</p>
+        <h1>Análisis estadístico y epidemiológico</h1>
+        <p>Panel integral de distribución clínica, correlación de variables, mapeo anatómico y métricas de calidad de datos.</p>
     </div>
 </section>
 
 @if (loading)
 {
-    <div class="alert alert-info">Cargando datos estadísticos...</div>
+    <div class="alert alert-info">Cargando datos estadísticos y entrenando visualizaciones...</div>
 }
 else if (!string.IsNullOrWhiteSpace(loadError))
 {
@@ -27,33 +27,75 @@ else if (overview is null)
 else
 {
     <section class="analytics-kpi-grid">
-        <article>
+        <article class="kpi-card">
             <span class="label">Imágenes en repositorio</span>
             <span class="value">@overview.TotalImages</span>
         </article>
-        <article>
+        <article class="kpi-card">
             <span class="label">Imágenes públicas</span>
             <span class="value">@overview.PublicImages</span>
         </article>
-        <article>
+        <article class="kpi-card">
             <span class="label">Instituciones</span>
             <span class="value">@overview.InstitutionsCount</span>
         </article>
-        <article>
+        <article class="kpi-card">
             <span class="label">Contribuidores</span>
             <span class="value">@overview.ContributorsCount</span>
         </article>
     </section>
 
+    <!-- Mapas Corporales & Histogramas -->
+    <section class="analytics-grid-complex">
+        <article class="analytics-card card-tall">
+            <h2>Mapeo de Melanoma</h2>
+            <p class="card-subtitle">Distribución anatómica de lesiones malignas (Melanoma)</p>
+            <BodyMapChart Data="@overview.MelanomaBodyMap" />
+        </article>
+
+        <div class="complex-grid-right">
+            <article class="analytics-card">
+                <h2>Sitios anatómicos (General)</h2>
+                <HistogramChart Data="@ToChartPoints(overview.AnatomicalSiteDistribution)" ColorClass="histogram-fill--primary" />
+            </article>
+
+            <article class="analytics-card">
+                <h2>Tendencia de cargas</h2>
+                <HistogramChart Data="@ToChartPoints(overview.MonthlyUploads)" ColorClass="histogram-fill--secondary" />
+            </article>
+        </div>
+    </section>
+
+    <!-- Correlaciones (Cross-tabs) -->
+    <h2 class="section-title">Correlaciones Clínicas</h2>
+    <section class="analytics-grid">
+        <article class="analytics-card analytics-card--wide">
+            <h2>Diagnóstico vs Sexo</h2>
+            <GroupedBarChart Data="@overview.DiagnosisBySex" />
+        </article>
+
+        <article class="analytics-card analytics-card--wide">
+            <h2>Tipo de Lesión vs Grupo de Edad</h2>
+            <GroupedBarChart Data="@overview.InjuryTypeByAgeGroup" />
+        </article>
+
+        <article class="analytics-card analytics-card--wide">
+            <h2>Diagnóstico vs Color de Piel</h2>
+            <GroupedBarChart Data="@overview.DiagnosisBySkinColor" />
+        </article>
+
+        <article class="analytics-card analytics-card--wide">
+            <h2>Diagnóstico vs Sitio Anatómico</h2>
+            <GroupedBarChart Data="@overview.DiagnosisByAnatomicalSite" />
+        </article>
+    </section>
+
+    <!-- Distribuciones univariadas -->
+    <h2 class="section-title">Distribuciones Generales</h2>
     <section class="analytics-grid">
         <article class="analytics-card">
             <h2>Categoría diagnóstica</h2>
             <PieChart Data="@ToChartPoints(overview.DiagnosisDistribution)" />
-        </article>
-
-        <article class="analytics-card">
-            <h2>Distribución por sexo</h2>
-            <PieChart Data="@ToChartPoints(overview.SexDistribution)" />
         </article>
 
         <article class="analytics-card">
@@ -62,20 +104,42 @@ else
         </article>
 
         <article class="analytics-card">
+            <h2>Distribución por sexo</h2>
+            <PieChart Data="@ToChartPoints(overview.SexDistribution)" />
+        </article>
+
+        <article class="analytics-card">
+            <h2>Color de piel</h2>
+            <PieChart Data="@ToChartPoints(overview.SkinColorDistribution)" />
+        </article>
+
+        <article class="analytics-card">
+            <h2>Grupos de edad</h2>
+            <PieChart Data="@ToChartPoints(overview.AgeGroupDistribution)" />
+        </article>
+
+        <article class="analytics-card">
             <h2>Fototipo</h2>
-            <PieChart Data="@ToChartPoints(overview.PhotoTypeDistribution)" />
+            <PieChart Data="@ToPhotoTypeChartPoints(overview.PhotoTypeDistribution)" />
         </article>
 
+        <article class="analytics-card">
+            <h2>Método de confirmación</h2>
+            <PieChart Data="@ToChartPoints(overview.DiagnosisConfirmDistribution)" />
+        </article>
+
+        <article class="analytics-card">
+            <h2>Tipo de imagen</h2>
+            <PieChart Data="@ToChartPoints(overview.ImageTypeDistribution)" />
+        </article>
+    </section>
+
+    <!-- Completitud de Datos -->
+    <h2 class="section-title">Calidad de Datos (Metadata)</h2>
+    <section class="analytics-grid">
         <article class="analytics-card analytics-card--wide">
-            <h2>Sitios anatómicos más frecuentes</h2>
-            <HistogramChart Data="@ToChartPoints(overview.AnatomicalSiteDistribution.Take(6))" />
+            <DataCompletenessChart Data="@overview.DataCompleteness" />
         </article>
-
-        <article class="analytics-card analytics-card--wide">
-            <h2>Tendencia mensual de cargas</h2>
-            <HistogramChart Data="@ToChartPoints(overview.MonthlyUploads)" ColorClass="histogram-fill--secondary" />
-        </article>
-
     </section>
 }
 
@@ -83,6 +147,7 @@ else
     private StatisticsOverviewDto? overview;
     private bool loading = true;
     private string? loadError;
+    private static readonly string[] PhotoTypeOrder = ["I", "II", "III", "IV", "V", "VI"];
 
     protected override async Task OnInitializedAsync()
     {
@@ -115,11 +180,27 @@ else
             Value = x.Count
         }).ToList();
 
+    private static List<ChartPoint> ToPhotoTypeChartPoints(IEnumerable<StatisticsBucketDto> data)
+    {
+        var orderMap = PhotoTypeOrder
+            .Select((value, index) => new { value, index })
+            .ToDictionary(x => x.value, x => x.index, StringComparer.Ordinal);
+
+        return data
+            .OrderBy(x => orderMap.TryGetValue(x.Key, out var idx) ? idx : int.MaxValue)
+            .ThenBy(x => x.Key)
+            .Select(x => new ChartPoint
+            {
+                Label = x.Label,
+                Value = x.Count
+            })
+            .ToList();
+    }
+
     private static List<ChartPoint> ToChartPoints(IEnumerable<MonthlyUploadDto> data)
         => data.Select(x => new ChartPoint
         {
             Label = x.Label,
             Value = x.Count
         }).ToList();
-
 }

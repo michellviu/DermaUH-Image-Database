@@ -1,12 +1,13 @@
 .analytics-hero {
     border-radius: 1.4rem;
-    padding: 1.2rem;
-    margin-bottom: 1rem;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
     border: 1px solid color-mix(in srgb, var(--outline-variant) 36%, transparent);
     background:
         radial-gradient(circle at 12% 20%, color-mix(in srgb, var(--primary-fixed) 54%, transparent), transparent 40%),
         radial-gradient(circle at 85% 80%, color-mix(in srgb, var(--secondary-container) 38%, transparent), transparent 42%),
         color-mix(in srgb, var(--surface-container-lowest) 88%, transparent);
+    box-shadow: 0 10px 30px color-mix(in srgb, var(--primary) 8%, transparent);
 }
 
 .analytics-kicker {
@@ -14,86 +15,143 @@
     letter-spacing: 0.16em;
     font-size: 0.7rem;
     color: var(--on-surface-variant);
-    font-weight: 700;
+    font-weight: 800;
 }
 
 .analytics-hero h1 {
     margin: 0.45rem 0 0;
     color: var(--primary);
-    font-size: clamp(1.8rem, 3vw, 2.8rem);
+    font-size: clamp(2rem, 3.5vw, 3.2rem);
+    line-height: 1.1;
 }
 
 .analytics-hero p {
-    margin: 0.45rem 0 0;
+    margin: 0.6rem 0 0;
     color: var(--on-surface-variant);
-    max-width: 70ch;
+    max-width: 80ch;
+    font-size: 1.05rem;
+}
+
+.section-title {
+    font-size: 1.4rem;
+    color: var(--on-surface);
+    margin: 2rem 0 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid color-mix(in srgb, var(--outline-variant) 40%, transparent);
 }
 
 .analytics-kpi-grid {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 0.75rem;
-    margin-bottom: 1rem;
+    gap: 0.8rem;
+    margin-bottom: 2rem;
 }
 
-.analytics-kpi-grid article {
-    border-radius: 1rem;
+.kpi-card {
+    border-radius: 1.2rem;
     border: 1px solid color-mix(in srgb, var(--outline-variant) 33%, transparent);
     background: color-mix(in srgb, var(--surface-container-lowest) 89%, transparent);
-    padding: 0.95rem;
+    padding: 1rem 1.2rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.analytics-kpi-grid .label {
+.kpi-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px color-mix(in srgb, var(--primary) 12%, transparent);
+}
+
+.kpi-card .label {
     display: block;
     text-transform: uppercase;
-    letter-spacing: 0.07em;
+    letter-spacing: 0.08em;
     color: var(--on-surface-variant);
     font-size: 0.7rem;
+    font-weight: 700;
 }
 
-.analytics-kpi-grid .value {
+.kpi-card .value {
     display: block;
-    margin-top: 0.25rem;
+    margin-top: 0.35rem;
     color: var(--primary-container);
     font-family: var(--font-display);
-    font-size: 1.4rem;
+    font-size: 1.6rem;
     font-weight: 800;
+}
+
+.kpi-card--stats .value {
+    font-size: 1.25rem; /* slightly smaller for more text */
+    color: var(--secondary);
+}
+
+.analytics-grid-complex {
+    display: grid;
+    grid-template-columns: minmax(360px, 450px) minmax(0, 1fr);
+    gap: 1.2rem;
+    margin-bottom: 2rem;
+    align-items: stretch;
+}
+
+.complex-grid-right {
+    display: grid;
+    grid-template-rows: 1fr 1fr;
+    gap: 1.2rem;
 }
 
 .analytics-grid {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.9rem;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 1.2rem;
+    margin-bottom: 2rem;
 }
 
 .analytics-card {
-    border-radius: 1rem;
+    border-radius: 1.2rem;
     border: 1px solid color-mix(in srgb, var(--outline-variant) 33%, transparent);
     background: color-mix(in srgb, var(--surface-container-lowest) 89%, transparent);
-    padding: 1rem;
+    padding: 1.4rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+}
+
+.card-tall {
+    display: flex;
+    flex-direction: column;
 }
 
 .analytics-card h2 {
     margin: 0 0 0.85rem;
     color: var(--on-surface);
-    font-size: 1rem;
+    font-size: 1.15rem;
+}
+
+.card-subtitle {
+    font-size: 0.85rem;
+    color: var(--on-surface-variant);
+    margin-top: -0.6rem;
+    margin-bottom: 1.2rem;
 }
 
 .analytics-card--wide {
-    grid-column: span 2;
+    grid-column: 1 / -1;
+}
+
+@media (max-width: 1200px) {
+    .analytics-kpi-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
 }
 
 @media (max-width: 980px) {
-    .analytics-kpi-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+    .analytics-grid-complex {
+        grid-template-columns: 1fr;
     }
 
     .analytics-grid {
         grid-template-columns: 1fr;
     }
-
-    .analytics-card--wide {
-        grid-column: auto;
+    
+    .analytics-kpi-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
 
