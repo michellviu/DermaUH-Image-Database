@@ -206,7 +206,7 @@ public class StatisticsManager : IStatisticsManager
             result.Add(new MonthlyUploadDto
             {
                 MonthKey = monthKey,
-                Label = current.ToString("MMM yy", CultureInfo.InvariantCulture),
+                Label = current.ToString("MMM yy", CultureInfo.GetCultureInfo("es-ES")),
                 Count = count
             });
         }
@@ -298,19 +298,23 @@ public class StatisticsManager : IStatisticsManager
     private static string MapDiagnosisConfirmLabel(string key) => key switch
     {
         "Histopathology" => "Histopatología",
-        "SerialImaging" => "Imágenes seriadas",
-        "SingleImage" => "Imagen única",
-        "Confocal" => "Confocal",
-        "FollowUp" => "Seguimiento",
-        "Consensus" => "Consenso clínico",
+        "SingleContributorClinicalAssessment" => "Evaluación clínica individual",
+        "SerialImagingShowingNoChange" => "Imágenes seriadas sin cambio",
+        "SingleImageExpertConsensus" => "Consenso de expertos",
+        "ConfocalMicroscopyWithConsensusDermoscopy" => "Microscopía confocal",
         _ => key
     };
 
     private static string MapImageTypeLabel(string key) => key switch
     {
         "Dermoscopic" => "Dermoscópica",
-        "Clinical" => "Clínica",
-        "OverviewPhoto" => "Foto panorámica",
+        "ClinicalOverview" => "Clínica: Vista General",
+        "ClinicalCloseUp" => "Clínica: Primer Plano",
+        "TBPTileOverview" => "TBP: Vista General",
+        "TBPTileCloseUp" => "TBP: Primer Plano",
+        "RCMMacroscopic" => "RCM: Macroscópica",
+        "RCMTile" => "RCM: Tile",
+        "RCMMosaic" => "RCM: Mosaico",
         _ => key
     };
 

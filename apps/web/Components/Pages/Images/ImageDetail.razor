@@ -28,7 +28,7 @@ else
         }
         @if (!string.IsNullOrWhiteSpace(image.InjuryType))
         {
-            <span class="summary-chip">@image.InjuryType</span>
+            <span class="summary-chip">@LocalizeInjuryType(image.InjuryType)</span>
         }
         @if (!string.IsNullOrWhiteSpace(image.InstitutionName))
         {
@@ -53,9 +53,9 @@ else
                 <div class="detail-list">
                     @KeyValue("ID Público", image.PublicId)
                     @KeyValue("Archivo", image.FileName)
-                    @KeyValue("Tipo de Imagen", image.ImageType)
-                    @KeyValue("Manipulación", image.ImageManipulation)
-                    @KeyValue("Tipo Dermatoscópico", image.DermoscopicType)
+                    @KeyValue("Tipo de Imagen", LocalizeImageType(image.ImageType))
+                    @KeyValue("Manipulación", LocalizeImageManipulation(image.ImageManipulation))
+                    @KeyValue("Tipo Dermatoscópico", LocalizeDermoscopicType(image.DermoscopicType))
                     @KeyValue("Contribuidor", image.ContributorFullName)
                     @KeyValue("Institución", image.InstitutionName)
                 </div>
@@ -65,8 +65,8 @@ else
                 <div class="detail-list">
                     @KeyValue("Edad Aproximada", image.AgeApprox?.ToString())
                     @KeyValue("Sexo", LocalizeSex(image.Sex))
-                    @KeyValue("Color de Piel", image.SkinColor)
-                    @KeyValue("Fototipo", image.FotoType)
+                    @KeyValue("Color de Piel", LocalizeSkinColor(image.SkinColor))
+                    @KeyValue("Fototipo", LocalizePhotoType(image.FotoType))
                     @KeyValue("Historial Personal", image.PersonalHistory)
                     @KeyValue("Antecedente Personal MM", FormatBool(image.PersonalHxMm))
                     @KeyValue("Antecedente Familiar MM", FormatBool(image.FamilyHxMm))
@@ -77,7 +77,7 @@ else
             <SectionCard Title="Información Clínica de la Lesión">
                 <div class="detail-list">
                     @KeyValue("Sitio Anatómico", LocalizeAnatomSite(image.AnatomSiteGeneral))
-                    @KeyValue("Sitio Especial", image.AnatomSiteSpecial)
+                    @KeyValue("Sitio Especial", LocalizeAnatomSiteSpecial(image.AnatomSiteSpecial))
                     @KeyValue("Diámetro Mayor (mm)", image.ClinSizeLongDiamMm?.ToString("F1"))
                 </div>
             </SectionCard>
@@ -87,8 +87,8 @@ else
                     @KeyValue("Diagnóstico", image.Diagnosis)
                     @KeyValue("Diag. Histopatológico", image.HistopathologicalDiagnosis)
                     @KeyValue("Categoría", image.DiagnosisCategory)
-                    @KeyValue("Tipo de lesión", image.InjuryType)
-                    @KeyValue("Confirmación", image.DiagnosisConfirmType)
+                    @KeyValue("Tipo de lesión", LocalizeInjuryType(image.InjuryType))
+                    @KeyValue("Confirmación", LocalizeDiagnosisConfirmType(image.DiagnosisConfirmType))
                 </div>
             </SectionCard>
 
@@ -182,6 +182,65 @@ else
         _ => sex ?? "—"
     };
 
+    private static string LocalizeSkinColor(string? value) => value switch
+    {
+        "White" => "Blanco",
+        "Mixed_Race" => "Mestizo",
+        "Black" => "Negro",
+        _ => value ?? "—"
+    };
+
+    private static string LocalizePhotoType(string? value) => value ?? "—";
+
+    private static string LocalizeImageType(string? value) => value switch
+    {
+        "Dermoscopic" => "Dermoscópica",
+        "ClinicalOverview" => "Clínica: Vista General",
+        "ClinicalCloseUp" => "Clínica: Primer Plano",
+        "TBPTileOverview" => "TBP: Vista General",
+        "TBPTileCloseUp" => "TBP: Primer Plano",
+        "RCMMacroscopic" => "RCM: Macroscópica",
+        "RCMTile" => "RCM: Tile",
+        "RCMMosaic" => "RCM: Mosaico",
+        _ => value ?? "—"
+    };
+
+    private static string LocalizeImageManipulation(string? value) => value switch
+    {
+        "InstrumentOnly" => "Solo instrumento",
+        "Altered" => "Alterada",
+        "Synthetic" => "Sintética",
+        "Unknown" => "Desconocida",
+        _ => value ?? "—"
+    };
+
+    private static string LocalizeDermoscopicType(string? value) => value switch
+    {
+        "ContactPolarized" => "Contacto Polarizado",
+        "ContactNonPolarized" => "Contacto No Polarizado",
+        "NonContactPolarized" => "Sin Contacto Polarizado",
+        _ => value ?? "—"
+    };
+
+    private static string LocalizeDiagnosisConfirmType(string? value) => value switch
+    {
+        "Histopathology" => "Histopatología",
+        "SingleContributorClinicalAssessment" => "Evaluación clínica individual",
+        "SerialImagingShowingNoChange" => "Imágenes seriadas sin cambio",
+        "SingleImageExpertConsensus" => "Consenso de expertos",
+        "ConfocalMicroscopyWithConsensusDermoscopy" => "Microscopía confocal",
+        _ => value ?? "—"
+    };
+
+    private static string LocalizeInjuryType(string? value) => value switch
+    {
+        "Melanoma" => "Melanoma",
+        "BasalCellCarcinoma" => "Carcinoma basocelular",
+        "SquamousCellCarcinoma" => "Carcinoma escamocelular",
+        "Others" => "Otros",
+        _ => value ?? "—"
+    };
+
     private static string LocalizeAnatomSite(string? value) => value switch
     {
         "HeadNeck" => "Cabeza/Cuello",
@@ -192,6 +251,17 @@ else
         "PosteriorTorso" => "Torso Posterior",
         "PalmsSoles" => "Palmas/Plantas",
         "OralGenital" => "Oral/Genital",
+        _ => value ?? "—"
+    };
+
+    private static string LocalizeAnatomSiteSpecial(string? value) => value switch
+    {
+        "AcralNOS" => "Acral (no especificado)",
+        "NailNOS" => "Uña (no especificado)",
+        "Fingernail" => "Uña de la mano",
+        "Toenail" => "Uña del pie",
+        "AcralPalmsOrSoles" => "Acral (palmas o plantas)",
+        "OralOrGenital" => "Oral o genital",
         _ => value ?? "—"
     };
 

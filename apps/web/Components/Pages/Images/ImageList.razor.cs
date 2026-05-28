@@ -1,3 +1,4 @@
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Json;
 using Microsoft.AspNetCore.Components;
@@ -9,6 +10,7 @@ namespace Web.DermaImage.Components.Pages.Images;
 
 public partial class ImageList
 {
+    [Inject] private NavigationManager Navigation { get; set; } = default!;
     private List<DermaImgDto> images = [];
     private bool hasLoaded;
     private int totalCount;
@@ -411,6 +413,12 @@ public partial class ImageList
         try
         {
             using var response = await Http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
+            if (response.StatusCode == HttpStatusCode.Unauthorized || response.StatusCode == HttpStatusCode.Forbidden)
+            {
+                Navigation.NavigateTo("/account/login", forceLoad: true);
+                return;
+            }
+
             if (!response.IsSuccessStatusCode)
             {
                 downloadError = await ApiValidationMessageParser.BuildFriendlyErrorMessageAsync(response);
