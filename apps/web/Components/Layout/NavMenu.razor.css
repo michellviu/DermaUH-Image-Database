@@ -25,11 +25,13 @@
     color: var(--primary);
 }
 
-.nav-brand-mark {
-    width: 1.2rem;
-    height: 1.2rem;
-    border-radius: 999px;
-    background: linear-gradient(135deg, var(--primary), var(--primary-container));
+.nav-brand-icon {
+    width: 2.35rem;
+    height: 2.35rem;
+    display: inline-block;
+    background-color: var(--primary);
+    -webkit-mask: url("/assets/icono.webp") no-repeat center / contain;
+    mask: url("/assets/icono.webp") no-repeat center / contain;
     box-shadow: 0 0 0 6px color-mix(in srgb, var(--secondary-container) 35%, transparent);
 }
 
