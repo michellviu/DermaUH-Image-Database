@@ -4,6 +4,7 @@ using Domain.DermaImage.Entities.Enums;
 using Domain.DermaImage.Interfaces.Repository;
 using Domain.DermaImage.Interfaces.Services;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Configuration;
 
 namespace Application.DermaImage.Managers;
 
@@ -12,12 +13,14 @@ public class AuthManager : IAuthManager
     private readonly IUserRepository _users;
     private readonly IJwtService _jwt;
     private readonly IEmailService _email;
+    private readonly string _googleClientId;
 
-    public AuthManager(IUserRepository users, IJwtService jwt, IEmailService email)
+    public AuthManager(IUserRepository users, IJwtService jwt, IEmailService email, IConfiguration config)
     {
         _users = users;
         _jwt = jwt;
         _email = email;
+        _googleClientId = config["Google:ClientId"] ?? string.Empty;
     }
 
 
@@ -92,11 +95,21 @@ public class AuthManager : IAuthManager
     public async Task<(LoginResponseDto? Response, string? Error)> GoogleLoginAsync(
         GoogleLoginDto dto, CancellationToken ct = default)
     {
+        if (string.IsNullOrWhiteSpace(_googleClientId))
+        {
+            return (null, "Login con Google no está configurado.");
+        }
+
         // Validate Google ID token
         Google.Apis.Auth.GoogleJsonWebSignature.Payload? payload;
         try
         {
-            payload = await Google.Apis.Auth.GoogleJsonWebSignature.ValidateAsync(dto.IdToken);
+            payload = await Google.Apis.Auth.GoogleJsonWebSignature.ValidateAsync(
+                dto.IdToken,
+                new Google.Apis.Auth.GoogleJsonWebSignature.ValidationSettings
+                {
+                    Audience = new[] { _googleClientId }
+                });
         }
         catch
         {

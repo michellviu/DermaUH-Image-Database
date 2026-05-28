@@ -7,7 +7,7 @@
 main {
     flex: 1;
     padding: 2rem clamp(1rem, 3vw, 3rem) 3rem;
-    max-width: 1440px;
+    max-width: 1600px;
     width: 100%;
     margin: 0 auto;
 }
@@ -22,13 +22,23 @@ main {
 }
 
 .app-footer__inner {
-    max-width: 1440px;
+    max-width: 1600px;
     margin: 0 auto;
     padding: 1.5rem clamp(1rem, 3vw, 3rem);
     display: flex;
     justify-content: space-between;
     align-items: center;
     gap: 1rem;
+}
+
+@media (min-width: 1600px) {
+    main {
+        padding: 2.5rem clamp(2rem, 4vw, 4rem) 3.5rem;
+    }
+
+    .app-footer__inner {
+        padding: 2rem clamp(2rem, 4vw, 4rem);
+    }
 }
 
 .app-footer__brand {

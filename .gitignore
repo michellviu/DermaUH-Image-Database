@@ -64,3 +64,5 @@ stitch*/
 # Local environment files
 .env
 .env.*
+appsettings.Development.json
+**/appsettings.Development.json
