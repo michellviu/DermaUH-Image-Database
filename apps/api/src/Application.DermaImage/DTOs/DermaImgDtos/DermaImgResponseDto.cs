@@ -16,8 +16,6 @@ public class DermaImgResponseDto
     public DermoscopicType? DermoscopicType { get; set; }
 
     // Patient
-    public string? PatientName { get; set; }
-    public string? ClinicalHistoryNumber { get; set; }
     public int? AgeApprox { get; set; }
     public Sex? Sex { get; set; }
     public SkinColor? SkinColor { get; set; }
@@ -26,6 +24,7 @@ public class DermaImgResponseDto
     public bool? PersonalHxMm { get; set; }
     public bool? FamilyHxMm { get; set; }
     public bool? SunExposure { get; set; }
+    public Provincia? Provincia { get; set; }
 
     // Lesion clinical
     public AnatomSiteGeneral? AnatomSiteGeneral { get; set; }

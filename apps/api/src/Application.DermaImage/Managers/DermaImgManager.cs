@@ -70,8 +70,6 @@ public class DermaImgManager : IDermaImgManager
             ImageType = dto.ImageType,
             ImageManipulation = dto.ImageManipulation,
             DermoscopicType = dto.DermoscopicType,
-            PatientName = dto.PatientName,
-            ClinicalHistoryNumber = dto.ClinicalHistoryNumber,
             AgeApprox = dto.AgeApprox,
             Sex = dto.Sex,
             SkinColor = dto.SkinColor,
@@ -80,6 +78,7 @@ public class DermaImgManager : IDermaImgManager
             PersonalHxMm = dto.PersonalHxMm,
             FamilyHxMm = dto.FamilyHxMm,
             SunExposure = dto.SunExposure,
+            Provincia = dto.Provincia,
             AnatomSiteGeneral = dto.AnatomSiteGeneral,
             AnatomSiteSpecial = dto.AnatomSiteSpecial,
             ClinSizeLongDiamMm = dto.ClinSizeLongDiamMm,
@@ -109,8 +108,6 @@ public class DermaImgManager : IDermaImgManager
         entity.ImageType = dto.ImageType;
         entity.ImageManipulation = dto.ImageManipulation;
         entity.DermoscopicType = dto.DermoscopicType;
-        entity.PatientName = dto.PatientName;
-        entity.ClinicalHistoryNumber = dto.ClinicalHistoryNumber;
         entity.AgeApprox = dto.AgeApprox;
         entity.Sex = dto.Sex;
         entity.SkinColor = dto.SkinColor;
@@ -119,6 +116,7 @@ public class DermaImgManager : IDermaImgManager
         entity.PersonalHxMm = dto.PersonalHxMm;
         entity.FamilyHxMm = dto.FamilyHxMm;
         entity.SunExposure = dto.SunExposure;
+        entity.Provincia = dto.Provincia;
         entity.AnatomSiteGeneral = dto.AnatomSiteGeneral;
         entity.AnatomSiteSpecial = dto.AnatomSiteSpecial;
         entity.ClinSizeLongDiamMm = dto.ClinSizeLongDiamMm;

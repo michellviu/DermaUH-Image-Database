@@ -386,6 +386,19 @@ public class DermaImgRepository : Repository<DermaImg>, IDermaImgRepository
         return grouped.Select(x => (x.Site, x.MelanomaCount, x.TotalCount)).ToList();
     }
 
+    public async Task<IReadOnlyList<(string Key, int Count)>> GetProvinceCountsAsync(bool includePrivate, CancellationToken cancellationToken = default)
+    {
+        Logger.LogInformation("Fetching province counts. IncludePrivate: {IncludePrivate}", includePrivate);
+        var grouped = await BuildVisibilityQuery(includePrivate)
+            .Where(i => i.Provincia.HasValue)
+            .GroupBy(i => i.Provincia)
+            .Select(g => new { Key = g.Key!.Value.ToString(), Count = g.Count() })
+            .OrderByDescending(x => x.Count)
+            .ToListAsync(cancellationToken);
+
+        return grouped.Select(x => (x.Key, x.Count)).ToList();
+    }
+
     public async Task<IReadOnlyList<(string FieldName, int FilledCount, int TotalCount)>> GetDataCompletenessAsync(
         bool includePrivate, CancellationToken cancellationToken = default)
     {
@@ -411,6 +424,7 @@ public class DermaImgRepository : Repository<DermaImg>, IDermaImgRepository
             ("PersonalHxMm", items.Count(i => i.PersonalHxMm.HasValue), total),
             ("FamilyHxMm", items.Count(i => i.FamilyHxMm.HasValue), total),
             ("SunExposure", items.Count(i => i.SunExposure.HasValue), total),
+            ("Provincia", items.Count(i => i.Provincia.HasValue), total),
         };
 
         return fields;

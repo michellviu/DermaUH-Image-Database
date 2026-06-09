@@ -62,6 +62,9 @@ public class StatisticsManager : IStatisticsManager
         // ── Data completeness ──────────────────────────────────────────
         var completeness = await _images.GetDataCompletenessAsync(includePrivate, cancellationToken);
 
+        // ── Province distribution ───────────────────────────────────────
+        var province = await _images.GetProvinceCountsAsync(includePrivate, cancellationToken);
+
         return new StatisticsOverviewDto
         {
             TotalImages = totalImages,
@@ -87,6 +90,7 @@ public class StatisticsManager : IStatisticsManager
             InjuryTypeByAgeGroup = MapCrossTab(injuryByAge, MapInjuryTypeLabel, MapAgeGroupLabel),
             DiagnosisBySkinColor = MapCrossTab(diagBySkinColor, MapDiagnosisLabel, MapSkinColorLabel),
             MelanomaBodyMap = melanomaBodyMap,
+            ProvinceDistribution = MapBuckets(province, MapProvinciaLabel),
             DataCompleteness = completeness.Select(x => new DataCompletenessDto
             {
                 FieldName = x.FieldName,
@@ -320,6 +324,22 @@ public class StatisticsManager : IStatisticsManager
 
     private static string MapAgeGroupLabel(string key) => key + " años";
 
+    private static string MapProvinciaLabel(string key) => key switch
+    {
+        "PinarDelRio" => "Pinar del Río",
+        "LaHabana" => "La Habana",
+        "VillaClara" => "Villa Clara",
+        "SanctiSpiritus" => "Sancti Spíritus",
+        "CiegoDeAvila" => "Ciego de Ávila",
+        "Camaguey" => "Camagüey",
+        "LasTunas" => "Las Tunas",
+        "SantiagoDeCuba" => "Santiago de Cuba",
+        "IslaDeLaJuventud" => "Isla de la Juventud",
+        "Guantanamo" => "Guantánamo",
+        "Holguin" => "Holguín",
+        _ => key
+    };
+
     private static string MapCompletenessLabel(string key) => key switch
     {
         "AgeApprox" => "Edad",
@@ -336,6 +356,7 @@ public class StatisticsManager : IStatisticsManager
         "PersonalHxMm" => "Hist. personal melanoma",
         "FamilyHxMm" => "Hist. familiar melanoma",
         "SunExposure" => "Exposición solar",
+        "Provincia" => "Provincia",
         _ => key
     };
 }

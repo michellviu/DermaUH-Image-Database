@@ -19,8 +19,6 @@ public class DermaImgConfiguration : IEntityTypeConfiguration<DermaImg>
         builder.Property(e => e.FileName).IsRequired().HasMaxLength(500);
         builder.Property(e => e.FilePath).IsRequired().HasMaxLength(1000);
         builder.Property(e => e.ContentType).IsRequired().HasMaxLength(100);
-        builder.Property(e => e.PatientName).HasMaxLength(200);
-        builder.Property(e => e.ClinicalHistoryNumber).HasMaxLength(100);
         builder.Property(e => e.PersonalHistory).HasMaxLength(1000);
         builder.Property(e => e.Diagnosis).HasMaxLength(500);
         builder.Property(e => e.HistopathologicalDiagnosis).HasMaxLength(500);
@@ -41,6 +39,7 @@ public class DermaImgConfiguration : IEntityTypeConfiguration<DermaImg>
         builder.Property(e => e.MelMitoticIndex).HasConversion<string>().HasMaxLength(50);
         builder.Property(e => e.FotoType).HasConversion<string>().HasMaxLength(50);
         builder.Property(e => e.InjuryType).HasConversion<string>().HasMaxLength(50);
+        builder.Property(e => e.Provincia).HasConversion<string>().HasMaxLength(50);
 
         // Soft delete filter
         builder.HasQueryFilter(e => !e.IsDeleted);

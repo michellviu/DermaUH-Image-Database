@@ -35,12 +35,6 @@ public class DermaImg : BaseEntity
     public DermoscopicType? DermoscopicType { get; set; }
 
     // ── Patient Demographics ───────────────────────────────────────────
-    /// <summary>Patient name as recorded in the clinical record.</summary>
-    public string? PatientName { get; set; }
-
-    /// <summary>Clinical history record identifier.</summary>
-    public string? ClinicalHistoryNumber { get; set; }
-
     /// <summary>Approximate age of the patient at time of capture.</summary>
     public int? AgeApprox { get; set; }
 
@@ -64,6 +58,9 @@ public class DermaImg : BaseEntity
 
     /// <summary>Reported sun exposure.</summary>
     public bool? SunExposure { get; set; }
+
+    /// <summary>Province of origin of the image.</summary>
+    public Provincia? Provincia { get; set; }
 
     // ── Lesion Clinical ────────────────────────────────────────────────
     /// <summary>General anatomic location of the lesion.</summary>

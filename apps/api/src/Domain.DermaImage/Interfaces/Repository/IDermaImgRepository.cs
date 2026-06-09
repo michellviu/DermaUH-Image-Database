@@ -28,5 +28,6 @@ public interface IDermaImgRepository : IRepository<DermaImg>
     Task<IReadOnlyList<int>> GetAgeValuesAsync(bool includePrivate, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<(string RowKey, string ColKey, int Count)>> GetCrossTabAsync(string rowField, string colField, bool includePrivate, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<(string SiteKey, int MelanomaCount, int TotalCount)>> GetMelanomaByAnatomicalSiteAsync(bool includePrivate, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<(string Key, int Count)>> GetProvinceCountsAsync(bool includePrivate, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<(string FieldName, int FilledCount, int TotalCount)>> GetDataCompletenessAsync(bool includePrivate, CancellationToken cancellationToken = default);
 }

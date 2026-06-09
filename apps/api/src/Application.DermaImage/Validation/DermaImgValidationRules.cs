@@ -9,11 +9,6 @@ public static class DermaImgValidationRules
     {
         var errors = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
 
-        AddIf(string.IsNullOrWhiteSpace(dto.PatientName),
-            nameof(dto.PatientName),
-            "El nombre del paciente es obligatorio.",
-            errors);
-
         AddIf(!dto.AgeApprox.HasValue,
             nameof(dto.AgeApprox),
             "La edad es obligatoria.",

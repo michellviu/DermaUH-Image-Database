@@ -31,6 +31,9 @@ public class StatisticsOverviewDto
     // ── Melanoma body map ──────────────────────────────────────────────
     public IReadOnlyList<BodyMapEntryDto> MelanomaBodyMap { get; set; } = [];
 
+    // ── Province distribution ──────────────────────────────────────────
+    public IReadOnlyList<StatisticsBucketDto> ProvinceDistribution { get; set; } = [];
+
     // ── Age statistics ─────────────────────────────────────────────────
     public double? AgeMedian { get; set; }
     public double? AgeMean { get; set; }
