@@ -83,7 +83,7 @@ public class AuthManager : IAuthManager
             return (null, "Debes confirmar tu correo electrónico antes de iniciar sesión.");
 
         if (!user.IsActive)
-            return (null, "Tu cuenta ha sido desactivada. Contacta al administrador.");
+            return (null, "Tu cuenta no está activa. Espere a que sea aprobada o contacte al administrador.");
 
         var roles = await _users.GetRolesAsync(user);
         var token = _jwt.GenerateToken(user, roles);
