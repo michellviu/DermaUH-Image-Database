@@ -61,6 +61,20 @@ public class ImagesController : ControllerBase
         };
 
         var (items, totalCount) = await _manager.GetPagedAsync(page, pageSize, filter, cancellationToken);
+        
+        var isAuthenticated = User.Identity?.IsAuthenticated ?? false;
+        if (!isAuthenticated)
+        {
+            if (page == 1)
+            {
+                items = items.Take(10).ToList();
+            }
+            else
+            {
+                items = new List<DermaImg>();
+            }
+        }
+
         return Ok(new PagedResponse<DermaImgResponseDto>
         {
             Items = items.Select(MapToResponseDto),

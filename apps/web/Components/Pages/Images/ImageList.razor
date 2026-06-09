@@ -188,16 +188,28 @@
             <div class="infinite-scroll-loading text-muted">Cargando más imágenes...</div>
         }
 
-        @if (hasLoaded && hasMorePages && !isLoadingPage)
+        @if (!isAuthenticated && totalCount > images.Count)
+        {
+            <div class="auth-prompt-wrap mt-4 text-center">
+                <div class="alert alert-warning d-inline-block">
+                    <p class="mb-2">Ha alcanzado el límite de vista previa. Inicie sesión para explorar los @totalCount casos completos.</p>
+                    <a href="/account/login?returnUrl=/images" class="btn btn-primary">Iniciar sesión</a>
+                </div>
+            </div>
+        }
+        else if (hasLoaded && hasMorePages && !isLoadingPage)
         {
             <div class="load-more-wrap">
                 <button type="button" class="load-more-btn" @onclick="LoadMoreAsync">Ver más</button>
             </div>
         }
 
-        <div id="@sentinelId" class="infinite-scroll-sentinel" aria-hidden="true"></div>
+        @if (isAuthenticated)
+        {
+            <div id="@sentinelId" class="infinite-scroll-sentinel" aria-hidden="true"></div>
+        }
 
-        @if (hasLoaded && !hasMorePages && images.Count > 0)
+        @if (hasLoaded && !hasMorePages && images.Count > 0 && isAuthenticated)
         {
             <div class="alert alert-secondary mt-3">No hay más imágenes para mostrar.</div>
         }

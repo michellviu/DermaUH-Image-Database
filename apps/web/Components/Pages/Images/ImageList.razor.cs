@@ -11,6 +11,8 @@ namespace Web.DermaImage.Components.Pages.Images;
 public partial class ImageList
 {
     [Inject] private NavigationManager Navigation { get; set; } = default!;
+    [Inject] private Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider AuthStateProvider { get; set; } = default!;
+    private bool isAuthenticated;
     private List<DermaImgDto> images = [];
     private bool hasLoaded;
     private int totalCount;
@@ -107,11 +109,19 @@ public partial class ImageList
 
     protected override async Task OnInitializedAsync()
     {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        isAuthenticated = authState.User.Identity?.IsAuthenticated ?? false;
+
         await ResetAndLoadImagesAsync();
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        if (!isAuthenticated)
+        {
+            return;
+        }
+
         if (!observerInitialized)
         {
             dotNetRef = DotNetObjectReference.Create(this);
@@ -189,6 +199,12 @@ public partial class ImageList
     {
         if (isLoadingPage || !hasMorePages)
         {
+            return;
+        }
+
+        if (!isAuthenticated && images.Count >= 10)
+        {
+            hasMorePages = false;
             return;
         }
 
