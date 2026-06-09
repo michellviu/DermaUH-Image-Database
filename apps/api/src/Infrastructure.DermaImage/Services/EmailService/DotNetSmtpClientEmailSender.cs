@@ -17,6 +17,24 @@ public class DotNetSmtpClientEmailSender : IEmailService
     private const string ResetPasswordTemplateResource =
         "Infrastructure.DermaImage.Services.EmailTemplates.PasswordReset.html";
 
+    private const string AdminNotificationNewUserTemplateResource =
+        "Infrastructure.DermaImage.Services.EmailTemplates.AdminNotificationNewUser.html";
+
+    private const string UserRegistrationApprovedTemplateResource =
+        "Infrastructure.DermaImage.Services.EmailTemplates.UserRegistrationApproved.html";
+
+    private const string UserRegistrationDeniedTemplateResource =
+        "Infrastructure.DermaImage.Services.EmailTemplates.UserRegistrationDenied.html";
+
+    private const string AdminNotificationNewDownloadRequestTemplateResource =
+        "Infrastructure.DermaImage.Services.EmailTemplates.AdminNotificationNewDownloadRequest.html";
+
+    private const string DownloadRequestApprovedTemplateResource =
+        "Infrastructure.DermaImage.Services.EmailTemplates.DownloadRequestApproved.html";
+
+    private const string DownloadRequestDeniedTemplateResource =
+        "Infrastructure.DermaImage.Services.EmailTemplates.DownloadRequestDenied.html";
+
     private const string GenericFallbackTemplateResource =
         "Infrastructure.DermaImage.Services.EmailTemplates.GenericFallback.html";
 
@@ -74,7 +92,14 @@ public class DotNetSmtpClientEmailSender : IEmailService
 
     public async Task SendAdminNotificationNewUserAsync(IEnumerable<string> adminEmails, string newUserName, string newUserEmail, CancellationToken ct = default)
     {
-        var body = $"<p>El usuario <b>{WebUtility.HtmlEncode(newUserName)}</b> ({WebUtility.HtmlEncode(newUserEmail)}) se ha registrado y está esperando aprobación.</p>";
+        var body = await BuildTemplateBodyAsync(
+            AdminNotificationNewUserTemplateResource,
+            new Dictionary<string, string>
+            {
+                ["NewUserName"] = WebUtility.HtmlEncode(newUserName),
+                ["NewUserEmail"] = WebUtility.HtmlEncode(newUserEmail),
+            });
+
         await SendEmailAsync(
             receivers: adminEmails.ToList(),
             carbonCopy: null,
@@ -85,7 +110,13 @@ public class DotNetSmtpClientEmailSender : IEmailService
 
     public async Task SendUserRegistrationApprovedAsync(string toEmail, string userName, CancellationToken ct = default)
     {
-        var body = $"<p>Hola <b>{WebUtility.HtmlEncode(userName)}</b>,</p><p>Tu solicitud de registro en DermaUH ha sido aprobada. Ya puedes iniciar sesión.</p>";
+        var body = await BuildTemplateBodyAsync(
+            UserRegistrationApprovedTemplateResource,
+            new Dictionary<string, string>
+            {
+                ["UserName"] = WebUtility.HtmlEncode(userName),
+            });
+
         await SendEmailAsync(
             receivers: [toEmail],
             carbonCopy: null,
@@ -96,7 +127,13 @@ public class DotNetSmtpClientEmailSender : IEmailService
 
     public async Task SendUserRegistrationDeniedAsync(string toEmail, string userName, CancellationToken ct = default)
     {
-        var body = $"<p>Hola <b>{WebUtility.HtmlEncode(userName)}</b>,</p><p>Tu solicitud de registro en DermaUH ha sido denegada por un administrador.</p>";
+        var body = await BuildTemplateBodyAsync(
+            UserRegistrationDeniedTemplateResource,
+            new Dictionary<string, string>
+            {
+                ["UserName"] = WebUtility.HtmlEncode(userName),
+            });
+
         await SendEmailAsync(
             receivers: [toEmail],
             carbonCopy: null,
@@ -107,12 +144,52 @@ public class DotNetSmtpClientEmailSender : IEmailService
 
     public async Task SendAdminNotificationNewDownloadRequestAsync(IEnumerable<string> adminEmails, string userName, CancellationToken ct = default)
     {
-        var body = $"<p>El usuario <b>{WebUtility.HtmlEncode(userName)}</b> ha solicitado autorización para descargar contenido de DermaUH.</p>" +
-                   "<p>Ingrese a su perfil en la aplicación para revisar y gestionar la solicitud.</p>";
+        var body = await BuildTemplateBodyAsync(
+            AdminNotificationNewDownloadRequestTemplateResource,
+            new Dictionary<string, string>
+            {
+                ["UserName"] = WebUtility.HtmlEncode(userName),
+            });
+
         await SendEmailAsync(
             receivers: adminEmails.ToList(),
             carbonCopy: null,
             subject: "Nueva solicitud de descarga - DermaUH",
+            messageBody: body,
+            ct: ct);
+    }
+
+    public async Task SendDownloadRequestApprovedAsync(string toEmail, string userName, string actionUrl, CancellationToken ct = default)
+    {
+        var body = await BuildTemplateBodyAsync(
+            DownloadRequestApprovedTemplateResource,
+            new Dictionary<string, string>
+            {
+                ["UserName"] = WebUtility.HtmlEncode(userName),
+                ["ActionUrl"] = actionUrl,
+            });
+
+        await SendEmailAsync(
+            receivers: [toEmail],
+            carbonCopy: null,
+            subject: "Autorización de descarga aprobada - DermaUH",
+            messageBody: body,
+            ct: ct);
+    }
+
+    public async Task SendDownloadRequestDeniedAsync(string toEmail, string userName, CancellationToken ct = default)
+    {
+        var body = await BuildTemplateBodyAsync(
+            DownloadRequestDeniedTemplateResource,
+            new Dictionary<string, string>
+            {
+                ["UserName"] = WebUtility.HtmlEncode(userName),
+            });
+
+        await SendEmailAsync(
+            receivers: [toEmail],
+            carbonCopy: null,
+            subject: "Autorización de descarga denegada - DermaUH",
             messageBody: body,
             ct: ct);
     }

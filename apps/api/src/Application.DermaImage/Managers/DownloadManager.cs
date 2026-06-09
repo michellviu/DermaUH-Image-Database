@@ -89,13 +89,26 @@ public class DownloadManager : IDownloadManager
         request.ReviewedAt = DateTime.UtcNow;
         await _requestRepo.UpdateAsync(request, ct);
 
+        var user = await _userRepo.GetByIdAsync(request.UserId, ct);
+        if (user is null) return;
+
         if (status == DownloadRequestStatus.Approved)
         {
-            var user = await _userRepo.GetByIdAsync(request.UserId, ct);
-            if (user is not null)
+            user.IsDownloadAuthorized = true;
+            await _userRepo.UpdateAsync(user, ct);
+
+            if (!string.IsNullOrWhiteSpace(user.Email))
             {
-                user.IsDownloadAuthorized = true;
-                await _userRepo.UpdateAsync(user, ct);
+                await _emailService.SendDownloadRequestApprovedAsync(
+                    user.Email, user.FullName, "/images", ct);
+            }
+        }
+        else if (status == DownloadRequestStatus.Denied)
+        {
+            if (!string.IsNullOrWhiteSpace(user.Email))
+            {
+                await _emailService.SendDownloadRequestDeniedAsync(
+                    user.Email, user.FullName, ct);
             }
         }
     }
