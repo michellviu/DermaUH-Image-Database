@@ -1,4 +1,6 @@
 @using Web.DermaImage.Shared.Models
+@using Blazorise
+@using Blazorise.Maps
 
 @if (Data.Count == 0)
 {
@@ -6,143 +8,87 @@
 }
 else
 {
-    <div class="cuba-layout">
-        <div class="cuba-svg-container">
-            <svg viewBox="0 0 860 340" xmlns="http://www.w3.org/2000/svg" class="cuba-svg" role="img" aria-label="Mapa de calor de provincias de Cuba">
-                <!-- Isla de la Juventud -->
-                <path d="M125 238 Q140 228 160 232 Q168 240 160 250 Q140 258 125 250 Z"
-                      class="cuba-region" style="fill: @GetFill("IslaDeLaJuventud");" />
-                <svg:text x="142" y="270" class="cuba-label" text-anchor="middle">Isla de la Juventud</svg:text>
+    <div class="cuba-map-wrapper">
+        <div class="cuba-map-container">
+            <Map View="@mapView"
+                 Options="@mapOptions"
+                 Height="Blazorise.Height.Px(480)">
+                <MapTileLayer
+                    Source="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+                    Subdomains="@(new[] { "a", "b", "c", "d" })"
+                    Attribution="&copy; <a href='https://www.openstreetmap.org/copyright'>OSM</a> &copy; <a href='https://carto.com/'>CARTO</a>"
+                    MaxZoom="18" />
 
-                <!-- Pinar del Río -->
-                <path d="M12 118 Q25 85 50 78 Q80 72 110 78 Q115 80 118 84 L115 92 Q100 96 90 100 Q78 108 70 120 Q60 132 45 140 Q28 146 15 142 Z"
-                      class="cuba-region" style="fill: @GetFill("PinarDelRio");" />
-                <svg:text x="60" y="115" class="cuba-count" text-anchor="middle">@GetCount("PinarDelRio")</svg:text>
-                <svg:text x="60" y="106" class="cuba-label" text-anchor="middle">Pinar del Río</svg:text>
+                @foreach (var province in provinceMarkers)
+                {
+                    var data = GetProvinceData(province.Key);
+                    if (data is not null && data.Count > 0)
+                    {
+                        var radius = ComputeRadius(data.Count);
+                        var color = ComputeColor(data.Count);
 
-                <!-- Artemisa -->
-                <path d="M118 84 Q130 76 148 76 Q158 76 168 82 L165 92 Q155 98 142 102 Q130 104 120 100 Z"
-                      class="cuba-region" style="fill: @GetFill("Artemisa");" />
-                <svg:text x="142" y="91" class="cuba-count" text-anchor="middle">@GetCount("Artemisa")</svg:text>
-                <svg:text x="142" y="82" class="cuba-label" text-anchor="middle">Artemisa</svg:text>
+                        <MapCircle Center="@province.Coordinate"
+                                   Radius="@radius"
+                                   Style="@(new MapShapeStyle
+                                   {
+                                       StrokeColor = color,
+                                       StrokeWidth = 2,
+                                       FillColor = color,
+                                       FillOpacity = 0.45
+                                   })" />
 
-                <!-- La Habana -->
-                <path d="M168 82 Q182 72 200 72 Q222 74 240 82 L236 94 Q220 98 200 100 Q182 100 172 96 Z"
-                      class="cuba-region" style="fill: @GetFill("LaHabana");" />
-                <svg:text x="204" y="87" class="cuba-count" text-anchor="middle">@GetCount("LaHabana")</svg:text>
-                <svg:text x="204" y="78" class="cuba-label" text-anchor="middle">La Habana</svg:text>
-
-                <!-- Mayabeque -->
-                <path d="M120 100 Q132 104 148 106 Q168 106 180 102 L178 114 Q162 120 144 120 Q126 118 118 112 Z"
-                      class="cuba-region" style="fill: @GetFill("Mayabeque");" />
-                <svg:text x="148" y="115" class="cuba-count" text-anchor="middle">@GetCount("Mayabeque")</svg:text>
-                <svg:text x="148" y="107" class="cuba-label" text-anchor="middle">Mayabeque</svg:text>
-
-                <!-- Matanzas -->
-                <path d="M240 82 Q264 74 290 74 Q318 76 340 84 L336 98 Q310 106 286 108 Q260 108 244 100 Z"
-                      class="cuba-region" style="fill: @GetFill("Matanzas");" />
-                <svg:text x="290" y="94" class="cuba-count" text-anchor="middle">@GetCount("Matanzas")</svg:text>
-                <svg:text x="290" y="85" class="cuba-label" text-anchor="middle">Matanzas</svg:text>
-
-                <!-- Villa Clara -->
-                <path d="M345 84 Q372 74 400 74 Q428 76 450 86 L444 100 Q420 106 396 108 Q370 108 350 100 Z"
-                      class="cuba-region" style="fill: @GetFill("VillaClara");" />
-                <svg:text x="396" y="94" class="cuba-count" text-anchor="middle">@GetCount("VillaClara")</svg:text>
-                <svg:text x="396" y="85" class="cuba-label" text-anchor="middle">Villa Clara</svg:text>
-
-                <!-- Cienfuegos -->
-                <path d="M350 108 Q372 114 400 116 Q424 114 444 106 L440 120 Q418 128 396 128 Q372 126 354 120 Z"
-                      class="cuba-region" style="fill: @GetFill("Cienfuegos");" />
-                <svg:text x="396" y="120" class="cuba-count" text-anchor="middle">@GetCount("Cienfuegos")</svg:text>
-                <svg:text x="396" y="112" class="cuba-label" text-anchor="middle">Cienfuegos</svg:text>
-
-                <!-- Sancti Spíritus -->
-                <path d="M240 108 Q256 112 280 114 Q310 114 340 108 L338 98 Q310 106 286 108 Q260 108 244 100 Z"
-                      class="cuba-region" style="fill: @GetFill("SanctiSpiritus");" />
-                <svg:text x="290" y="111" class="cuba-count" text-anchor="middle">@GetCount("SanctiSpiritus")</svg:text>
-                <svg:text x="290" y="103" class="cuba-label" text-anchor="middle">Sancti Spíritus</svg:text>
-
-                <!-- Ciego de Ávila -->
-                <path d="M455 86 Q480 78 508 78 Q536 80 558 88 L552 104 Q528 110 504 112 Q478 110 460 102 Z"
-                      class="cuba-region" style="fill: @GetFill("CiegoDeAvila");" />
-                <svg:text x="506" y="98" class="cuba-count" text-anchor="middle">@GetCount("CiegoDeAvila")</svg:text>
-                <svg:text x="506" y="89" class="cuba-label" text-anchor="middle">Ciego de Ávila</svg:text>
-
-                <!-- Camagüey -->
-                <path d="M562 88 Q592 78 624 78 Q656 80 682 90 L678 108 Q650 116 624 118 Q594 116 568 108 Z"
-                      class="cuba-region" style="fill: @GetFill("Camaguey");" />
-                <svg:text x="622" y="101" class="cuba-count" text-anchor="middle">@GetCount("Camaguey")</svg:text>
-                <svg:text x="622" y="92" class="cuba-label" text-anchor="middle">Camagüey</svg:text>
-
-                <!-- Las Tunas -->
-                <path d="M562 114 Q586 120 614 122 Q642 120 668 114 L664 128 Q638 136 612 136 Q586 134 564 126 Z"
-                      class="cuba-region" style="fill: @GetFill("LasTunas");" />
-                <svg:text x="616" y="130" class="cuba-count" text-anchor="middle">@GetCount("LasTunas")</svg:text>
-                <svg:text x="616" y="122" class="cuba-label" text-anchor="middle">Las Tunas</svg:text>
-
-                <!-- Holguín -->
-                <path d="M682 90 Q710 80 740 82 Q768 86 790 96 L784 112 Q756 118 730 118 Q702 116 684 108 Z"
-                      class="cuba-region" style="fill: @GetFill("Holguin");" />
-                <svg:text x="734" y="103" class="cuba-count" text-anchor="middle">@GetCount("Holguin")</svg:text>
-                <svg:text x="734" y="94" class="cuba-label" text-anchor="middle">Holguín</svg:text>
-
-                <!-- Granma -->
-                <path d="M668 120 Q694 126 722 128 Q748 126 772 118 L768 134 Q742 144 716 146 Q690 144 670 134 Z"
-                      class="cuba-region" style="fill: @GetFill("Granma");" />
-                <svg:text x="720" y="138" class="cuba-count" text-anchor="middle">@GetCount("Granma")</svg:text>
-                <svg:text x="720" y="130" class="cuba-label" text-anchor="middle">Granma</svg:text>
-
-                <!-- Santiago de Cuba -->
-                <path d="M772 96 Q798 88 824 92 Q842 98 848 110 L844 126 Q820 134 798 134 Q778 130 770 120 Z"
-                      class="cuba-region" style="fill: @GetFill("SantiagoDeCuba");" />
-                <svg:text x="810" y="118" class="cuba-count" text-anchor="middle">@GetCount("SantiagoDeCuba")</svg:text>
-                <svg:text x="810" y="109" class="cuba-label" text-anchor="middle">Santiago de Cuba</svg:text>
-
-                <!-- Guantánamo -->
-                <path d="M824 92 Q842 86 858 90 Q868 96 870 108 L868 122 Q852 130 838 130 Q822 126 818 118 Z"
-                      class="cuba-region" style="fill: @GetFill("Guantanamo");" />
-                <svg:text x="846" y="112" class="cuba-count" text-anchor="middle">@GetCount("Guantanamo")</svg:text>
-                <svg:text x="846" y="103" class="cuba-label" text-anchor="middle">Guantánamo</svg:text>
-            </svg>
+                        <MapMarker Coordinate="@province.Coordinate"
+                                   Title="@data.Label"
+                                   PopupText="@($"<div style='text-align:center;font-family:sans-serif'><strong style='font-size:14px;color:#e2e8f0'>{data.Label}</strong><br/><span style='font-size:22px;font-weight:800;color:{color}'>{data.Count}</span><br/><span style='font-size:11px;color:#94a3b8'>imágenes ({data.Percentage:F1}%)</span></div>")"
+                                   Icon="@(new MapMarkerIcon
+                                   {
+                                       Source = $"data:image/svg+xml,{Uri.EscapeDataString(BuildSvgMarker(data.Count, color))}",
+                                       Size = new(40, 40),
+                                       Anchor = new(20, 20)
+                                   })" />
+                    }
+                }
+            </Map>
         </div>
 
-        <div class="cuba-detail">
-            <div class="cuba-legend">
-                <span class="cuba-legend-item">
-                    <span class="cuba-legend-swatch" style="background: @GetLegendColor(0.0);"></span> Baja
-                </span>
-                <span class="cuba-legend-item">
-                    <span class="cuba-legend-swatch" style="background: @GetLegendColor(0.33);"></span> Media
-                </span>
-                <span class="cuba-legend-item">
-                    <span class="cuba-legend-swatch" style="background: @GetLegendColor(0.66);"></span> Alta
-                </span>
-                <span class="cuba-legend-item">
-                    <span class="cuba-legend-swatch" style="background: @GetLegendColor(1.0);"></span> Máxima
-                </span>
-            </div>
-            <table class="cuba-table">
-                <thead>
-                    <tr>
-                        <th>Provincia</th>
-                        <th>Imágenes</th>
-                        <th>%</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var entry in Data.OrderByDescending(e => e.Count))
-                    {
+        @* ── Province Legend / Table ── *@
+        <div class="cuba-detail-panel">
+            <h3 class="detail-title">
+                <span class="detail-icon">📊</span>
+                Datos por provincia
+            </h3>
+            <div class="detail-scroll">
+                <table class="cuba-table">
+                    <thead>
                         <tr>
-                            <td>
-                                <span class="cuba-site-dot" style="background: @GetFill(entry.Key);"></span>
-                                @entry.Label
-                            </td>
-                            <td class="cuba-num">@entry.Count</td>
-                            <td class="cuba-num">@entry.Percentage.ToString("0.0")%</td>
+                            <th>Provincia</th>
+                            <th class="cuba-num">Imgs</th>
+                            <th class="cuba-num">%</th>
                         </tr>
-                    }
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        @foreach (var p in orderedData)
+                        {
+                            var color = ComputeColor(p.Count);
+                            <tr>
+                                <td>
+                                    <span class="cuba-dot" style="background: @color"></span>
+                                    @p.Label
+                                </td>
+                                <td class="cuba-num">@p.Count</td>
+                                <td class="cuba-num pct">@p.Percentage.ToString("F1")%</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            @* Gradient legend *@
+            <div class="gradient-legend">
+                <span class="gradient-label">Baja</span>
+                <div class="gradient-bar"></div>
+                <span class="gradient-label">Alta</span>
+            </div>
         </div>
     </div>
 }
@@ -151,43 +97,91 @@ else
     [Parameter] public IReadOnlyList<StatisticsBucketDto> Data { get; set; } = [];
     [Parameter] public string EmptyMessage { get; set; } = "Sin datos de provincia disponibles.";
 
-    private int maxCount => Data.Count > 0 ? Math.Max(1, Data.Max(e => e.Count)) : 1;
-
-    private string GetCount(string key)
+    // Center of Cuba
+    private MapView mapView = new()
     {
-        var entry = Data.FirstOrDefault(e => e.Key == key);
-        return entry?.Count.ToString() ?? "";
+        Center = new(21.5218, -79.3812),
+        Zoom = 6.4
+    };
+
+    private MapOptions mapOptions = new()
+    {
+        Controls = new MapControlOptions { ShowZoom = true },
+        ZoomOnScroll = true,
+    };
+
+    private IReadOnlyList<StatisticsBucketDto> orderedData = [];
+
+    protected override void OnParametersSet()
+    {
+        orderedData = Data.OrderByDescending(x => x.Count).ToList();
     }
 
-    private string GetFill(string provinceKey)
-    {
-        var entry = Data.FirstOrDefault(e => e.Key == provinceKey);
-        if (entry == null || entry.Count == 0)
-            return "color-mix(in srgb, var(--surface-container-high) 60%, transparent)";
+    private StatisticsBucketDto? GetProvinceData(string key)
+        => Data.FirstOrDefault(d => string.Equals(d.Key, key, StringComparison.OrdinalIgnoreCase));
 
-        var intensity = Math.Max(0.0, Math.Min(1.0, (double)entry.Count / maxCount));
-        return GetLegendColor(intensity);
+    private int maxCount => Data.Count > 0 ? Data.Max(d => d.Count) : 1;
+
+    /// <summary>Circle radius in meters scaled to data density.</summary>
+    private double ComputeRadius(int count)
+    {
+        var ratio = (double)count / Math.Max(1, maxCount);
+        return 8000 + ratio * 28000; // 8km to 36km
     }
 
-    private string GetLegendColor(double intensity)
+    /// <summary>Interpolate between teal and vivid magenta based on count.</summary>
+    private string ComputeColor(int count)
     {
-        // Green (low) → Yellow (medium) → Red (high)
+        var ratio = Math.Clamp((double)count / Math.Max(1, maxCount), 0, 1);
+        // From #06b6d4 (cyan-500) through #8b5cf6 (violet-500) to #ec4899 (pink-500)
         int r, g, b;
-        if (intensity <= 0.5)
+        if (ratio < 0.5)
         {
-            var t = intensity / 0.5;
-            r = (int)(t * 255);
-            g = (int)(200 - t * 50);
-            b = (int)(50 - t * 50);
+            var t = ratio * 2;
+            r = (int)(6 + t * (139 - 6));
+            g = (int)(182 + t * (92 - 182));
+            b = (int)(212 + t * (246 - 212));
         }
         else
         {
-            var t = (intensity - 0.5) / 0.5;
-            r = 255;
-            g = (int)(150 - t * 120);
-            b = 0;
+            var t = (ratio - 0.5) * 2;
+            r = (int)(139 + t * (236 - 139));
+            g = (int)(92 + t * (72 - 92));
+            b = (int)(246 + t * (153 - 246));
         }
-
-        return $"rgb({r}, {g}, {b})";
+        return $"#{r:X2}{g:X2}{b:X2}";
     }
+
+    /// <summary>Build an SVG circle marker with the count displayed inside.</summary>
+    private string BuildSvgMarker(int count, string color)
+    {
+        return $@"<svg xmlns='http://www.w3.org/2000/svg' width='40' height='40'>
+            <circle cx='20' cy='20' r='17' fill='{color}' fill-opacity='0.85' stroke='#fff' stroke-width='2'/>
+            <text x='20' y='24' text-anchor='middle' font-size='12' font-weight='800'
+                  fill='#fff' font-family='system-ui,sans-serif'>{count}</text>
+        </svg>";
+    }
+
+    // ── Province coordinates (approximate capital/center of each province) ──
+    private static readonly ProvinceMarkerInfo[] provinceMarkers =
+    [
+        new("PinarDelRio",      new(22.4175, -83.6978)),
+        new("Artemisa",         new(22.8133, -82.7617)),
+        new("LaHabana",         new(23.0510, -82.3456)),
+        new("Mayabeque",        new(22.7860, -81.9531)),
+        new("Matanzas",         new(22.4119, -81.5744)),
+        new("VillaClara",       new(22.4065, -79.9554)),
+        new("Cienfuegos",       new(22.1507, -80.4408)),
+        new("SanctiSpiritus",   new(21.9304, -79.4427)),
+        new("CiegoDeAvila",     new(21.8405, -78.7628)),
+        new("Camaguey",         new(21.3810, -77.9170)),
+        new("LasTunas",         new(20.9600, -76.9540)),
+        new("Holguin",          new(20.8872, -76.2631)),
+        new("Granma",           new(20.3834, -76.6428)),
+        new("SantiagoDeCuba",   new(20.2260, -75.8210)),
+        new("Guantanamo",       new(20.1448, -75.2091)),
+        new("IslaDeLaJuventud", new(21.7031, -82.8230)),
+    ];
+
+    private record ProvinceMarkerInfo(string Key, MapCoordinate Coordinate);
 }

@@ -1,4 +1,7 @@
 using ApexCharts;
+using Blazorise;
+using Blazorise.Tailwind;
+using Blazorise.Maps;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Web.DermaImage.Components;
@@ -11,6 +14,10 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 builder.Services.AddApexCharts();
+builder.Services
+    .AddBlazorise()
+    .AddTailwindProviders()
+    .AddBlazoriseMaps();
 
 // Auth state provider
 builder.Services.AddScoped<AuthService>();
