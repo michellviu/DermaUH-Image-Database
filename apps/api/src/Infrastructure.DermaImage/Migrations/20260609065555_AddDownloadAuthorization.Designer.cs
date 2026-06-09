@@ -3,6 +3,7 @@ using System;
 using Infrastructure.DermaImage;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Infrastructure.DermaImage.Migrations
 {
     [DbContext(typeof(DermaImageDbContext))]
-    partial class DermaImageDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260609065555_AddDownloadAuthorization")]
+    partial class AddDownloadAuthorization
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -193,6 +196,35 @@ namespace Infrastructure.DermaImage.Migrations
                     b.ToTable("Images", (string)null);
                 });
 
+            modelBuilder.Entity("Domain.DermaImage.Entities.DownloadAuthorization", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsAuthorized")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.ToTable("DownloadAuthorizations", (string)null);
+                });
+
             modelBuilder.Entity("Domain.DermaImage.Entities.DownloadRequest", b =>
                 {
                     b.Property<Guid>("Id")
@@ -273,9 +305,6 @@ namespace Infrastructure.DermaImage.Migrations
                         .HasColumnType("boolean");
 
                     b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("IsDownloadAuthorized")
                         .HasColumnType("boolean");
 
                     b.Property<string>("LastName")
@@ -482,6 +511,17 @@ namespace Infrastructure.DermaImage.Migrations
                     b.HasKey("UserId", "LoginProvider", "Name");
 
                     b.ToTable("UserTokens", (string)null);
+                });
+
+            modelBuilder.Entity("Domain.DermaImage.Entities.DownloadAuthorization", b =>
+                {
+                    b.HasOne("Domain.DermaImage.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Domain.DermaImage.Entities.DownloadRequest", b =>
