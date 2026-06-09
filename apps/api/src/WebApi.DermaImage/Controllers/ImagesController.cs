@@ -21,15 +21,18 @@ public class ImagesController : ControllerBase
     private readonly IDermaImgManager _manager;
     private readonly IUserManager _userManager;
     private readonly IImageUploadManager _imageUploadManager;
+    private readonly IDownloadManager _downloadManager;
 
     public ImagesController(
         IDermaImgManager manager,
         IUserManager userManager,
-        IImageUploadManager imageUploadManager)
+        IImageUploadManager imageUploadManager,
+        IDownloadManager downloadManager)
     {
         _manager = manager;
         _userManager = userManager;
         _imageUploadManager = imageUploadManager;
+        _downloadManager = downloadManager;
     }
 
     [AllowAnonymous]
@@ -155,6 +158,9 @@ public class ImagesController : ControllerBase
             return NotFound("No se encontraron imagenes disponibles para descargar.");
         }
 
+        var authCheck = await CheckDownloadAuthorizationAsync(cancellationToken);
+        if (authCheck is not null) return authCheck;
+
         var (includeImages, includeMetadata) = ResolveDownloadOptions(mode);
         if (!includeImages && !includeMetadata)
         {
@@ -198,6 +204,9 @@ public class ImagesController : ControllerBase
         {
             return NotFound("No se encontraron imagenes para descargar con los filtros actuales.");
         }
+
+        var authCheck = await CheckDownloadAuthorizationAsync(cancellationToken);
+        if (authCheck is not null) return authCheck;
 
         var (includeImages, includeMetadata) = ResolveDownloadOptions(mode);
         if (!includeImages && !includeMetadata)
@@ -516,6 +525,29 @@ public class ImagesController : ControllerBase
             ?? User.FindFirstValue("sub");
 
         return Guid.TryParse(value, out var id) ? id : null;
+    }
+
+    private async Task<IActionResult?> CheckDownloadAuthorizationAsync(CancellationToken ct)
+    {
+        var isAdmin = User.IsInRole("Admin");
+        if (isAdmin)
+        {
+            return null;
+        }
+
+        var userId = GetCurrentUserId();
+        if (userId is null)
+        {
+            return Unauthorized();
+        }
+
+        var hasAuth = await _downloadManager.HasActiveAuthorizationAsync(userId.Value, ct);
+        if (!hasAuth)
+        {
+            return StatusCode(403, new { requiresAuthorization = true, message = "Debe solicitar autorización para descargar contenido." });
+        }
+
+        return null;
     }
 
     private static DermaImgResponseDto MapToResponseDto(DermaImg image)

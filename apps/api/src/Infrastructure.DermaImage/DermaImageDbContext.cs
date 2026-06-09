@@ -11,6 +11,7 @@ public class DermaImageDbContext : IdentityDbContext<User, IdentityRole<Guid>, G
     public DermaImageDbContext(DbContextOptions<DermaImageDbContext> options) : base(options) { }
 
     public DbSet<DermaImg> Images => Set<DermaImg>();
+    public DbSet<DownloadRequest> DownloadRequests => Set<DownloadRequest>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

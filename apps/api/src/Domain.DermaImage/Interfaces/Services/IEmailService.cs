@@ -10,4 +10,5 @@ public interface IEmailService
     Task SendAdminNotificationNewUserAsync(IEnumerable<string> adminEmails, string newUserName, string newUserEmail, CancellationToken ct = default);
     Task SendUserRegistrationApprovedAsync(string toEmail, string userName, CancellationToken ct = default);
     Task SendUserRegistrationDeniedAsync(string toEmail, string userName, CancellationToken ct = default);
+    Task SendAdminNotificationNewDownloadRequestAsync(IEnumerable<string> adminEmails, string userName, CancellationToken ct = default);
 }

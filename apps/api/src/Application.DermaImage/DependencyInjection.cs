@@ -17,6 +17,7 @@ public static class DependencyInjection
         services.AddScoped<IInstitutionManager, InstitutionManager>();
         services.AddScoped<IAuthManager, AuthManager>();
         services.AddScoped<IStatisticsManager, StatisticsManager>();
+        services.AddScoped<IDownloadManager, DownloadManager>();
 
         return services;
     }

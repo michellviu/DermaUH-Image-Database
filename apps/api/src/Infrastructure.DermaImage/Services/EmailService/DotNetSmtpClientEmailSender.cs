@@ -105,6 +105,18 @@ public class DotNetSmtpClientEmailSender : IEmailService
             ct: ct);
     }
 
+    public async Task SendAdminNotificationNewDownloadRequestAsync(IEnumerable<string> adminEmails, string userName, CancellationToken ct = default)
+    {
+        var body = $"<p>El usuario <b>{WebUtility.HtmlEncode(userName)}</b> ha solicitado autorización para descargar contenido de DermaUH.</p>" +
+                   "<p>Ingrese a su perfil en la aplicación para revisar y gestionar la solicitud.</p>";
+        await SendEmailAsync(
+            receivers: adminEmails.ToList(),
+            carbonCopy: null,
+            subject: "Nueva solicitud de descarga - DermaUH",
+            messageBody: body,
+            ct: ct);
+    }
+
     private async Task SendEmailAsync(
         IReadOnlyList<string> receivers,
         IReadOnlyList<string>? carbonCopy,
