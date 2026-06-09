@@ -8,10 +8,12 @@ namespace Application.DermaImage.Managers;
 public class UserManager : IUserManager
 {
     private readonly IUserService _service;
+    private readonly IEmailService _emailService;
 
-    public UserManager(IUserService service)
+    public UserManager(IUserService service, IEmailService emailService)
     {
         _service = service;
+        _emailService = emailService;
     }
 
     public async Task<(IEnumerable<User> Items, int TotalCount)> GetPagedAsync(int page, int pageSize, CancellationToken cancellationToken = default)
@@ -101,5 +103,37 @@ public class UserManager : IUserManager
             filtered = "user";
 
         return $"{filtered}_{Guid.NewGuid():N}";
+    }
+
+    public async Task<(IEnumerable<User> Items, int TotalCount)> GetPendingRegistrationsAsync(int page, int pageSize, string? emailFilter, CancellationToken cancellationToken = default)
+    {
+        return await _service.GetPendingUsersAsync(page, pageSize, emailFilter, cancellationToken);
+    }
+
+    public async Task ApproveRegistrationAsync(Guid userId, CancellationToken cancellationToken = default)
+    {
+        var user = await _service.GetByIdAsync(userId, cancellationToken)
+            ?? throw new KeyNotFoundException($"User with id '{userId}' was not found.");
+
+        user.IsActive = true;
+        await _service.UpdateAsync(user, cancellationToken);
+        
+        if (!string.IsNullOrWhiteSpace(user.Email))
+        {
+            await _emailService.SendUserRegistrationApprovedAsync(user.Email, user.FullName, cancellationToken);
+        }
+    }
+
+    public async Task DenyRegistrationAsync(Guid userId, CancellationToken cancellationToken = default)
+    {
+        var user = await _service.GetByIdAsync(userId, cancellationToken)
+            ?? throw new KeyNotFoundException($"User with id '{userId}' was not found.");
+
+        await _service.DeleteAsync(userId, cancellationToken);
+
+        if (!string.IsNullOrWhiteSpace(user.Email))
+        {
+            await _emailService.SendUserRegistrationDeniedAsync(user.Email, user.FullName, cancellationToken);
+        }
     }
 }

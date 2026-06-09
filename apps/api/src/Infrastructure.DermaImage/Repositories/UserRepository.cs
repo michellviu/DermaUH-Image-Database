@@ -127,6 +127,29 @@ public class UserRepository : IUserRepository
             .ToList();
     }
 
+    public async Task<(IEnumerable<User> Items, int TotalCount)> GetPendingUsersAsync(int page, int pageSize, string? emailFilter, CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation("Fetching pending users");
+        var query = _context.Users
+            .Where(u => !u.IsActive && !u.IsDeleted)
+            .AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(emailFilter))
+        {
+            var filter = emailFilter.Trim().ToLower();
+            query = query.Where(u => u.Email != null && u.Email.ToLower().Contains(filter));
+        }
+
+        var totalCount = await query.CountAsync(cancellationToken);
+        var items = await query
+            .OrderByDescending(u => u.CreatedAt)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(cancellationToken);
+
+        return (items, totalCount);
+    }
+
     public async Task<User> CreateExternalAsync(User user, CancellationToken cancellationToken = default)
     {
         _logger.LogInformation("Creating external user: {@User}", user);

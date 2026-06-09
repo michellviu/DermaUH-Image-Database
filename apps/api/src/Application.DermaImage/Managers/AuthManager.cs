@@ -39,6 +39,7 @@ public class AuthManager : IAuthManager
             Email = dto.Email,
             UserName = BuildUserName(dto.Email),
             EmailConfirmed = false,
+            IsActive = false,
         };
 
         User created;
@@ -56,6 +57,13 @@ public class AuthManager : IAuthManager
         var encodedToken = Uri.EscapeDataString(token);
         var link = $"{confirmationBaseUrl}?userId={created.Id}&token={encodedToken}";
         await _email.SendEmailConfirmationAsync(created.Email!, created.FirstName, link, ct);
+
+        var admins = await _users.GetActiveUsersByRoleAsync(UserRole.Admin, ct);
+        var adminEmails = admins.Select(a => a.Email).Where(e => !string.IsNullOrWhiteSpace(e)).Cast<string>().ToList();
+        if (adminEmails.Count > 0)
+        {
+            await _email.SendAdminNotificationNewUserAsync(adminEmails, created.FullName, created.Email!, ct);
+        }
 
         return (true, null);
     }
@@ -117,8 +125,7 @@ public class AuthManager : IAuthManager
         }
 
         // Find existing user or create a new one
-        var user = await _users.FindByLoginAsync("Google", payload.Subject)
-                ?? await _users.GetByEmailAsync(payload.Email, ct);
+        var user = await _users.GetByEmailAsync(payload.Email, ct);
 
         if (user is null)
         {
@@ -129,19 +136,23 @@ public class AuthManager : IAuthManager
                 Email = payload.Email,
                 UserName = BuildUserName(payload.Email),
                 EmailConfirmed = true,
-                IsActive = true,
+                IsActive = false,
             };
             user = await _users.CreateExternalAsync(user, ct);
             await _users.AddToRoleAsync(user, nameof(UserRole.Viewer));
         }
 
-        // Ensure Google login is linked
-        var logins = await _users.FindByLoginAsync("Google", payload.Subject);
-        if (logins is null)
-            await _users.AddLoginAsync(user, new UserLoginInfo("Google", payload.Subject, "Google"));
-
+        // If the user was just created, we need to notify admins and they can't login yet
         if (!user.IsActive)
-            return (null, "Tu cuenta ha sido desactivada.");
+        {
+            var admins = await _users.GetActiveUsersByRoleAsync(UserRole.Admin, ct);
+            var adminEmails = admins.Select(a => a.Email).Where(e => !string.IsNullOrWhiteSpace(e)).Cast<string>().ToList();
+            if (adminEmails.Count > 0)
+            {
+                await _email.SendAdminNotificationNewUserAsync(adminEmails, user.FullName, user.Email!, ct);
+            }
+            return (null, "Tu cuenta ha sido creada y está pendiente de aprobación por un administrador.");
+        }
 
         var roles = await _users.GetRolesAsync(user);
         var token = _jwt.GenerateToken(user, roles);

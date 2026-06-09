@@ -22,6 +22,7 @@ public interface IUserRepository
     Task RemoveFromRoleAsync(User user, string role);
     Task<IList<string>> GetRolesAsync(User user);
     Task<IReadOnlyList<User>> GetActiveUsersByRoleAsync(UserRole role, CancellationToken cancellationToken = default);
+    Task<(IEnumerable<User> Items, int TotalCount)> GetPendingUsersAsync(int page, int pageSize, string? emailFilter, CancellationToken cancellationToken = default);
 
     // Auth-specific
     Task<bool> CheckPasswordAsync(User user, string password);

@@ -72,6 +72,39 @@ public class DotNetSmtpClientEmailSender : IEmailService
             ct: ct);
     }
 
+    public async Task SendAdminNotificationNewUserAsync(IEnumerable<string> adminEmails, string newUserName, string newUserEmail, CancellationToken ct = default)
+    {
+        var body = $"<p>El usuario <b>{WebUtility.HtmlEncode(newUserName)}</b> ({WebUtility.HtmlEncode(newUserEmail)}) se ha registrado y está esperando aprobación.</p>";
+        await SendEmailAsync(
+            receivers: adminEmails.ToList(),
+            carbonCopy: null,
+            subject: "Nueva solicitud de registro - DermaUH",
+            messageBody: body,
+            ct: ct);
+    }
+
+    public async Task SendUserRegistrationApprovedAsync(string toEmail, string userName, CancellationToken ct = default)
+    {
+        var body = $"<p>Hola <b>{WebUtility.HtmlEncode(userName)}</b>,</p><p>Tu solicitud de registro en DermaUH ha sido aprobada. Ya puedes iniciar sesión.</p>";
+        await SendEmailAsync(
+            receivers: [toEmail],
+            carbonCopy: null,
+            subject: "Registro aprobado - DermaUH",
+            messageBody: body,
+            ct: ct);
+    }
+
+    public async Task SendUserRegistrationDeniedAsync(string toEmail, string userName, CancellationToken ct = default)
+    {
+        var body = $"<p>Hola <b>{WebUtility.HtmlEncode(userName)}</b>,</p><p>Tu solicitud de registro en DermaUH ha sido denegada por un administrador.</p>";
+        await SendEmailAsync(
+            receivers: [toEmail],
+            carbonCopy: null,
+            subject: "Registro denegado - DermaUH",
+            messageBody: body,
+            ct: ct);
+    }
+
     private async Task SendEmailAsync(
         IReadOnlyList<string> receivers,
         IReadOnlyList<string>? carbonCopy,

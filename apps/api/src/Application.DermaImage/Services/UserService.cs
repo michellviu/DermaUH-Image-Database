@@ -63,4 +63,9 @@ public class UserService : IUserService
     {
         return await _repository.GetActiveUsersByRoleAsync(role, cancellationToken);
     }
+
+    public async Task<(IEnumerable<User> Items, int TotalCount)> GetPendingUsersAsync(int page, int pageSize, string? emailFilter, CancellationToken cancellationToken = default)
+    {
+        return await _repository.GetPendingUsersAsync(page, pageSize, emailFilter, cancellationToken);
+    }
 }

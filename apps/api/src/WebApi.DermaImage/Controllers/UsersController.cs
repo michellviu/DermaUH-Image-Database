@@ -124,6 +124,45 @@ public class UsersController : ControllerBase
         return NoContent();
     }
 
+    [HttpGet("pending")]
+    public async Task<ActionResult<PagedResponse<UserResponseDto>>> GetPendingRegistrations(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10,
+        [FromQuery] string? emailFilter = null,
+        CancellationToken cancellationToken = default)
+    {
+        var (items, totalCount) = await _manager.GetPendingRegistrationsAsync(page, pageSize, emailFilter, cancellationToken);
+        var userDtos = new List<UserResponseDto>();
+
+        foreach (var user in items)
+        {
+            var roles = await _manager.GetRolesAsync(user.Id, cancellationToken);
+            userDtos.Add(MapToResponseDto(user, roles));
+        }
+
+        return Ok(new PagedResponse<UserResponseDto>
+        {
+            Items = userDtos,
+            TotalCount = totalCount,
+            Page = page,
+            PageSize = pageSize
+        });
+    }
+
+    [HttpPost("{id:guid}/approve")]
+    public async Task<IActionResult> ApproveRegistration(Guid id, CancellationToken cancellationToken)
+    {
+        await _manager.ApproveRegistrationAsync(id, cancellationToken);
+        return NoContent();
+    }
+
+    [HttpPost("{id:guid}/deny")]
+    public async Task<IActionResult> DenyRegistration(Guid id, CancellationToken cancellationToken)
+    {
+        await _manager.DenyRegistrationAsync(id, cancellationToken);
+        return NoContent();
+    }
+
     private static UserResponseDto MapToResponseDto(User user, IList<string>? roles = null)
     {
         return new UserResponseDto

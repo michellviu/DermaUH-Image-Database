@@ -16,4 +16,7 @@ public interface IUserManager
     Task RemoveRoleAsync(Guid userId, UserRole role, CancellationToken cancellationToken = default);
     Task SetActiveAsync(Guid userId, bool isActive, CancellationToken cancellationToken = default);
     Task DeleteAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<(IEnumerable<User> Items, int TotalCount)> GetPendingRegistrationsAsync(int page, int pageSize, string? emailFilter, CancellationToken cancellationToken = default);
+    Task ApproveRegistrationAsync(Guid userId, CancellationToken cancellationToken = default);
+    Task DenyRegistrationAsync(Guid userId, CancellationToken cancellationToken = default);
 }
