@@ -1,0 +1,51 @@
+@page "/terms"
+@rendermode InteractiveServer
+
+<PageTitle>Términos y Condiciones – DermaUH</PageTitle>
+
+<div class="terms-page" style="max-width: 800px; margin: 2rem auto; padding: 2rem; background: var(--surface-container-lowest); border-radius: 1rem; border: 1px solid color-mix(in srgb, var(--outline-variant) 40%, transparent); box-shadow: 0 12px 30px color-mix(in srgb, var(--primary) 6%, transparent);">
+    
+    <div class="app-page-header">
+        <div class="app-page-header__text text-center w-100" style="text-align: center; width: 100%;">
+            <span class="material-symbols-outlined" style="font-size: 3rem; color: var(--primary); margin-bottom: 1rem;">gavel</span>
+            <h1 style="font-size: 2.2rem; color: var(--primary); margin-bottom: 0.5rem;">Términos y Condiciones de Uso</h1>
+            <p style="color: var(--on-surface-variant); font-size: 1rem; margin: 0 auto; max-width: 60ch;">Por favor, lee detenidamente nuestras políticas de privacidad y los términos bajo los cuales opera la plataforma DermaUH Images.</p>
+        </div>
+    </div>
+
+    <div class="terms-content" style="margin-top: 2rem; color: var(--on-surface); line-height: 1.7; font-size: 0.95rem;">
+        
+        <h3 style="color: var(--primary); margin-top: 2rem; margin-bottom: 1rem; font-size: 1.3rem;">1. Origen de las Imágenes</h3>
+        <p style="margin-bottom: 1rem;">
+            Las imágenes dermatológicas disponibles en esta plataforma <strong>son recogidas a través de otras aplicaciones del Ecosistema DermaUH</strong> (incluyendo aplicaciones móviles de diagnóstico y registros médicos de instituciones colaboradoras). La base de datos centraliza este contenido para su procesamiento y análisis estructurado.
+        </p>
+
+        <h3 style="color: var(--primary); margin-top: 2rem; margin-bottom: 1rem; font-size: 1.3rem;">2. Consentimiento Informado</h3>
+        <p style="margin-bottom: 1rem;">
+            Garantizamos que <strong>todas las imágenes que aparecen en esta base de datos cuentan con el consentimiento informado explícito y firmado de los pacientes</strong>. Previo a la captura de las imágenes en las aplicaciones de origen, los pacientes aceptan libremente que su información visual y metadatos clínicos (debidamente anonimizados) sean incorporados al ecosistema DermaUH.
+        </p>
+
+        <h3 style="color: var(--primary); margin-top: 2rem; margin-bottom: 1rem; font-size: 1.3rem;">3. Uso de la Información</h3>
+        <p style="margin-bottom: 1rem;">
+            A través del consentimiento informado, los pacientes aceptan el uso de sus imágenes para:
+        </p>
+        <ul style="margin-bottom: 1rem; padding-left: 1.5rem; list-style-type: disc;">
+            <li style="margin-bottom: 0.5rem;"><strong>Fines educativos:</strong> Formación de nuevos especialistas en dermatología y entrenamiento de modelos de inteligencia artificial (IA).</li>
+            <li style="margin-bottom: 0.5rem;"><strong>Potenciar mejoras en la salud:</strong> Desarrollo de algoritmos de detección temprana de lesiones malignas y estudios epidemiológicos.</li>
+            <li style="margin-bottom: 0.5rem;"><strong>Comercialización e Investigación:</strong> Incluyendo su comercialización de forma ética, exclusivamente para que <strong>grupos investigativos, académicos y desarrolladores de tecnologías médicas</strong> las utilicen en el avance de la ciencia y el ecosistema tecnológico.</li>
+        </ul>
+
+        <h3 style="color: var(--primary); margin-top: 2rem; margin-bottom: 1rem; font-size: 1.3rem;">4. Privacidad y Anonimato</h3>
+        <p style="margin-bottom: 1rem;">
+            Ninguna imagen está vinculada a información que permita identificar directamente al paciente (como nombre completo, documento de identidad o datos de contacto). Todos los metadatos clínicos almacenados se limitan a factores relevantes para el estudio dermatológico (como fototipo de piel, zona anatómica y antecedentes familiares).
+        </p>
+
+        <div style="margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid color-mix(in srgb, var(--outline-variant) 40%, transparent); text-align: center;">
+            <p style="color: var(--on-surface-variant); font-size: 0.85rem;">
+                Última actualización: @DateTime.Now.ToString("dd / MMMM / yyyy")<br/>
+                Al registrarte en la plataforma, confirmas que has leído y aceptas estos términos.
+            </p>
+            <a href="/account/register" class="btn btn-primary" style="margin-top: 1rem;">Volver al registro</a>
+        </div>
+    </div>
+</div>

@@ -38,13 +38,7 @@ public partial class AuthService
     {
         try
         {
-            var response = await _http.PostAsJsonAsync("/api/auth/register", new
-            {
-                request.FirstName,
-                request.LastName,
-                request.Email,
-                request.Password,
-            });
+            var response = await _http.PostAsJsonAsync("/api/auth/register", request);
 
             if (!response.IsSuccessStatusCode)
             {

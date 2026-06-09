@@ -15,6 +15,9 @@ public class RegisterRequest
     public string Email { get; set; } = string.Empty;
     public string Password { get; set; } = string.Empty;
     public string ConfirmPassword { get; set; } = string.Empty;
+
+    [System.ComponentModel.DataAnnotations.Range(typeof(bool), "true", "true", ErrorMessage = "Debe aceptar los términos y condiciones.")]
+    public bool AcceptTerms { get; set; }
 }
 
 public class LoginResponse

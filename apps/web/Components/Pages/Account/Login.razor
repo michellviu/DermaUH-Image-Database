@@ -85,6 +85,13 @@
 
         <div class="auth-divider"><span>o</span></div>
 
+        <div class="form-group form-check" style="justify-content: center; margin-bottom: 0.8rem;">
+            <InputCheckbox class="form-check-input" @bind-Value="_acceptTermsGoogle" id="acceptTermsGoogle" />
+            <label class="form-check-label text-muted" for="acceptTermsGoogle" style="font-size: 0.85rem;">
+                He leído y acepto los <a href="/terms" target="_blank" class="btn-link">Términos y Condiciones</a>
+            </label>
+        </div>
+
         <div id="google-signin-btn" class="google-btn-container"></div>
 
         @if (!string.IsNullOrEmpty(_googleError))
@@ -104,6 +111,7 @@
     private bool _loading;
     private string? _errorMessage;
     private string? _googleError;
+    private bool _acceptTermsGoogle;
 
     private DotNetObjectReference<Login>? _dotNetRef;
 
@@ -146,6 +154,14 @@
     public async Task OnGoogleCredentialReceived(string idToken)
     {
         _googleError = null;
+        
+        if (!_acceptTermsGoogle)
+        {
+            _googleError = "Debe aceptar los términos y condiciones antes de iniciar sesión con Google.";
+            StateHasChanged();
+            return;
+        }
+
         var (success, error) = await Auth.GoogleLoginAsync(idToken);
 
         if (!success)

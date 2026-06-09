@@ -104,6 +104,14 @@
                     }
                 </div>
 
+                <div class="form-group form-check" style="margin-top: 1.2rem; margin-bottom: 1.5rem; align-items: flex-start;">
+                    <InputCheckbox class="form-check-input" @bind-Value="_model.AcceptTerms" id="acceptTerms" style="margin-top: 0.2rem;" />
+                    <label class="form-check-label text-muted" for="acceptTerms" style="font-size: 0.85rem; line-height: 1.4;">
+                        He leído y acepto los <a href="/terms" target="_blank" class="btn-link">Términos y Condiciones</a> de uso y privacidad.
+                        <ValidationMessage For="@(() => _model.AcceptTerms)" class="text-danger small" style="display: block; margin-top: 0.2rem;" />
+                    </label>
+                </div>
+
                 <button type="submit" class="btn btn-primary btn-full" disabled="@_loading">
                     @if (_loading)
                     {

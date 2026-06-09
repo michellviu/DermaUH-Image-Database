@@ -15,4 +15,7 @@ public class RegisterDto
 
     [Required, MinLength(8)]
     public string Password { get; set; } = string.Empty;
+
+    [Range(typeof(bool), "true", "true", ErrorMessage = "Debe aceptar los términos y condiciones.")]
+    public bool AcceptTerms { get; set; }
 }
