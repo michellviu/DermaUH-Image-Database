@@ -71,6 +71,7 @@ else
                     @KeyValue("Antecedente Personal MM", FormatBool(image.PersonalHxMm))
                     @KeyValue("Antecedente Familiar MM", FormatBool(image.FamilyHxMm))
                     @KeyValue("Exposición Solar", FormatBool(image.SunExposure))
+                    @KeyValue("Provincia", LocalizeProvincia(image.Provincia))
                 </div>
             </SectionCard>
 
@@ -191,6 +192,20 @@ else
     };
 
     private static string LocalizePhotoType(string? value) => value ?? "—";
+
+    private static string LocalizeProvincia(string? value) => value switch
+    {
+        "PinarDelRio" => "Pinar del Río",
+        "LaHabana" => "La Habana",
+        "VillaClara" => "Villa Clara",
+        "SanctiSpiritus" => "Sancti Spíritus",
+        "CiegoDeAvila" => "Ciego de Ávila",
+        "Camaguey" => "Camagüey",
+        "LasTunas" => "Las Tunas",
+        "SantiagoDeCuba" => "Santiago de Cuba",
+        "IslaDeLaJuventud" => "Isla de la Juventud",
+        _ => value ?? "—"
+    };
 
     private static string LocalizeImageType(string? value) => value switch
     {

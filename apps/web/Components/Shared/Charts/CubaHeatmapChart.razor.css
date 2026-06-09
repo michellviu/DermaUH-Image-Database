@@ -1,0 +1,116 @@
+.cuba-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 260px;
+    gap: 1.2rem;
+    align-items: start;
+}
+
+.cuba-svg-container {
+    display: flex;
+    justify-content: center;
+}
+
+.cuba-svg {
+    width: 100%;
+    height: auto;
+}
+
+.cuba-region {
+    stroke: color-mix(in srgb, var(--outline-variant) 50%, transparent);
+    stroke-width: 1.2;
+    transition: fill 0.3s ease, stroke 0.2s ease;
+    cursor: default;
+}
+
+.cuba-region:hover {
+    stroke: var(--primary);
+    stroke-width: 2;
+    filter: brightness(1.15);
+}
+
+.cuba-label {
+    font-size: 7px;
+    font-weight: 700;
+    fill: var(--on-surface);
+    pointer-events: none;
+    font-family: var(--font-display);
+}
+
+.cuba-count {
+    font-size: 9px;
+    font-weight: 800;
+    fill: #fff;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+    pointer-events: none;
+    font-family: var(--font-display);
+}
+
+.cuba-detail {
+    overflow-x: auto;
+}
+
+.cuba-legend {
+    display: flex;
+    gap: 0.6rem;
+    margin-bottom: 0.8rem;
+    flex-wrap: wrap;
+    font-size: 0.75rem;
+    color: var(--on-surface-variant);
+}
+
+.cuba-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.cuba-legend-swatch {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+}
+
+.cuba-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 0.8rem;
+}
+
+.cuba-table thead th {
+    text-align: left;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--on-surface-variant);
+    border-bottom: 1px solid color-mix(in srgb, var(--outline-variant) 30%, transparent);
+    padding: 0.5rem 0.6rem;
+}
+
+.cuba-table tbody td {
+    padding: 0.4rem 0.6rem;
+    color: var(--on-surface);
+    border-bottom: 1px solid color-mix(in srgb, var(--outline-variant) 15%, transparent);
+}
+
+.cuba-num {
+    text-align: center;
+    font-weight: 700;
+    font-family: var(--font-display);
+}
+
+.cuba-site-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 0.35rem;
+    vertical-align: middle;
+}
+
+@media (max-width: 860px) {
+    .cuba-layout {
+        grid-template-columns: 1fr;
+    }
+}

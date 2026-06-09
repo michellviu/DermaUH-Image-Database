@@ -9,8 +9,6 @@ public class DermaImgDto
     public string ContentType { get; set; } = string.Empty;
     public long FileSize { get; set; }
     public bool IsPublic { get; set; }
-    public string? PatientName { get; set; }
-    public string? ClinicalHistoryNumber { get; set; }
 
     // Acquisition
     public string? ImageType { get; set; }
@@ -26,6 +24,7 @@ public class DermaImgDto
     public bool? PersonalHxMm { get; set; }
     public bool? FamilyHxMm { get; set; }
     public bool? SunExposure { get; set; }
+    public string? Provincia { get; set; }
 
     // Lesion clinical
     public string? AnatomSiteGeneral { get; set; }

@@ -20,6 +20,7 @@ public class CreateImageFormModel
     public int? AgeApprox { get; set; }
     public string? Sex { get; set; }
     public string? FotoType { get; set; }
+    public string? Provincia { get; set; }
 
     public string? AnatomSiteGeneral { get; set; }
     public string? AnatomSiteSpecial { get; set; }

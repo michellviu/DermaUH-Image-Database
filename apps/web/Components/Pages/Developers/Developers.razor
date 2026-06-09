@@ -30,7 +30,7 @@
                 <span class="developers-hero-label">Endpoint de carga activo</span>
             </div>
             <div>
-                <span class="developers-hero-value">35</span>
+                            <span class="developers-hero-value">34</span>
                 <span class="developers-hero-label">Campos en payload</span>
             </div>
             <div>
@@ -193,26 +193,6 @@
                 <div class="developers-field-group">Paciente</div>
                 <div class="developers-field-row">
                     <div class="developers-field-cell" data-label="Campo">
-                        <span class="developers-field-name">PatientName</span>
-                    </div>
-                    <div class="developers-field-cell" data-label="Tipo">string</div>
-                    <div class="developers-field-cell" data-label="Obligatorio">
-                        <span class="developers-pill developers-pill--required">Sí</span>
-                    </div>
-                    <div class="developers-field-cell" data-label="Opciones / notas">Nombre del paciente.</div>
-                </div>
-                <div class="developers-field-row">
-                    <div class="developers-field-cell" data-label="Campo">
-                        <span class="developers-field-name">ClinicalHistoryNumber</span>
-                    </div>
-                    <div class="developers-field-cell" data-label="Tipo">string</div>
-                    <div class="developers-field-cell" data-label="Obligatorio">
-                        <span class="developers-pill developers-pill--optional">No</span>
-                    </div>
-                    <div class="developers-field-cell" data-label="Opciones / notas">Texto libre.</div>
-                </div>
-                <div class="developers-field-row">
-                    <div class="developers-field-cell" data-label="Campo">
                         <span class="developers-field-name">AgeApprox</span>
                     </div>
                     <div class="developers-field-cell" data-label="Tipo">int</div>
@@ -312,6 +292,33 @@
                     <div class="developers-field-cell" data-label="Opciones / notas">
                         <span class="developers-option-chip">true</span>
                         <span class="developers-option-chip">false</span>
+                    </div>
+                </div>
+                <div class="developers-field-row">
+                    <div class="developers-field-cell" data-label="Campo">
+                        <span class="developers-field-name">Provincia</span>
+                    </div>
+                    <div class="developers-field-cell" data-label="Tipo">enum</div>
+                    <div class="developers-field-cell" data-label="Obligatorio">
+                        <span class="developers-pill developers-pill--optional">No</span>
+                    </div>
+                    <div class="developers-field-cell" data-label="Opciones / notas">
+                        <span class="developers-option-chip">PinarDelRio</span>
+                        <span class="developers-option-chip">Artemisa</span>
+                        <span class="developers-option-chip">LaHabana</span>
+                        <span class="developers-option-chip">Mayabeque</span>
+                        <span class="developers-option-chip">Matanzas</span>
+                        <span class="developers-option-chip">VillaClara</span>
+                        <span class="developers-option-chip">Cienfuegos</span>
+                        <span class="developers-option-chip">SanctiSpiritus</span>
+                        <span class="developers-option-chip">CiegoDeAvila</span>
+                        <span class="developers-option-chip">Camaguey</span>
+                        <span class="developers-option-chip">LasTunas</span>
+                        <span class="developers-option-chip">Holguin</span>
+                        <span class="developers-option-chip">Granma</span>
+                        <span class="developers-option-chip">SantiagoDeCuba</span>
+                        <span class="developers-option-chip">Guantanamo</span>
+                        <span class="developers-option-chip">IslaDeLaJuventud</span>
                     </div>
                 </div>
 
@@ -579,7 +586,7 @@
             <ul class="developers-rule-list">
                 <li>File es obligatorio y no puede venir vacío.</li>
                 <li>ContributorId debe ser un GUID válido distinto de Guid.Empty.</li>
-                <li>PatientName, AgeApprox, Sex, AnatomSiteGeneral, Diagnosis y SunExposure son obligatorios.</li>
+                <li>AgeApprox, Sex, AnatomSiteGeneral, Diagnosis y SunExposure son obligatorios.</li>
                 <li>AgeApprox debe estar entre 0 y 120.</li>
                 <li>ClinSizeLongDiamMm y MelThickMm solo son válidos si son mayores que 0.</li>
                 <li>DermoscopicType solo puede enviarse cuando ImageType = Dermoscopic.</li>
