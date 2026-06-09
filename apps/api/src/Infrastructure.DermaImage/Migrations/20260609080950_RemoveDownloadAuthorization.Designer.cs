@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Infrastructure.DermaImage.Migrations
 {
     [DbContext(typeof(DermaImageDbContext))]
-    [Migration("20260609072845_RemoveDownloadAuthorization")]
+    [Migration("20260609080950_RemoveDownloadAuthorization")]
     partial class RemoveDownloadAuthorization
     {
         /// <inheritdoc />
@@ -215,8 +215,8 @@ namespace Infrastructure.DermaImage.Migrations
 
                     b.Property<string>("Reason")
                         .IsRequired()
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)");
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
 
                     b.Property<DateTime?>("ReviewedAt")
                         .HasColumnType("timestamp with time zone");
