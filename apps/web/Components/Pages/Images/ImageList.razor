@@ -216,3 +216,40 @@
     </section>
 </div>
 
+@if (_showRequestModal)
+{
+    <div class="request-overlay" @onclick="CloseRequestModal">
+        <div class="request-dialog" @onclick:stopPropagation>
+            <div class="request-dialog-header">
+                <h5 class="request-dialog-title">Solicitar autorización para descargar</h5>
+                <button type="button" class="request-dialog-close" @onclick="CloseRequestModal">&times;</button>
+            </div>
+            <div class="request-dialog-body">
+                <p>Necesita autorización de un administrador para descargar contenido. Complete los siguientes campos:</p>
+                @if (!string.IsNullOrEmpty(_requestError))
+                {
+                    <div class="alert alert-danger">@_requestError</div>
+                }
+                @if (!string.IsNullOrEmpty(_requestSuccess))
+                {
+                    <div class="alert alert-success">@_requestSuccess</div>
+                }
+                <div class="form-group mb-3">
+                    <label class="form-label">Motivo de uso</label>
+                    <textarea class="form-control" @bind="_requestReason" rows="3" placeholder="Describa el motivo por el cual necesita descargar el contenido..."></textarea>
+                </div>
+                <div class="form-group mb-3">
+                    <label class="form-label">Institución</label>
+                    <input class="form-control" @bind="_requestInstitution" placeholder="Nombre de la institución a la que pertenece" />
+                </div>
+            </div>
+            <div class="request-dialog-footer">
+                <button type="button" class="btn btn-outline-secondary" @onclick="CloseRequestModal">Cancelar</button>
+                <button type="button" class="btn btn-primary" @onclick="SubmitDownloadRequestAsync" disabled="@_isSubmittingRequest">
+                    @(_isSubmittingRequest ? "Enviando..." : "Enviar solicitud")
+                </button>
+            </div>
+        </div>
+    </div>
+}
+

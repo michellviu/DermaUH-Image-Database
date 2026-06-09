@@ -16,6 +16,12 @@ public partial class Profile
     private int _pendingPageSize = 5;
     private string? _pendingEmailFilter;
 
+    private PagedResponse<DownloadRequestDto>? _downloadRequestsResponse;
+    private bool _loadingDownloadRequests;
+    private bool _processingDownloadRequest;
+    private int _downloadRequestsPage = 1;
+    private int _downloadRequestsPageSize = 5;
+
     private bool _savingProfile;
     private bool _savingPwd;
     private bool _pwdMismatch;
@@ -32,6 +38,7 @@ public partial class Profile
         if (_profile != null && _profile.Roles.Contains("Admin", StringComparer.OrdinalIgnoreCase))
         {
             await LoadPendingUsersAsync();
+            await LoadDownloadRequestsAsync();
         }
     }
 
@@ -138,6 +145,79 @@ public partial class Profile
 
         _pwdSuccess = "Contraseña actualizada correctamente.";
         _pwdForm = new ChangePasswordRequest();
+    }
+
+    private async Task LoadDownloadRequestsAsync()
+    {
+        _loadingDownloadRequests = true;
+        try
+        {
+            _downloadRequestsResponse = await Http.GetFromJsonAsync<PagedResponse<DownloadRequestDto>>(
+                $"api/download-requests/pending?page={_downloadRequestsPage}&pageSize={_downloadRequestsPageSize}");
+        }
+        catch
+        {
+            _downloadRequestsResponse = new PagedResponse<DownloadRequestDto> { Items = new List<DownloadRequestDto>() };
+        }
+        finally
+        {
+            _loadingDownloadRequests = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task GoToDownloadRequestsPreviousPageAsync()
+    {
+        if (_downloadRequestsResponse?.HasPrevious == true)
+        {
+            _downloadRequestsPage--;
+            await LoadDownloadRequestsAsync();
+        }
+    }
+
+    private async Task GoToDownloadRequestsNextPageAsync()
+    {
+        if (_downloadRequestsResponse?.HasNext == true)
+        {
+            _downloadRequestsPage++;
+            await LoadDownloadRequestsAsync();
+        }
+    }
+
+    private async Task ApproveDownloadRequestAsync(Guid requestId)
+    {
+        _processingDownloadRequest = true;
+        try
+        {
+            var response = await Http.PostAsJsonAsync($"api/download-requests/{requestId}/review",
+                new ReviewDownloadRequestDto { Status = "Approved" });
+            if (response.IsSuccessStatusCode)
+            {
+                await LoadDownloadRequestsAsync();
+            }
+        }
+        finally
+        {
+            _processingDownloadRequest = false;
+        }
+    }
+
+    private async Task DenyDownloadRequestAsync(Guid requestId)
+    {
+        _processingDownloadRequest = true;
+        try
+        {
+            var response = await Http.PostAsJsonAsync($"api/download-requests/{requestId}/review",
+                new ReviewDownloadRequestDto { Status = "Denied" });
+            if (response.IsSuccessStatusCode)
+            {
+                await LoadDownloadRequestsAsync();
+            }
+        }
+        finally
+        {
+            _processingDownloadRequest = false;
+        }
     }
 
     private async Task ReloadProfileAsync()

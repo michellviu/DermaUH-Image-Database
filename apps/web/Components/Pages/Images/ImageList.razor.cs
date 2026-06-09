@@ -33,6 +33,13 @@ public partial class ImageList
     private bool isDownloading;
     private ImageDownloadMode downloadMode = ImageDownloadMode.ImagesAndMetadata;
 
+    private bool _showRequestModal;
+    private bool _isSubmittingRequest;
+    private string? _requestError;
+    private string? _requestSuccess;
+    private string _requestReason = string.Empty;
+    private string _requestInstitution = string.Empty;
+
     private readonly HashSet<Guid> selectedImageIds = [];
 
     private readonly HashSet<string> selectedImageTypes = [];
@@ -429,8 +436,31 @@ public partial class ImageList
         try
         {
             using var response = await Http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
-            if (response.StatusCode == HttpStatusCode.Unauthorized || response.StatusCode == HttpStatusCode.Forbidden)
+            if (response.StatusCode == HttpStatusCode.Unauthorized)
             {
+                Navigation.NavigateTo("/account/login", forceLoad: true);
+                return;
+            }
+
+            if (response.StatusCode == HttpStatusCode.Forbidden)
+            {
+                try
+                {
+                    await response.Content.LoadIntoBufferAsync();
+                    var body = await response.Content.ReadAsStringAsync();
+                    if (body.Contains("requiresAuthorization", StringComparison.OrdinalIgnoreCase))
+                    {
+                        _showRequestModal = true;
+                        StateHasChanged();
+                        return;
+                    }
+                }
+                catch
+                {
+                    _showRequestModal = true;
+                    StateHasChanged();
+                    return;
+                }
                 Navigation.NavigateTo("/account/login", forceLoad: true);
                 return;
             }
@@ -461,6 +491,56 @@ public partial class ImageList
         var contentDisposition = response.Content.Headers.ContentDisposition;
         var candidate = contentDisposition?.FileNameStar ?? contentDisposition?.FileName;
         return string.IsNullOrWhiteSpace(candidate) ? fallback : candidate.Trim('"');
+    }
+
+    private async Task SubmitDownloadRequestAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_requestReason) || string.IsNullOrWhiteSpace(_requestInstitution))
+        {
+            _requestError = "Todos los campos son obligatorios.";
+            return;
+        }
+
+        _isSubmittingRequest = true;
+        _requestError = null;
+        _requestSuccess = null;
+
+        try
+        {
+            var payload = new CreateDownloadRequestDto
+            {
+                Reason = _requestReason,
+                Institution = _requestInstitution
+            };
+            var response = await Http.PostAsJsonAsync("api/download-requests", payload);
+
+            if (response.IsSuccessStatusCode)
+            {
+                _requestSuccess = "Solicitud enviada correctamente. Recibirá un correo cuando sea aprobada.";
+                _requestReason = string.Empty;
+                _requestInstitution = string.Empty;
+            }
+            else
+            {
+                _requestError = "Error al enviar la solicitud. Intente nuevamente.";
+            }
+        }
+        catch
+        {
+            _requestError = "Error de conexión. Intente nuevamente.";
+        }
+        finally
+        {
+            _isSubmittingRequest = false;
+            StateHasChanged();
+        }
+    }
+
+    private void CloseRequestModal()
+    {
+        _showRequestModal = false;
+        _requestError = null;
+        _requestSuccess = null;
     }
 
     public async ValueTask DisposeAsync()

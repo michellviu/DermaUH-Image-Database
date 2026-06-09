@@ -344,6 +344,94 @@
     color: var(--on-surface-variant);
 }
 
+/* Download authorization request dialog */
+.request-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: color-mix(in srgb, #000 42%, transparent);
+    backdrop-filter: blur(4px);
+    padding: 1rem;
+}
+
+.request-dialog {
+    background: var(--surface-container-lowest, #fff);
+    border-radius: 1.2rem;
+    box-shadow: 0 24px 60px color-mix(in srgb, var(--primary, #c83b8e) 20%, transparent),
+                0 0 0 1px color-mix(in srgb, var(--outline-variant, #d8c3cc) 30%, transparent);
+    width: 100%;
+    max-width: 480px;
+    animation: request-dialog-in 0.2s ease-out;
+}
+
+@keyframes request-dialog-in {
+    from {
+        opacity: 0;
+        transform: scale(0.95) translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.request-dialog-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.1rem 1.2rem 0;
+}
+
+.request-dialog-title {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 800;
+    font-family: var(--font-display, "Manrope", sans-serif);
+    color: var(--on-surface, #191c1d);
+}
+
+.request-dialog-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    line-height: 1;
+    color: var(--on-surface-variant, #4d4350);
+    cursor: pointer;
+    padding: 0.2rem;
+    border-radius: 999px;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s ease;
+}
+
+.request-dialog-close:hover {
+    background: color-mix(in srgb, var(--outline-variant, #d8c3cc) 30%, transparent);
+}
+
+.request-dialog-body {
+    padding: 1.1rem 1.2rem;
+}
+
+.request-dialog-body p {
+    color: var(--on-surface-variant, #4d4350);
+    font-size: 0.88rem;
+    margin-bottom: 0.75rem;
+    line-height: 1.6;
+}
+
+.request-dialog-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.6rem;
+    padding: 0.75rem 1.2rem 1.2rem;
+}
+
 @media (max-width: 992px) {
     .gallery-header {
         align-items: flex-start;
