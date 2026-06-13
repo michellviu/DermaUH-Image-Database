@@ -10,7 +10,7 @@
 .nav-shell {
     max-width: 1440px;
     margin: 0 auto;
-    padding: 0.85rem clamp(1rem, 3vw, 2.5rem);
+    padding: 0.5rem clamp(1rem, 3vw, 2.5rem);
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -26,13 +26,12 @@
 }
 
 .nav-brand-icon {
-    width: 2.35rem;
-    height: 2.35rem;
-    display: inline-block;
-    background-color: var(--primary);
-    -webkit-mask: url("/assets/icono.webp") no-repeat center / contain;
-    mask: url("/assets/icono.webp") no-repeat center / contain;
-    box-shadow: 0 0 0 6px color-mix(in srgb, var(--secondary-container) 35%, transparent);
+    height: 1.8rem;
+    width: 11rem;
+    object-fit: cover;
+    object-position: center 30%;
+    display: block;
+    flex-shrink: 0;
 }
 
 .nav-brand-text {
