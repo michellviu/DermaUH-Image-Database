@@ -50,6 +50,15 @@ else
             <p class="profile-since mt-3">
                 <small class="text-muted">Miembro desde @_profile.CreatedAt.ToString("MMMM yyyy")</small>
             </p>
+
+            @if (_hasDownloadAuthorization)
+            {
+                <span class="badge badge-success mt-2">✓ Autorizado para descarga masiva</span>
+            }
+            else
+            {
+                <span class="badge badge-warning mt-2">⚠ Sin autorización de descarga masiva</span>
+            }
         </div>
 
         <!-- Right: Edit forms -->
@@ -208,6 +217,90 @@ else
                     </div>
                 </div>
             }
+
+            <!-- My download requests -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h2 class="card-title">Mis solicitudes de descarga</h2>
+                </div>
+                <div class="card-body">
+                    @if (_loadingMyDownloadRequests)
+                    {
+                        <div class="text-center py-3">
+                            <div class="spinner-border text-primary" role="status"></div>
+                        </div>
+                    }
+                    else if (_myDownloadRequests == null || !_myDownloadRequests.Any())
+                    {
+                        <p class="text-muted mb-0">No has realizado ninguna solicitud de descarga.</p>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Fecha</th>
+                                        <th>Motivo</th>
+                                        <th>Institución</th>
+                                        <th>Estado</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var req in PagedMyRequests)
+                                    {
+                                        <tr>
+                                            <td>@req.CreatedAt.ToString("dd/MM/yyyy")</td>
+                                            <td>@req.Reason</td>
+                                            <td>@req.Institution</td>
+                                            <td>
+                                                @if (req.Status == "Pending")
+                                                {
+                                                    <span class="badge text-bg-warning">Pendiente</span>
+                                                }
+                                                else if (req.Status == "Approved")
+                                                {
+                                                    <span class="badge text-bg-success">Aprobada</span>
+                                                }
+                                                else if (req.Status == "Denied")
+                                                {
+                                                    <span class="badge text-bg-danger">Denegada</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge text-bg-secondary">@req.Status</span>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        @if (TotalMyRequestsPages > 1)
+                        {
+                            <div class="d-flex justify-content-between align-items-center mt-3">
+                                <span class="text-muted small">
+                                    Página @_myRequestsPage de @TotalMyRequestsPages ·
+                                    @_myDownloadRequests.Count solicitudes
+                                </span>
+                                <div class="d-flex gap-2">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary"
+                                            disabled="@(_myRequestsPage == 1)"
+                                            @onclick="GoToMyRequestsPreviousPage">
+                                        Anterior
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-primary"
+                                            disabled="@(_myRequestsPage == TotalMyRequestsPages)"
+                                            @onclick="GoToMyRequestsNextPage">
+                                        Siguiente
+                                    </button>
+                                </div>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
 
             <!-- Profile info -->
             <div class="card mb-4">

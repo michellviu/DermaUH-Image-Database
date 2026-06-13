@@ -1,4 +1,5 @@
 using System.Net.Http.Json;
+using System.Text.Json;
 using Web.DermaImage.Shared.Models;
 
 namespace Web.DermaImage.Components.Pages.Account;
@@ -22,6 +23,18 @@ public partial class Profile
     private int _downloadRequestsPage = 1;
     private int _downloadRequestsPageSize = 5;
 
+    private bool _hasDownloadAuthorization;
+    private List<DownloadRequestDto> _myDownloadRequests = new();
+    private bool _loadingMyDownloadRequests;
+    private int _myRequestsPage = 1;
+    private int _myRequestsPageSize = 5;
+
+    private IEnumerable<DownloadRequestDto> PagedMyRequests =>
+        _myDownloadRequests.Skip((_myRequestsPage - 1) * _myRequestsPageSize).Take(_myRequestsPageSize);
+
+    private int TotalMyRequestsPages =>
+        (int)Math.Ceiling(_myDownloadRequests.Count / (double)_myRequestsPageSize);
+
     private bool _savingProfile;
     private bool _savingPwd;
     private bool _pwdMismatch;
@@ -35,10 +48,74 @@ public partial class Profile
     {
         await ReloadProfileAsync();
 
-        if (_profile != null && _profile.Roles.Contains("Admin", StringComparer.OrdinalIgnoreCase))
+        if (_profile != null)
         {
-            await LoadPendingUsersAsync();
-            await LoadDownloadRequestsAsync();
+            await CheckDownloadAuthorizationAsync();
+            await LoadMyDownloadRequestsAsync();
+
+            if (_profile.Roles.Contains("Admin", StringComparer.OrdinalIgnoreCase))
+            {
+                await LoadPendingUsersAsync();
+                await LoadDownloadRequestsAsync();
+            }
+        }
+    }
+
+    private async Task CheckDownloadAuthorizationAsync()
+    {
+        if (_profile != null && _profile.IsAdmin)
+        {
+            _hasDownloadAuthorization = true;
+            return;
+        }
+
+        try
+        {
+            var result = await Http.GetFromJsonAsync<JsonElement>("api/download-requests/authorization");
+            if (result.TryGetProperty("isAuthorized", out var isAuthorizedElement))
+            {
+                _hasDownloadAuthorization = isAuthorizedElement.GetBoolean();
+            }
+        }
+        catch
+        {
+            _hasDownloadAuthorization = false;
+        }
+    }
+
+    private async Task LoadMyDownloadRequestsAsync()
+    {
+        _loadingMyDownloadRequests = true;
+        try
+        {
+            var requests = await Http.GetFromJsonAsync<List<DownloadRequestDto>>("api/download-requests/my");
+            _myDownloadRequests = requests ?? new();
+        }
+        catch
+        {
+            _myDownloadRequests = new();
+        }
+        finally
+        {
+            _myRequestsPage = 1;
+            _loadingMyDownloadRequests = false;
+            StateHasChanged();
+        }
+    }
+
+    private void GoToMyRequestsPreviousPage()
+    {
+        if (_myRequestsPage > 1)
+        {
+            _myRequestsPage--;
+        }
+    }
+
+    private void GoToMyRequestsNextPage()
+    {
+        if (_myRequestsPage < TotalMyRequestsPages)
+        {
+            _myRequestsPage++;
         }
     }
 

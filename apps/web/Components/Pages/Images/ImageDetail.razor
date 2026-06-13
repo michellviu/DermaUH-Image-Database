@@ -1,6 +1,9 @@
 @page "/images/{Id:guid}"
 @rendermode InteractiveServer
+@using Microsoft.AspNetCore.Authorization
 @inject HttpClient Http
+@inject IJSRuntime JS
+@inject NavigationManager Navigation
 
 <PageTitle>Detalle de Imagen - DermaUH</PageTitle>
 
@@ -17,8 +20,20 @@ else
     <PageHeader Title="Detalle de imagen" Subtitle="@($"ID público: {image.PublicId}")">
         <Actions>
             <a href="images" class="btn btn-outline-primary">Volver al listado</a>
+            <AuthorizeView Roles="Admin">
+                <Authorized>
+                    <button class="btn btn-outline-danger ms-2" @onclick="DeleteImageAsync" disabled="@deleting">
+                        @(deleting ? "Eliminando..." : "Eliminar")
+                    </button>
+                </Authorized>
+            </AuthorizeView>
         </Actions>
     </PageHeader>
+    
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger mt-3">@errorMessage</div>
+    }
 
     <section class="detail-summary-strip">
         <span class="summary-chip @(image.IsPublic ? "summary-chip--public" : "summary-chip--private")">@(image.IsPublic ? "Pública" : "Privada")</span>
@@ -122,6 +137,8 @@ else
     [Parameter] public Guid Id { get; set; }
     private DermaImgDto? image;
     private bool loading = true;
+    private bool deleting = false;
+    private string? errorMessage;
 
     protected override async Task OnInitializedAsync()
     {
@@ -308,4 +325,37 @@ else
         builder.CloseElement();
         builder.CloseElement();
     };
+
+    private async Task DeleteImageAsync()
+    {
+        errorMessage = null;
+        var confirmed = await JS.InvokeAsync<bool>("confirm", new object?[] { "¿Deseas eliminar esta imagen? Esta acción no se puede deshacer." });
+        if (!confirmed)
+        {
+            return;
+        }
+
+        deleting = true;
+        try
+        {
+            var response = await Http.DeleteAsync($"api/images/{Id}");
+            if (response.IsSuccessStatusCode)
+            {
+                Navigation.NavigateTo("/images");
+            }
+            else
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                errorMessage = $"Error al eliminar: {content}";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error: {ex.Message}";
+        }
+        finally
+        {
+            deleting = false;
+        }
+    }
 }
