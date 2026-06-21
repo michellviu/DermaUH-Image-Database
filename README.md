@@ -1,6 +1,6 @@
 # DermaUH Image Database
 
-En este repositorio se estará desarrollando la base de imágenes de DermaUH.
+**DermaUH Image Database** es una plataforma web integral diseñada para el almacenamiento, gestión y anotación de imágenes dermatológicas clínicas. Este sistema facilita el trabajo de especialistas médicos y desarrolladores al ofrecer un entorno seguro para manejar imágenes médicas, gestionar usuarios y solicitudes de descarga, y servir como base fundamental para la investigación médica y el entrenamiento de modelos de Inteligencia Artificial en el campo de la dermatología.
 
 ## Requisitos
 
