@@ -308,7 +308,7 @@ public static class ImageMetadataCatalog
             null,
             false,
             null,
-            image => image.InstitutionName)
+            image => image.Institution?.Name)
     ];
 
     public static IReadOnlyList<ImageMetadataDefinition> Definitions => Fields

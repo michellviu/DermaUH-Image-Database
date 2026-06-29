@@ -18,7 +18,6 @@ public interface IDermaImgRepository : IRepository<DermaImg>
     Task<IReadOnlyList<(string Key, int Count)>> GetPhotoTypeCountsAsync(bool includePrivate, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<(string Key, int Count)>> GetInjuryTypeCountsAsync(bool includePrivate, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<(int Year, int Month, int Count)>> GetMonthlyUploadCountsAsync(int recentMonths, bool includePrivate, CancellationToken cancellationToken = default);
-    Task<IReadOnlyList<(string InstitutionName, string? InstitutionDescription, string? InstitutionCountry, int Count)>> GetDerivedInstitutionsAsync(bool includePrivate, CancellationToken cancellationToken = default);
     Task<string> GeneratePublicIdAsync(CancellationToken cancellationToken = default);
 
     // ── New statistical queries ────────────────────────────────────────

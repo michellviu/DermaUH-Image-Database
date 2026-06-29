@@ -43,11 +43,5 @@ public class DermaImgConfiguration : IEntityTypeConfiguration<DermaImg>
 
         // Soft delete filter
         builder.HasQueryFilter(e => !e.IsDeleted);
-
-        // Relationships
-        builder.Property(e => e.InstitutionName).HasMaxLength(200);
-        builder.Property(e => e.InstitutionDescription).HasMaxLength(1000);
-        builder.Property(e => e.InstitutionCountry).HasMaxLength(100);
-
     }
 }

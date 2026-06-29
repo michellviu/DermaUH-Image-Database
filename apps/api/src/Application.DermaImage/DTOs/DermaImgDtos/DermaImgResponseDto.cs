@@ -53,7 +53,14 @@ public class DermaImgResponseDto
     // Relationships
     public Guid ContributorId { get; set; }
     public string? ContributorFullName { get; set; }
+    public Guid? InstitutionId { get; set; }
+
+    /// <summary>Name sourced from the Institution entity.</summary>
     public string? InstitutionName { get; set; }
+
+    /// <summary>Description sourced from the Institution entity.</summary>
     public string? InstitutionDescription { get; set; }
+
+    /// <summary>Country sourced from the Institution entity.</summary>
     public string? InstitutionCountry { get; set; }
 }

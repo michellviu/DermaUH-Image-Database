@@ -8,9 +8,12 @@ namespace Application.DermaImage.Managers;
 public class StatisticsManager : IStatisticsManager
 {
     private readonly IDermaImgRepository _images;
-    public StatisticsManager(IDermaImgRepository images)
+    private readonly IInstitutionRepository _institutions;
+
+    public StatisticsManager(IDermaImgRepository images, IInstitutionRepository institutions)
     {
         _images = images;
+        _institutions = institutions;
     }
 
     public async Task<StatisticsOverviewDto> GetOverviewAsync(
@@ -27,7 +30,7 @@ public class StatisticsManager : IStatisticsManager
         var publicImages = includePrivate
             ? await _images.CountByVisibilityAsync(false, cancellationToken)
             : totalImages;
-        var derivedInstitutions = await _images.GetDerivedInstitutionsAsync(includePrivate, cancellationToken);
+        var derivedInstitutions = await _institutions.GetAllAsync(cancellationToken);
         var institutionsCount = derivedInstitutions.Count;
         var contributorsCount = await _images.CountDistinctContributorsAsync(includePrivate, cancellationToken);
 

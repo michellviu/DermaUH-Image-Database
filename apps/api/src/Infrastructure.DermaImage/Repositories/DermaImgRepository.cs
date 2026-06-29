@@ -14,13 +14,14 @@ public class DermaImgRepository : Repository<DermaImg>, IDermaImgRepository
     {
         Logger.LogInformation("Fetching image by id: {ImageId}", id);
         return DbSet
+            .Include(i => i.Institution)
             .FirstOrDefaultAsync(i => i.Id == id, cancellationToken);
     }
 
     private IQueryable<DermaImg> BuildVisibilityQuery(bool includePrivate)
     {
         Logger.LogInformation("Building image visibility query. IncludePrivate: {IncludePrivate}", includePrivate);
-        var query = DbSet.AsNoTracking();
+        IQueryable<DermaImg> query = DbSet.AsNoTracking().Include(i => i.Institution);
 
         if (!includePrivate)
         {
@@ -90,6 +91,7 @@ public class DermaImgRepository : Repository<DermaImg>, IDermaImgRepository
     {
         Logger.LogInformation("Fetching image by public id: {PublicId}", publicId);
         return DbSet
+            .Include(i => i.Institution)
             .FirstOrDefaultAsync(i => i.PublicId == publicId, cancellationToken);
     }
 
@@ -115,6 +117,7 @@ public class DermaImgRepository : Repository<DermaImg>, IDermaImgRepository
         Logger.LogInformation("Fetching images by ids. Count: {Count}", idList.Count);
 
         return await DbSet
+            .Include(i => i.Institution)
             .Where(i => idList.Contains(i.Id))
             .OrderByDescending(i => i.CreatedAt)
             .ToListAsync(cancellationToken);
@@ -256,30 +259,6 @@ public class DermaImgRepository : Repository<DermaImg>, IDermaImgRepository
         return grouped.Select(x => (x.Year, x.Month, x.Count)).ToList();
     }
 
-    public async Task<IReadOnlyList<(string InstitutionName, string? InstitutionDescription, string? InstitutionCountry, int Count)>> GetDerivedInstitutionsAsync(bool includePrivate, CancellationToken cancellationToken = default)
-    {
-        Logger.LogInformation("Fetching derived institutions. IncludePrivate: {IncludePrivate}", includePrivate);
-
-        var grouped = await BuildVisibilityQuery(includePrivate)
-            .Where(i => i.InstitutionName != null && i.InstitutionName != "")
-            .GroupBy(i => new
-            {
-                InstitutionName = i.InstitutionName,
-                InstitutionDescription = i.InstitutionDescription,
-                InstitutionCountry = i.InstitutionCountry
-            })
-            .Select(g => new
-            {
-                g.Key.InstitutionName,
-                g.Key.InstitutionDescription,
-                g.Key.InstitutionCountry,
-                Count = g.Count()
-            })
-            .OrderByDescending(x => x.Count)
-            .ToListAsync(cancellationToken);
-
-        return grouped.Select(x => (x.InstitutionName!, x.InstitutionDescription, x.InstitutionCountry, x.Count)).ToList();
-    }
 
     public async Task<string> GeneratePublicIdAsync(CancellationToken cancellationToken = default)
     {

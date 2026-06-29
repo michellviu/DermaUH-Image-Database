@@ -7,10 +7,12 @@ namespace Application.DermaImage.Managers;
 public class DermaImgManager : IDermaImgManager
 {
     private readonly IDermaImgService _service;
+    private readonly IInstitutionManager _institutionManager;
 
-    public DermaImgManager(IDermaImgService service)
+    public DermaImgManager(IDermaImgService service, IInstitutionManager institutionManager)
     {
         _service = service;
+        _institutionManager = institutionManager;
     }
 
     public async Task<(IEnumerable<DermaImg> Items, int TotalCount)> GetPagedAsync(int page, int pageSize, DermaImgFilter? filter = null, CancellationToken cancellationToken = default)
@@ -40,7 +42,20 @@ public class DermaImgManager : IDermaImgManager
 
     public async Task<DermaImg> CreateAsync(CreateDermaImgDto dto, CancellationToken cancellationToken = default)
     {
-        var image = MapToEntity(dto);
+        // Institution upsert: if a name was supplied, look up the institution by name
+        // (or create it) and set the Guid FK on the image.
+        Guid? institutionId = null;
+        if (!string.IsNullOrWhiteSpace(dto.InstitutionName))
+        {
+            var institution = await _institutionManager.GetOrCreateAsync(
+                dto.InstitutionName,
+                dto.InstitutionDescription,
+                dto.InstitutionCountry,
+                cancellationToken);
+            institutionId = institution.Id;
+        }
+
+        var image = MapToEntity(dto, institutionId);
         return await _service.CreateAsync(image, cancellationToken);
     }
 
@@ -49,7 +64,19 @@ public class DermaImgManager : IDermaImgManager
         var existing = await _service.GetByIdAsync(id, cancellationToken)
             ?? throw new KeyNotFoundException($"Image with id '{id}' was not found.");
 
-        MapToExistingEntity(dto, existing);
+        // Resolve institution by name (upsert) — same logic as CreateAsync
+        Guid? institutionId = null;
+        if (!string.IsNullOrWhiteSpace(dto.InstitutionName))
+        {
+            var institution = await _institutionManager.GetOrCreateAsync(
+                dto.InstitutionName,
+                dto.InstitutionDescription,
+                dto.InstitutionCountry,
+                cancellationToken);
+            institutionId = institution.Id;
+        }
+
+        MapToExistingEntity(dto, existing, institutionId);
         await _service.UpdateAsync(existing, cancellationToken);
     }
 
@@ -58,7 +85,7 @@ public class DermaImgManager : IDermaImgManager
         await _service.DeleteAsync(id, cancellationToken);
     }
 
-    private static DermaImg MapToEntity(CreateDermaImgDto dto)
+    private static DermaImg MapToEntity(CreateDermaImgDto dto, Guid? institutionId)
     {
         return new DermaImg
         {
@@ -96,13 +123,12 @@ public class DermaImgManager : IDermaImgManager
             InformedConsentDate = dto.InformedConsentDate,
             InformedConsentText = dto.InformedConsentText,
             ContributorId = dto.ContributorId,
-            InstitutionName = dto.InstitutionName,
-            InstitutionDescription = dto.InstitutionDescription,
-            InstitutionCountry = dto.InstitutionCountry
+            // Assign the resolved institution Guid FK
+            InstitutionId = institutionId
         };
     }
 
-    private static void MapToExistingEntity(CreateDermaImgDto dto, DermaImg entity)
+    private static void MapToExistingEntity(CreateDermaImgDto dto, DermaImg entity, Guid? institutionId)
     {
         entity.IsPublic = dto.IsPublic;
         entity.ImageType = dto.ImageType;
@@ -133,8 +159,6 @@ public class DermaImgManager : IDermaImgManager
         entity.InformedConsent = dto.InformedConsent;
         entity.InformedConsentDate = dto.InformedConsentDate;
         entity.InformedConsentText = dto.InformedConsentText;
-        entity.InstitutionName = dto.InstitutionName;
-        entity.InstitutionDescription = dto.InstitutionDescription;
-        entity.InstitutionCountry = dto.InstitutionCountry;
+        entity.InstitutionId = institutionId;
     }
 }

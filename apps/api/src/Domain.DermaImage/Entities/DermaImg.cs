@@ -118,12 +118,9 @@ public class DermaImg : BaseEntity
     /// <summary>External contributor identifier (not linked to local users).</summary>
     public Guid ContributorId { get; set; }
 
-    /// <summary>Name of the contributing institution.</summary>
-    public string? InstitutionName { get; set; }
+    /// <summary>FK to the contributing institution. Null when no institution is associated.</summary>
+    public Guid? InstitutionId { get; set; }
 
-    /// <summary>Description of the contributing institution.</summary>
-    public string? InstitutionDescription { get; set; }
-
-    /// <summary>Country of the contributing institution.</summary>
-    public string? InstitutionCountry { get; set; }
+    /// <summary>Navigation property to the contributing institution.</summary>
+    public Institution? Institution { get; set; }
 }

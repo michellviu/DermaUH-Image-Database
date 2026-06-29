@@ -589,9 +589,10 @@ public class ImagesController : ControllerBase
             CreatedAt = image.CreatedAt,
             ContributorId = image.ContributorId,
             ContributorFullName = null,
-            InstitutionName = image.InstitutionName,
-            InstitutionDescription = image.InstitutionDescription,
-            InstitutionCountry = image.InstitutionCountry
+            InstitutionId = image.InstitutionId,
+            InstitutionName = image.Institution?.Name,
+            InstitutionDescription = image.Institution?.Description,
+            InstitutionCountry = image.Institution?.Country
         };
     }
 
