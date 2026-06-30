@@ -116,19 +116,22 @@ var app = builder.Build();
 
 app.Logger.LogInformation("Starting API in {Environment} environment", app.Environment.EnvironmentName);
 
-// Apply pending migrations automatically
-using (var scope = app.Services.CreateScope())
+// Apply pending migrations automatically unless in testing environment
+if (!app.Environment.IsEnvironment("Testing"))
 {
-    try
+    using (var scope = app.Services.CreateScope())
     {
-        var db = scope.ServiceProvider.GetRequiredService<DermaImageDbContext>();
-        await db.Database.MigrateAsync();
-        app.Logger.LogInformation("Database migration check completed successfully");
-    }
-    catch (Exception ex)
-    {
-        app.Logger.LogCritical(ex, "Database migration failed during startup");
-        throw;
+        try
+        {
+            var db = scope.ServiceProvider.GetRequiredService<DermaImageDbContext>();
+            await db.Database.MigrateAsync();
+            app.Logger.LogInformation("Database migration check completed successfully");
+        }
+        catch (Exception ex)
+        {
+            app.Logger.LogCritical(ex, "Database migration failed during startup");
+            throw;
+        }
     }
 }
 
