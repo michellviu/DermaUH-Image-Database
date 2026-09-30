@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebApi.DermaImage.Middleware;
 using WebApi.DermaImage.Managers;
+using WebApi.DermaImage.Startup;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -126,6 +127,8 @@ if (!app.Environment.IsEnvironment("Testing"))
             var db = scope.ServiceProvider.GetRequiredService<DermaImageDbContext>();
             await db.Database.MigrateAsync();
             app.Logger.LogInformation("Database migration check completed successfully");
+
+            await AdminBootstrapper.EnsureAdminAsync(scope.ServiceProvider, app.Configuration, app.Logger);
         }
         catch (Exception ex)
         {

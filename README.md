@@ -99,6 +99,40 @@ cd apps/web
 dotnet run
 ```
 
+## Despliegue con Docker
+
+El repositorio incluye `docker-compose.yml` con PostgreSQL, la API y la aplicación web. Solo se necesita Docker con el complemento Compose v2.
+
+```bash
+cp .env.example .env   # ajustar contraseñas, JWT_SECRET_KEY y el administrador inicial
+docker compose up -d --build
+```
+
+| Servicio   | URL por defecto                 | Descripción                                   |
+|------------|---------------------------------|-----------------------------------------------|
+| `web`      | http://localhost:5130           | Aplicación Blazor Server                      |
+| `api`      | http://localhost:5131           | API REST (Swagger solo en `Development`)      |
+| `postgres` | 127.0.0.1:5432                  | Base de datos, publicada solo en el host      |
+| `mailpit`  | http://localhost:8025           | Opcional (`--profile mail`): correo de prueba |
+
+- **Migraciones**: se aplican automáticamente al arrancar la API.
+- **Primer administrador**: una base de datos nueva no tiene usuarios. Definir `BOOTSTRAP_ADMIN_EMAIL` y `BOOTSTRAP_ADMIN_PASSWORD` en `.env` para que la API cree esa cuenta con rol `Admin` al arrancar (si ya existe, solo le asigna el rol).
+- **Persistencia**: volúmenes `postgres_data` (base de datos), `api_images` (archivos de imagen) y `api_keys`/`web_keys` (claves de Data Protection; sin ellas, los enlaces de confirmación y de recuperación de contraseña dejan de ser válidos tras reiniciar).
+- **Correo**: sin SMTP configurado los correos solo se registran en el log y los usuarios no pueden confirmar su cuenta. Para pruebas locales: `SMTP_SERVER_ADDRESS=mailpit`, `SMTP_SERVER_PORT=1025` y `docker compose --profile mail up -d`.
+- **Producción**: cambiar todos los secretos de `.env`, poner un proxy inverso con HTTPS **con soporte de WebSocket** (Blazor Server lo necesita) delante de `web` y `api`, y ajustar `FRONTEND_BASE_URL` a la URL pública.
+
+Comandos habituales:
+
+```bash
+docker compose logs -f api web                                  # registros
+docker compose down                                             # detener (conserva los datos)
+docker compose exec postgres pg_dump -U root DermaImage > dermauh.sql   # copia de la base de datos
+```
+
+> `docker compose down -v` elimina también los volúmenes (base de datos e imágenes).
+
+Si `docker compose build` falla con *timeouts* al restaurar paquetes de NuGet (HTTPS) mientras hay una VPN activa, la causa suele ser la MTU de la red de Docker: ajustar `"mtu"` en `/etc/docker/daemon.json` al valor de la interfaz de la VPN (p. ej. `1420`) y reiniciar Docker.
+
 ## Configuración de Email SMTP
 
 La API usa `MailKit` y configuración tipada en `EmailSettings`.
