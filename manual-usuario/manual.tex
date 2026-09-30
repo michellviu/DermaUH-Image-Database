@@ -1,0 +1,1339 @@
+\documentclass[11pt,a4paper]{article}
+
+% ---------- Codificación e idioma ----------
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish,es-tabla,es-nodecimaldot]{babel}
+\usepackage{lmodern}
+\usepackage{amssymb}
+
+% ---------- Geometría y layout ----------
+\usepackage[a4paper,margin=2.5cm,headheight=22pt]{geometry}
+\usepackage{parskip}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{needspace}
+\emergencystretch=3em
+\sloppy
+
+% ---------- Color y gráficos ----------
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage[most]{tcolorbox}
+\usepackage{float}
+\usepackage{caption}
+
+% ---------- Tablas ----------
+\usepackage{tabularx}
+\usepackage{longtable}
+\usepackage{booktabs}
+\usepackage{colortbl}
+\usepackage{array}
+
+% ---------- Listas, código y enlaces ----------
+\usepackage{enumitem}
+\usepackage{fancyvrb}
+\usepackage{hyperref}
+
+% ---------- Paleta de marca DermaUH ----------
+\definecolor{dermaPrimary}{HTML}{A21CAF}
+\definecolor{dermaPrimaryLight}{HTML}{D946EF}
+\definecolor{dermaSoft}{HTML}{FAE8FF}
+\definecolor{dermaBg}{HTML}{FDF4FF}
+\definecolor{dermaText}{HTML}{4A044E}
+\definecolor{dermaTextSoft}{HTML}{7E2F7D}
+\definecolor{adminColor}{HTML}{B2416E}
+\definecolor{noteColor}{HTML}{0F766E}
+\definecolor{warnColor}{HTML}{B45309}
+\definecolor{codeBg}{HTML}{F6F2F7}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=dermaPrimary,
+    urlcolor=dermaPrimary,
+    citecolor=dermaPrimary,
+    pdftitle={Manual de Usuario - DermaUH Image Database},
+    pdfauthor={Equipo DermaUH},
+    pdfsubject={Manual de Usuario},
+    bookmarksopen=true
+}
+
+% ---------- Estilo de títulos ----------
+\titleformat{\section}
+  {\color{dermaPrimary}\Large\bfseries}
+  {\thesection}{0.6em}{}
+\titleformat{\subsection}
+  {\color{dermaTextSoft}\large\bfseries}
+  {\thesubsection}{0.6em}{}
+\titleformat{\subsubsection}
+  {\color{dermaTextSoft}\normalsize\bfseries}
+  {\thesubsubsection}{0.6em}{}
+
+\titlespacing*{\section}{0pt}{1.4em}{0.8em}
+\titlespacing*{\subsection}{0pt}{1.1em}{0.5em}
+
+% Cada sección principal comienza en una página nueva.
+\newcommand{\seccion}[1]{\clearpage\section{#1}}
+
+% ---------- Encabezado / pie de página ----------
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\headrule}{\hbox to\headwidth{\color{dermaPrimaryLight}\leaders\hrule height \headrulewidth\hfill}}
+\fancyhead[L]{\small\color{dermaTextSoft} Manual de Usuario}
+\fancyhead[R]{\small\color{dermaTextSoft} DermaUH Image Database}
+\fancyfoot[L]{\small\color{dermaTextSoft} Versión 1.0}
+\fancyfoot[R]{\small\color{dermaTextSoft} Página \thepage}
+
+\fancypagestyle{plain}{%
+  \fancyhf{}
+  \fancyfoot[R]{\small\color{dermaTextSoft} Página \thepage}
+  \renewcommand{\headrulewidth}{0pt}
+}
+
+% ---------- Figuras ----------
+\captionsetup{font=small, labelfont={bf,color=dermaPrimary}, justification=centering}
+\captionsetup[figure]{name=Figura}
+
+% \captura[ancho]{archivo}{pie de figura}: inserta una captura de pantalla
+% desde figuras/, con marco fino y etiqueta fig:<archivo>.
+\newcommand{\captura}[3][0.96\textwidth]{%
+  \begin{figure}[H]
+    \centering
+    {\setlength{\fboxsep}{0pt}\setlength{\fboxrule}{0.5pt}%
+     \fcolorbox{black!25}{white}{%
+       \includegraphics[width=#1,height=0.68\textheight,keepaspectratio]{figuras/#2}}}
+    \caption{#3}
+    \label{fig:#2}
+  \end{figure}}
+
+% ---------- Cajas informativas ----------
+\newtcolorbox{notabox}{
+  colback=dermaSoft, colframe=dermaPrimaryLight, boxrule=0.6pt,
+  arc=2pt, left=8pt, right=8pt, top=6pt, bottom=6pt,
+  fonttitle=\bfseries, title=NOTA
+}
+\newtcolorbox{adminbox}{
+  colback=white!95!adminColor, colframe=adminColor, boxrule=0.6pt,
+  arc=2pt, left=8pt, right=8pt, top=6pt, bottom=6pt,
+  fonttitle=\bfseries\color{white}, coltitle=white,
+  colbacktitle=adminColor, title=SOLO ADMINISTRADORES
+}
+\newtcolorbox{warnbox}{
+  colback=white!93!warnColor, colframe=warnColor, boxrule=0.6pt,
+  arc=2pt, left=8pt, right=8pt, top=6pt, bottom=6pt,
+  fonttitle=\bfseries, title=IMPORTANTE
+}
+\newtcolorbox{tipbox}{
+  colback=white!93!noteColor, colframe=noteColor, boxrule=0.6pt,
+  arc=2pt, left=8pt, right=8pt, top=6pt, bottom=6pt,
+  fonttitle=\bfseries, title=CONSEJO
+}
+
+% Bloques de comandos de consola (anexo técnico).
+\DefineVerbatimEnvironment{consola}{Verbatim}{%
+  fontsize=\small, frame=single, framerule=0.4pt, rulecolor=\color{black!25},
+  framesep=3mm, xleftmargin=2mm, xrightmargin=2mm}
+
+% ---------- Convenciones tipográficas ----------
+% Nombre de un campo de formulario
+\newcommand{\campo}[1]{\textbf{\textcolor{dermaTextSoft}{#1}}}
+% Botón, enlace o casilla de la interfaz
+\newcommand{\boton}[1]{\colorbox{dermaSoft}{\textcolor{dermaPrimary}{\textbf{\small #1}}}}
+% Rol de usuario
+\newcommand{\rol}[1]{\textcolor{dermaPrimary}{\textbf{#1}}}
+% Opción de menú o ruta de navegación
+\newcommand{\menu}[1]{\textsf{\textbf{#1}}}
+% Mensaje literal mostrado por el sistema
+\newcommand{\mensaje}[1]{\textit{«#1»}}
+% Separador de rutas de menú
+\newcommand{\flecha}{\,$\triangleright$\,}
+
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+
+\setlist[itemize]{leftmargin=1.4em, itemsep=2pt, topsep=4pt}
+\setlist[enumerate]{leftmargin=1.6em, itemsep=2pt, topsep=4pt}
+% Lista para procedimientos paso a paso
+\newlist{pasos}{enumerate}{1}
+\setlist[pasos]{label=\textbf{\textcolor{dermaPrimary}{Paso \arabic*.}}, leftmargin=4.2em,
+  labelwidth=3.8em, align=left, itemsep=3pt, topsep=4pt}
+
+\begin{document}
+
+% ==========================================================
+% PORTADA
+% ==========================================================
+\begin{titlepage}
+  \centering
+  \vspace*{1.5cm}
+  \includegraphics[width=5cm]{assets/logo-dermauh.png}\\[1.8cm]
+  {\Huge\bfseries\color{dermaPrimary} Manual de Usuario\\[0.4cm]}
+  {\LARGE\color{dermaTextSoft} DermaUH Image Database\\[0.3cm]}
+  \vspace{0.4cm}
+  {\large\color{dermaTextSoft} Plataforma para el almacenamiento, gestión y consulta\\
+   de imágenes dermatológicas clínicas}
+  \vfill
+  {\color{dermaPrimaryLight}\rule{0.6\textwidth}{0.6pt}}\\[0.5cm]
+  {\large Versión del documento: 1.0}\\
+  {\large Septiembre de 2026}
+  \vspace{1.5cm}
+\end{titlepage}
+
+% ==========================================================
+% CONTROL DEL DOCUMENTO
+% ==========================================================
+\section*{Control del documento}
+
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}l l Y@{}}
+\toprule
+\rowcolor{dermaSoft}
+\textbf{Versión} & \textbf{Fecha} & \textbf{Descripción del cambio} \\
+\midrule
+1.0 & Septiembre de 2026 & Versión inicial del manual de usuario, con capturas de
+pantalla de la plataforma y anexo de despliegue con Docker. \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\vspace{1em}
+\begin{notabox}
+Las capturas de pantalla de este manual se obtuvieron de una instalación de
+demostración con \textbf{datos ficticios}: las instituciones, personas y casos
+clínicos que aparecen en ellas son ilustrativos y no corresponden a pacientes ni
+a centros reales. Según la configuración y los datos de su instalación, las
+pantallas pueden presentar diferencias menores.
+\end{notabox}
+
+\clearpage
+\tableofcontents
+\clearpage
+\listoffigures
+
+% ==========================================================
+\seccion{Introducción}
+% ==========================================================
+
+\subsection{Propósito del manual}
+
+Este documento explica cómo utilizar la aplicación web \textbf{DermaUH Image
+Database}. Describe, paso a paso y con capturas de pantalla, cada una de las
+tareas que los usuarios pueden realizar: crear una cuenta, iniciar sesión,
+explorar y descargar imágenes, consultar los análisis estadísticos, gestionar el
+perfil personal y, en el caso de los administradores, gestionar usuarios y
+solicitudes.
+
+\subsection{Alcance}
+
+El manual cubre todas las funciones disponibles en la interfaz web de la
+plataforma. La integración con otros sistemas mediante la API se presenta de forma
+resumida en la sección~\ref{sec:desarrolladores}; su referencia técnica completa
+está disponible dentro de la propia aplicación. La instalación de la plataforma se
+describe en el Anexo~\ref{anexo:despliegue}, dirigido al personal técnico.
+
+\subsection{Destinatarios}
+
+\begin{itemize}
+  \item \textbf{Especialistas clínicos e investigadores} que consultan el
+  repositorio de imágenes, sus metadatos y sus estadísticas.
+  \item \textbf{Administradores de la plataforma}, responsables de aprobar cuentas,
+  autorizar descargas y gestionar usuarios.
+  \item \textbf{Equipos técnicos} que integran otras aplicaciones con la plataforma
+  o que se encargan de su despliegue.
+\end{itemize}
+
+No se requieren conocimientos informáticos especiales para las secciones
+dirigidas a usuarios finales; basta con saber utilizar un navegador web.
+
+\subsection{Cómo usar este manual}
+
+\begin{itemize}
+  \item Si es la primera vez que utiliza la plataforma, lea en orden las secciones
+  \ref{sec:descripcion} a \ref{sec:primeros-pasos}.
+  \item Para realizar una tarea concreta, localícela en el índice: cada tarea se
+  describe como un \textbf{procedimiento numerado}.
+  \item Si aparece un mensaje que no entiende o algo no funciona como espera,
+  consulte la sección~\ref{sec:problemas}.
+  \item Los términos médicos y técnicos se explican en el
+  glosario (sección~\ref{sec:glosario}).
+\end{itemize}
+
+\subsection{Convenciones tipográficas}
+
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}l Y@{}}
+\toprule
+\rowcolor{dermaSoft}
+\textbf{Convención} & \textbf{Significado} \\
+\midrule
+\boton{Iniciar sesión} & Botón, enlace o casilla de la interfaz sobre el que se
+hace clic. \\
+\addlinespace
+\campo{Correo electrónico} & Nombre de un campo de un formulario. \\
+\addlinespace
+\menu{Desarrolladores\flecha API} & Opción del menú de navegación; el símbolo
+\flecha{} separa los niveles del menú. \\
+\addlinespace
+\mensaje{Credenciales incorrectas.} & Texto literal que muestra el sistema. \\
+\addlinespace
+\rol{Admin} & Rol de usuario. \\
+\addlinespace
+\texttt{/images} & Dirección (ruta) dentro de la plataforma. \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+Además, el manual utiliza los siguientes recuadros:
+
+\begin{notabox}
+Información complementaria útil para comprender el funcionamiento del sistema.
+\end{notabox}
+\begin{tipbox}
+Recomendación práctica para trabajar de forma más cómoda o eficiente.
+\end{tipbox}
+\begin{warnbox}
+Advertencia sobre acciones irreversibles o situaciones que requieren atención.
+\end{warnbox}
+\begin{adminbox}
+Función disponible únicamente para cuentas con el rol Admin.
+\end{adminbox}
+
+% ==========================================================
+\seccion{Descripción general del sistema}
+\label{sec:descripcion}
+% ==========================================================
+
+\subsection{¿Qué es DermaUH Image Database?}
+
+DermaUH Image Database es un repositorio web de imágenes dermatológicas clínicas
+acompañadas de metadatos estandarizados: datos demográficos del paciente
+(anonimizados), localización anatómica de la lesión, diagnóstico, método de
+confirmación diagnóstica y, en los melanomas, datos histológicos. Su objetivo es
+servir de base para la docencia, la investigación clínica y epidemiológica, y el
+entrenamiento de modelos de Inteligencia Artificial en dermatología.
+
+\subsection{Funcionalidades principales}
+
+\begin{itemize}
+  \item \textbf{Galería diagnóstica}: búsqueda y filtrado de imágenes por
+  metadatos clínicos y consulta del detalle de cada caso.
+  \item \textbf{Descarga de conjuntos de datos}: exportación de imágenes y/o
+  metadatos en un archivo ZIP, sujeta a autorización.
+  \item \textbf{Análisis estadístico}: panel con indicadores y gráficos sobre la
+  composición del repositorio.
+  \item \textbf{Instituciones}: consulta de los centros que aportan imágenes.
+  \item \textbf{Gestión de cuentas}: registro, perfil personal y, para los
+  administradores, aprobación de cuentas, autorización de descargas y
+  gestión de roles.
+  \item \textbf{Integración}: diccionario de metadatos y API documentada para
+  aportar imágenes desde otras aplicaciones.
+\end{itemize}
+
+\subsection{Perfiles de usuario}
+\label{sec:roles}
+
+Las acciones disponibles dependen del \textbf{rol} de la cuenta. Toda cuenta nueva
+recibe automáticamente el rol \rol{Viewer}; los administradores pueden asignar
+roles adicionales, y una misma cuenta puede tener varios a la vez.
+
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}l Y@{}}
+\toprule
+\rowcolor{dermaSoft}
+\textbf{Rol} & \textbf{Descripción} \\
+\midrule
+\rol{Viewer} (Visualizador) & Explora la galería completa, consulta el detalle
+de las imágenes, las instituciones y los análisis, gestiona su perfil y puede
+solicitar autorización para descargar. \\
+\addlinespace
+\rol{Contributor} (Contribuidor) & Además de lo anterior, puede aportar imágenes al
+repositorio mediante la API de integración (sección~\ref{sec:desarrolladores}). \\
+\addlinespace
+\rol{Admin} (Administrador) & Control total: aprueba cuentas y solicitudes de
+descarga, gestiona usuarios y roles, elimina imágenes y descarga sin necesidad de
+autorización previa. \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+La tabla siguiente resume los permisos de cada perfil, incluido el visitante que
+navega sin haber iniciado sesión.
+
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}Y c c c c@{}}
+\toprule
+\rowcolor{dermaSoft}
+\textbf{Función} & \textbf{Visitante} & \textbf{Viewer} & \textbf{Contributor} & \textbf{Admin} \\
+\midrule
+Ver la página de inicio, el análisis estadístico y los términos & \checkmark & \checkmark & \checkmark & \checkmark \\
+Explorar la galería & 10 primeras & \checkmark & \checkmark & \checkmark \\
+Consultar el detalle de una imagen pública & \checkmark & \checkmark & \checkmark & \checkmark \\
+Ver las instituciones colaboradoras & -- & \checkmark & \checkmark & \checkmark \\
+Solicitar autorización de descarga & -- & \checkmark & \checkmark & -- \\
+Descargar imágenes y metadatos & -- & Con autorización & Con autorización & \checkmark \\
+Aportar imágenes vía API & -- & -- & \checkmark & \checkmark \\
+Eliminar imágenes & -- & -- & -- & \checkmark \\
+Aprobar cuentas y solicitudes de descarga & -- & -- & -- & \checkmark \\
+Gestionar usuarios y roles & -- & -- & -- & \checkmark \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\begin{notabox}
+La galería muestra únicamente las imágenes marcadas como \textbf{públicas} en el
+repositorio. Las imágenes no públicas no aparecen en los listados ni en las
+descargas.
+\end{notabox}
+
+% ==========================================================
+\seccion{Requisitos para el uso}
+% ==========================================================
+
+Para utilizar la plataforma solo se necesita:
+
+\begin{itemize}
+  \item Un \textbf{navegador web actualizado}: Google Chrome, Microsoft Edge,
+  Mozilla Firefox o Safari en sus versiones recientes.
+  \item \textbf{JavaScript habilitado} y el almacenamiento de datos del sitio
+  permitido: la plataforma guarda la sesión en el navegador.
+  \item Una \textbf{conexión a Internet estable}. La aplicación mantiene una
+  conexión permanente con el servidor mientras la página está abierta; si se
+  interrumpe, el navegador mostrará un aviso de reconexión.
+  \item Una \textbf{cuenta de correo electrónico} propia, necesaria para
+  registrarse, confirmar la cuenta y recuperar la contraseña.
+  \item Una pantalla con resolución de al menos 1280\,×\,720 píxeles para
+  visualizar con comodidad los gráficos. La interfaz se adapta también a tabletas
+  y teléfonos.
+\end{itemize}
+
+No es necesario instalar ningún programa en el equipo del usuario.
+
+% ==========================================================
+\seccion{Primeros pasos}
+\label{sec:primeros-pasos}
+% ==========================================================
+
+\subsection{Acceder a la plataforma}
+
+Abra el navegador y escriba la dirección (URL) de la plataforma que le haya
+facilitado el administrador de su institución. En una instalación local, la
+dirección por defecto es \texttt{http://localhost:5130}. Se mostrará la página de
+inicio (Figura~\ref{fig:inicio-anonimo}).
+
+\captura{inicio-anonimo}{Página de inicio vista por un visitante sin sesión iniciada.}
+
+\subsection{Elementos de la interfaz}
+
+En la parte superior de todas las páginas se encuentra la \textbf{barra de
+navegación}, con los siguientes accesos:
+
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}l l Y@{}}
+\toprule
+\rowcolor{dermaSoft}
+\textbf{Opción} & \textbf{Ruta} & \textbf{Contenido} \\
+\midrule
+\menu{Inicio} & \texttt{/} & Resumen de la plataforma y accesos rápidos. \\
+\menu{Imágenes} & \texttt{/images} & Galería diagnóstica (sección~\ref{sec:galeria}). \\
+\menu{Instituciones} & \texttt{/institutions} & Centros colaboradores (sección~\ref{sec:instituciones}). \\
+\menu{Análisis} & \texttt{/analytics} & Panel estadístico (sección~\ref{sec:analisis}). \\
+\menu{Desarrolladores\flecha Metadatos} & \texttt{/developers/metadata} & Diccionario de metadatos. \\
+\menu{Desarrolladores\flecha API} & \texttt{/developers/api} & Documentación de la API. \\
+\menu{Usuarios} & \texttt{/users} & Gestión de usuarios (solo \rol{Admin}). \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+A la derecha de la barra aparecen los botones \boton{Iniciar sesión} y
+\boton{Registrarse} cuando no hay una sesión abierta. Tras iniciar sesión se
+sustituyen por el \textbf{menú de usuario}: un botón con las iniciales y el nombre
+de la persona que, al pulsarlo, despliega las opciones \boton{Mi perfil} y
+\boton{Cerrar sesión} (Figura~\ref{fig:menu-usuario}). En pantallas estrechas el
+menú se agrupa en un botón con tres líneas horizontales.
+
+\captura[0.6\textwidth]{menu-usuario}{Menú de usuario desplegado tras iniciar sesión.}
+
+\subsection{Crear una cuenta}
+\label{sec:registro}
+
+\begin{pasos}
+  \item En la barra de navegación, pulse \boton{Registrarse}.
+  \item Complete los campos \campo{Nombre}, \campo{Apellido} y
+  \campo{Correo electrónico} (Figura~\ref{fig:registro}).
+  \item Escriba una contraseña en \campo{Contraseña} y repítala en
+  \campo{Confirmar contraseña}. Debe tener al menos 8 caracteres e incluir una
+  letra mayúscula, una minúscula y un número.
+  \item Lea los \hyperref[sec:terminos]{Términos y Condiciones} (el enlace se abre
+  en una pestaña nueva) y marque la casilla de aceptación.
+  \item Pulse \boton{Crear cuenta}. El sistema confirma el registro e indica que
+  revise su correo.
+\end{pasos}
+
+\captura[0.8\textwidth]{registro}{Formulario de registro de una cuenta nueva.}
+
+Una cuenta recién creada \textbf{todavía no permite iniciar sesión}. Para
+activarla deben completarse dos condiciones, en cualquier orden:
+
+\begin{enumerate}
+  \item \textbf{Confirmar el correo electrónico} mediante el enlace recibido
+  (sección~\ref{sec:confirmar}).
+  \item \textbf{Aprobación de un administrador}, que recibe un aviso por correo
+  cada vez que se registra una cuenta (sección~\ref{sec:aprobar-registros}).
+  Cuando la cuenta es aprobada, usted recibe un correo de confirmación.
+\end{enumerate}
+
+\subsection{Confirmar el correo electrónico}
+\label{sec:confirmar}
+
+\begin{pasos}
+  \item Abra el mensaje \mensaje{Confirma tu correo - DermaUH} recibido en su
+  bandeja de entrada (revise también la carpeta de correo no deseado).
+  \item Pulse el enlace de confirmación. Se abrirá la plataforma, que valida el
+  enlace automáticamente.
+  \item Si la validación es correcta se muestra la pantalla de la
+  Figura~\ref{fig:confirmacion-correo}. Si el enlace no es válido o ha
+  caducado, la página muestra un mensaje de error.
+\end{pasos}
+
+\captura{confirmacion-correo}{Confirmación de correo realizada correctamente.}
+
+\subsection{Iniciar sesión}
+\label{sec:login}
+
+\begin{pasos}
+  \item Pulse \boton{Iniciar sesión} en la barra de navegación.
+  \item Introduzca su \campo{Correo electrónico} y su \campo{Contraseña}
+  (Figura~\ref{fig:login}).
+  \item Pulse el botón \boton{Iniciar sesión}. Si los datos son correctos, el
+  menú de usuario aparece en la barra de navegación.
+\end{pasos}
+
+\captura{login}{Pantalla de inicio de sesión.}
+
+\textbf{Acceso con Google.} Si la institución ha habilitado esta opción, debajo del
+formulario aparece el botón de Google. Para usarlo, marque primero la casilla de
+aceptación de los Términos y Condiciones y después pulse el botón. La primera vez
+que se accede con Google se crea la cuenta y queda \textbf{pendiente de
+aprobación} por un administrador; el correo de Google se considera ya confirmado.
+
+\begin{notabox}
+Por seguridad, la sesión caduca al cabo de un tiempo (por defecto, 24 horas). Al
+caducar, el sistema le pedirá que vuelva a iniciar sesión.
+\end{notabox}
+
+\subsection{Cerrar sesión}
+
+Pulse el menú de usuario y seleccione \boton{Cerrar sesión}. Es recomendable
+hacerlo siempre al utilizar un equipo compartido.
+
+\subsection{Recuperar la contraseña}
+\label{sec:recuperar}
+
+\begin{pasos}
+  \item En la pantalla de inicio de sesión, pulse \boton{¿Olvidaste tu contraseña?}.
+  \item Escriba su \campo{Correo electrónico} y pulse
+  \boton{Enviar enlace} (Figura~\ref{fig:olvido-contrasena}).
+  \item Abra el correo recibido y pulse el enlace para restablecer la contraseña.
+  \item En la página que se abre (Figura~\ref{fig:restablecer-contrasena}),
+  escriba la \campo{Nueva contraseña}, repítala en \campo{Confirmar contraseña}
+  y pulse \boton{Restablecer contraseña}.
+  \item Inicie sesión con la nueva contraseña.
+\end{pasos}
+
+\captura[0.8\textwidth]{olvido-contrasena}{Solicitud de recuperación de contraseña.}
+
+\begin{notabox}
+Por seguridad, el sistema muestra siempre el mismo mensaje tanto si el correo
+existe como si no, y solo envía instrucciones a cuentas con el correo ya
+confirmado.
+\end{notabox}
+
+\captura[0.8\textwidth]{restablecer-contrasena}{Formulario para establecer una nueva contraseña.}
+
+% ==========================================================
+\seccion{Página de inicio}
+% ==========================================================
+
+La página de inicio ofrece una vista general de la plataforma:
+
+\begin{itemize}
+  \item \textbf{Indicadores}: número de imágenes en el repositorio, instituciones
+  activas y contribuidores activos.
+  \item \textbf{Accesos directos}: \boton{Explorar galería} y
+  \boton{Ver análisis estadístico}.
+  \item \textbf{Tarjetas de funciones}: galería diagnóstica, instituciones y
+  análisis estadístico. La última tarjeta depende del rol: los administradores
+  ven \boton{Gestionar usuarios} y el resto de usuarios \boton{Ver mi perfil}
+  (Figura~\ref{fig:inicio-tarjetas}).
+\end{itemize}
+
+\captura{inicio-tarjetas}{Tarjetas de acceso rápido de la página de inicio (vista de administrador).}
+
+% ==========================================================
+\seccion{Galería de imágenes}
+\label{sec:galeria}
+% ==========================================================
+
+La galería diagnóstica (\menu{Imágenes}) permite explorar el repositorio y
+seleccionar imágenes para su descarga. La pantalla se divide en el panel de
+\textbf{filtros}, a la izquierda, y la zona de \textbf{resultados}, a la derecha
+(Figura~\ref{fig:galeria}).
+
+\captura{galeria}{Galería diagnóstica con el panel de filtros y los resultados.}
+
+Cada tarjeta de resultado muestra la miniatura de la imagen, el nombre del archivo,
+la categoría diagnóstica y el tipo de imagen. Encima de los resultados se indica
+el número de casos encontrados.
+
+\subsection{Consultar la galería sin iniciar sesión}
+
+Un visitante sin sesión puede ver únicamente las \textbf{diez primeras} imágenes.
+Al final de la lista se muestra el aviso \mensaje{Ha alcanzado el límite de vista
+previa. Inicie sesión para explorar los N casos completos.} junto al botón
+\boton{Iniciar sesión} (Figura~\ref{fig:galeria-anonimo}). Con la sesión iniciada,
+las imágenes se cargan automáticamente a medida que se desplaza hacia abajo.
+
+\captura[0.8\textwidth]{galeria-anonimo}{Límite de vista previa para visitantes sin sesión.}
+
+\subsection{Filtrar las imágenes}
+
+\begin{pasos}
+  \item Para buscar por diagnóstico, escriba un término en el campo
+  \campo{Diagnóstico} (por ejemplo, «melanoma»). Los resultados se actualizan
+  mientras escribe.
+  \item Marque una o varias casillas en los grupos de filtros. Dentro de un grupo,
+  las opciones marcadas se combinan entre sí (se muestran los casos que cumplen
+  cualquiera de ellas); los distintos grupos se aplican conjuntamente.
+  \item Para eliminar todos los filtros, pulse \boton{Restablecer}.
+\end{pasos}
+
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}l Y@{}}
+\toprule
+\rowcolor{dermaSoft}
+\textbf{Filtro} & \textbf{Opciones} \\
+\midrule
+Tipo de imagen & Dermoscópica; Clínica: Vista General; Clínica: Primer Plano; TBP: Vista
+General; TBP: Primer Plano; RCM: Macroscópica; RCM: Tile; RCM: Mosaico. \\
+Categoría & Benigno, Indeterminado, Maligno. \\
+Tipo de lesión & Melanoma, Carcinoma Basocelular, Carcinoma Escamocelular, Otros. \\
+Confirmación diagnóstica & Histopatología; Evaluación clínica individual; Imágenes
+seriadas sin cambio; Consenso de expertos; Microscopía confocal. \\
+Fototipo & I, II, III, IV, V, VI (escala de Fitzpatrick). \\
+Sexo & Masculino, Femenino. \\
+Sitio anatómico & Cabeza/Cuello; Extremidad Superior; Extremidad Inferior; Torso
+Anterior; Torso Lateral; Torso Posterior; Palmas/Plantas; Oral/Genital. \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\subsection{Seleccionar y descargar imágenes}
+\label{sec:descargar}
+
+Las descargas requieren haber iniciado sesión y, salvo para los administradores,
+contar con autorización (sección~\ref{sec:autorizacion}).
+
+\begin{pasos}
+  \item Aplique los filtros que necesite.
+  \item Marque la casilla situada en la esquina de cada imagen que desee
+  descargar, o marque \boton{Seleccionar todo lo cargado} para seleccionar todas
+  las imágenes visibles. El contador indica cuántas hay seleccionadas
+  (Figura~\ref{fig:galeria-seleccion}).
+  \item En el desplegable \campo{Formato}, elija el contenido del archivo:
+  \textit{Imágenes y metadatos}, \textit{Solo metadatos} o \textit{Solo imágenes}.
+  \item Pulse \boton{Descargar selección} para descargar las imágenes marcadas, o
+  \boton{Descargar todo} para descargar \textbf{todos} los casos que cumplen los
+  filtros actuales, aunque no estén cargados en pantalla.
+  \item El navegador guarda un archivo ZIP.
+\end{pasos}
+
+\captura{galeria-seleccion}{Galería filtrada por categoría «Maligno» con tres imágenes seleccionadas.}
+
+El archivo ZIP descargado contiene:
+
+\begin{itemize}
+  \item \texttt{metadata.csv}: una fila por imagen con todos sus metadatos
+  clínicos (si el formato incluye metadatos). Puede abrirse con cualquier hoja de
+  cálculo.
+  \item Carpeta \texttt{images/}: los archivos de imagen, nombrados con su
+  identificador público (si el formato incluye imágenes).
+  \item \texttt{errores.txt}: solo aparece si alguna imagen no pudo incluirse, y
+  enumera cuáles.
+\end{itemize}
+
+\subsection{Solicitar autorización de descarga}
+\label{sec:autorizacion}
+
+La primera vez que un usuario sin autorización intenta descargar, se abre la
+ventana \textbf{Solicitar autorización para descargar}
+(Figura~\ref{fig:modal-solicitud}).
+
+\begin{pasos}
+  \item En \campo{Motivo de uso}, describa para qué necesita las imágenes (por
+  ejemplo, el proyecto de investigación o la asignatura).
+  \item En \campo{Institución}, indique la institución a la que pertenece.
+  \item Pulse \boton{Enviar solicitud}. Todos los administradores reciben un aviso
+  por correo.
+  \item Consulte el estado de la solicitud en \menu{Mi perfil}, apartado
+  \textbf{Mis solicitudes de descarga} (sección~\ref{sec:mis-solicitudes}).
+  Recibirá también un correo cuando sea aprobada o denegada.
+\end{pasos}
+
+\captura{modal-solicitud}{Ventana de solicitud de autorización de descarga.}
+
+\begin{notabox}
+Una vez aprobada una solicitud, la autorización queda asociada a la cuenta de
+forma permanente: no es necesario solicitarla de nuevo para futuras descargas.
+\end{notabox}
+
+\subsection{Consultar el detalle de una imagen}
+\label{sec:detalle}
+
+Pulse sobre cualquier tarjeta de la galería para abrir su ficha de detalle
+(Figura~\ref{fig:detalle-imagen}). La ficha es de solo lectura y muestra la imagen
+ampliada junto a sus metadatos, agrupados en:
+
+\begin{itemize}
+  \item \textbf{Información general}: identificador público, archivo, tipo de
+  imagen, manipulación, tipo dermatoscópico, contribuidor e institución.
+  \item \textbf{Datos del paciente}: edad aproximada, sexo, color de piel,
+  fototipo, antecedentes personales, antecedentes personales y familiares de
+  melanoma, exposición solar y provincia.
+  \item \textbf{Información clínica de la lesión}: sitio anatómico general y
+  especial, y diámetro mayor en milímetros.
+  \item \textbf{Diagnóstico}: diagnóstico clínico, diagnóstico histopatológico,
+  categoría, tipo de lesión y método de confirmación.
+  \item \textbf{Histología (melanoma)}: espesor de Breslow, índice mitótico y
+  ulceración, cuando la lesión es un melanoma.
+  \item \textbf{Notas}: notas clínicas y comentarios dermatoscópicos, si existen.
+\end{itemize}
+
+Para volver a la galería pulse \boton{Volver al listado}.
+
+\captura[0.72\textwidth]{detalle-imagen}{Ficha de detalle de una imagen.}
+
+% ==========================================================
+\seccion{Instituciones}
+\label{sec:instituciones}
+% ==========================================================
+
+La página \menu{Instituciones} presenta los centros que han aportado imágenes al
+repositorio, en un carrusel de tarjetas que puede desplazarse lateralmente. Cada
+tarjeta muestra el nombre, la descripción, el país y el número de imágenes
+aportadas; en la parte superior se resumen el total de instituciones y de
+imágenes (Figura~\ref{fig:instituciones}).
+
+\captura{instituciones}{Instituciones colaboradoras.}
+
+\begin{notabox}
+El listado de instituciones solo se carga con la sesión iniciada. La página es de
+consulta: las instituciones se registran automáticamente al aportar imágenes a
+través de la API.
+\end{notabox}
+
+% ==========================================================
+\seccion{Análisis estadístico}
+\label{sec:analisis}
+% ==========================================================
+
+El panel \menu{Análisis} resume la composición del repositorio para apoyar la
+investigación epidemiológica y la evaluación de la calidad de los datos. Es de
+acceso público. Los gráficos se calculan con los datos disponibles en el momento
+de la consulta; al pasar el puntero sobre un elemento se muestra su valor.
+
+\subsection{Indicadores y distribución anatómica}
+
+La parte superior muestra los indicadores clave (total de imágenes, imágenes
+públicas, instituciones y contribuidores) y tres gráficos
+(Figura~\ref{fig:analitica-resumen}):
+
+\begin{itemize}
+  \item \textbf{Mapeo de melanoma}: silueta corporal en la que cada región se
+  colorea según el número de casos de melanoma localizados en ella.
+  \item \textbf{Sitios anatómicos (general)}: número de imágenes por región
+  anatómica.
+  \item \textbf{Tendencia de cargas}: número de imágenes incorporadas cada mes.
+\end{itemize}
+
+\captura{analitica-resumen}{Indicadores clave, mapa corporal de melanoma y distribución anatómica.}
+
+\subsection{Correlaciones clínicas}
+
+Cuatro gráficos de barras agrupadas cruzan dos variables: Diagnóstico frente a
+Sexo, Tipo de lesión frente a Grupo de edad, Diagnóstico frente a Color de piel y
+Diagnóstico frente a Sitio anatómico (Figura~\ref{fig:analitica-correlaciones}).
+
+\captura{analitica-correlaciones}{Correlaciones clínicas.}
+
+\subsection{Distribución geográfica}
+
+El mapa de Cuba colorea cada provincia según el número de imágenes procedentes de
+ella, lo que permite valorar la representatividad territorial del repositorio
+(Figura~\ref{fig:analitica-geografica}).
+
+\captura{analitica-geografica}{Representatividad de las imágenes por provincia.}
+
+\subsection{Distribuciones generales}
+
+Ocho gráficos circulares muestran la proporción de casos según categoría
+diagnóstica, tipo de lesión, sexo, color de piel, grupo de edad, fototipo, método
+de confirmación y tipo de imagen (Figura~\ref{fig:analitica-distribuciones}).
+
+\captura[0.85\textwidth]{analitica-distribuciones}{Distribuciones generales del repositorio.}
+
+\subsection{Calidad de los datos}
+
+El gráfico de completitud indica, para cada campo clínico, el porcentaje de
+imágenes que tienen ese dato informado. Es útil para identificar qué metadatos
+conviene completar (Figura~\ref{fig:analitica-completitud}).
+
+\captura[0.85\textwidth]{analitica-completitud}{Completitud de los metadatos clínicos.}
+
+% ==========================================================
+\seccion{Mi perfil}
+\label{sec:perfil}
+% ==========================================================
+
+Para abrir el perfil, pulse el menú de usuario y seleccione \boton{Mi perfil}. La
+página requiere sesión iniciada (Figura~\ref{fig:perfil-usuario}).
+
+A la izquierda se muestra el \textbf{resumen de la cuenta}: iniciales, nombre,
+correo, estado de verificación del correo, roles asignados, fecha de alta y si la
+cuenta está autorizada para descargas (por ejemplo, \mensaje{Sin autorización de
+descarga masiva}). A la derecha se encuentran, de arriba abajo, el listado
+\textbf{Mis solicitudes de descarga} y los formularios \textbf{Información
+personal} y \textbf{Cambiar contraseña}, que se describen a continuación. Las
+cuentas con rol Admin ven además, al principio, los apartados de aprobación
+descritos en la sección~\ref{sec:admin}.
+
+\captura[0.8\textwidth]{perfil-usuario}{Perfil de un usuario con rol Viewer.}
+
+\subsection{Actualizar los datos personales}
+
+\begin{pasos}
+  \item En el apartado \textbf{Información personal}, modifique los campos
+  \campo{Nombre}, \campo{Apellido} o \campo{Teléfono (opcional)}.
+  \item Pulse \boton{Guardar cambios}.
+\end{pasos}
+
+El correo electrónico no puede modificarse, ya que identifica la cuenta.
+
+\subsection{Cambiar la contraseña}
+
+\begin{pasos}
+  \item En el apartado \textbf{Cambiar contraseña}, escriba su
+  \campo{Contraseña actual}.
+  \item Escriba la \campo{Nueva contraseña} y repítala en
+  \campo{Confirmar nueva contraseña}.
+  \item Pulse \boton{Cambiar contraseña}.
+\end{pasos}
+
+\subsection{Seguimiento de las solicitudes de descarga}
+\label{sec:mis-solicitudes}
+
+El apartado \textbf{Mis solicitudes de descarga} lista las solicitudes enviadas,
+con su fecha, motivo, institución y estado: \textit{Pendiente},
+\textit{Aprobada} o \textit{Denegada}.
+
+% ==========================================================
+\seccion{Tareas de administración}
+\label{sec:admin}
+% ==========================================================
+
+\begin{adminbox}
+Las funciones de esta sección solo están disponibles para cuentas con el rol
+Admin.
+\end{adminbox}
+
+\subsection{Aprobar o denegar registros}
+\label{sec:aprobar-registros}
+
+Las cuentas nuevas aparecen en \menu{Mi perfil}, apartado
+\textbf{Solicitudes de registro pendientes} (Figura~\ref{fig:perfil-admin-registros}).
+
+\begin{pasos}
+  \item Abra \menu{Mi perfil}. Si hay muchas solicitudes, escriba parte del correo
+  en \campo{Buscar por email} y pulse \boton{Buscar}.
+  \item Compruebe el nombre y el correo del solicitante.
+  \item Pulse \boton{Aceptar} para activar la cuenta, o \boton{Denegar} para
+  rechazarla. En ambos casos el solicitante recibe un correo.
+\end{pasos}
+
+\captura{perfil-admin-registros}{Solicitudes de registro pendientes.}
+
+\begin{warnbox}
+Denegar una solicitud \textbf{elimina la cuenta}. Si la persona desea acceder más
+adelante, deberá registrarse de nuevo.
+\end{warnbox}
+
+\begin{notabox}
+Aprobar una cuenta no confirma su correo: el usuario solo podrá iniciar sesión
+cuando, además, haya pulsado el enlace de confirmación que recibió al
+registrarse.
+\end{notabox}
+
+\subsection{Revisar solicitudes de descarga}
+
+Las solicitudes de autorización de descarga aparecen en \menu{Mi perfil},
+apartado \textbf{Solicitudes de descarga pendientes}, con el solicitante, su
+correo, el motivo, la institución y la fecha (Figura~\ref{fig:perfil-admin-descargas}).
+
+\begin{pasos}
+  \item Lea el motivo de uso y la institución indicados.
+  \item Pulse \boton{Aceptar} para conceder la autorización de forma permanente, o
+  \boton{Denegar} para rechazarla. El usuario recibe un correo con la decisión.
+\end{pasos}
+
+\captura{perfil-admin-descargas}{Solicitudes de descarga pendientes de revisión.}
+
+\subsection{Gestionar usuarios}
+
+La página \menu{Usuarios} lista todas las cuentas con su nombre, correo, roles,
+estado y fecha de registro (Figura~\ref{fig:usuarios}). El listado puede
+filtrarse con \campo{Buscar por email}, \campo{Rol} (Todos, Admin, Contributor,
+Viewer o Sin rol) y \campo{Estado} (Todos, Activos o Inactivos).
+
+\captura{usuarios}{Gestión de usuarios.}
+
+\subsubsection*{Crear un usuario}
+
+\begin{pasos}
+  \item Pulse \boton{+ Nuevo usuario}. Se despliega el formulario de la
+  Figura~\ref{fig:usuarios-nuevo}.
+  \item Complete \campo{Nombre}, \campo{Apellido}, \campo{Email} y
+  \campo{Contraseña} (todos obligatorios).
+  \item Pulse \boton{Guardar}. Para cerrar el formulario sin crear la cuenta, pulse
+  \boton{Cancelar}.
+\end{pasos}
+
+\captura{usuarios-nuevo}{Formulario de creación de un usuario.}
+
+La cuenta se crea con el rol \rol{Viewer} y sigue el mismo circuito que un registro
+normal: la persona recibe el correo de confirmación y la cuenta aparece en las
+solicitudes de registro pendientes hasta que se aprueba o se activa.
+
+\subsubsection*{Asignar o quitar roles}
+
+\begin{pasos}
+  \item Localice el usuario en el listado.
+  \item Para añadir un rol, elíjalo en el primer selector de la columna
+  \textbf{Acciones} (solo se ofrecen los roles que aún no tiene) y pulse
+  \boton{Asignar}.
+  \item Para quitar un rol, elíjalo en el segundo selector (roles asignados) y pulse
+  \boton{Quitar}.
+\end{pasos}
+
+Los cambios de rol se aplican la próxima vez que el usuario inicie sesión.
+
+\subsubsection*{Activar, desactivar o eliminar una cuenta}
+
+\begin{itemize}
+  \item \boton{Desactivar} impide que la cuenta inicie sesión sin borrarla;
+  \boton{Activar} la habilita de nuevo. El navegador pide confirmación.
+  \item \boton{Eliminar} borra la cuenta tras confirmar el mensaje
+  \mensaje{¿Deseas eliminar este usuario? Esta acción no se puede deshacer.}
+\end{itemize}
+
+\subsection{Eliminar una imagen}
+
+\begin{pasos}
+  \item Abra la ficha de detalle de la imagen (sección~\ref{sec:detalle}).
+  \item Pulse \boton{Eliminar} en la parte superior derecha
+  (Figura~\ref{fig:detalle-admin}).
+  \item Confirme el mensaje \mensaje{¿Deseas eliminar esta imagen? Esta acción no se
+  puede deshacer.} El sistema vuelve a la galería.
+\end{pasos}
+
+\captura{detalle-admin}{Ficha de detalle vista por un administrador, con el botón «Eliminar».}
+
+\begin{warnbox}
+La eliminación de imágenes y de usuarios no se puede deshacer desde la interfaz.
+\end{warnbox}
+
+% ==========================================================
+\seccion{Sección para desarrolladores}
+\label{sec:desarrolladores}
+% ==========================================================
+
+El menú \menu{Desarrolladores} reúne la información necesaria para integrar otras
+aplicaciones con la plataforma. Es de acceso público.
+
+\subsection{Diccionario de metadatos}
+
+\menu{Desarrolladores\flecha Metadatos} describe cada campo clínico del
+repositorio: nombre, significado, tipo de dato y valores admitidos
+(Figura~\ref{fig:desarrolladores-metadatos}). El botón
+\boton{Descargar diccionario (CSV)} exporta la lista completa. El mismo
+diccionario está disponible en la ruta \texttt{/metadata}.
+
+\captura{desarrolladores-metadatos}{Diccionario de metadatos.}
+
+\subsection{API de carga de imágenes}
+
+\menu{Desarrolladores\flecha API} documenta cómo aportar imágenes desde otra
+aplicación (Figura~\ref{fig:desarrolladores-api}). Los datos esenciales son:
+
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}l Y@{}}
+\toprule
+\rowcolor{dermaSoft}
+\textbf{Elemento} & \textbf{Detalle} \\
+\midrule
+Operación & \texttt{POST /api/images} \\
+Autenticación & Token \textit{Bearer} (JWT) obtenido con \texttt{POST /api/auth/login} \\
+Roles permitidos & \rol{Admin} o \rol{Contributor} \\
+Formato & \texttt{multipart/form-data} (archivo de imagen y campos de metadatos) \\
+Campos obligatorios & Archivo, identificador del contribuidor, edad aproximada,
+sexo, sitio anatómico general, diagnóstico clínico y exposición solar \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+La página detalla cada campo con su tipo, obligatoriedad y reglas de validación;
+por ejemplo, el tipo de lesión solo se admite si la categoría diagnóstica es
+\textit{Maligno}, y los datos histológicos solo si la lesión es un melanoma.
+
+\captura[0.8\textwidth]{desarrolladores-api}{Documentación de la API de carga de imágenes.}
+
+% ==========================================================
+\seccion{Términos y condiciones}
+\label{sec:terminos}
+% ==========================================================
+
+La página de Términos y Condiciones (\texttt{/terms}) explica el origen de las
+imágenes, la existencia de consentimiento informado de los pacientes, los usos
+permitidos del contenido (docencia, investigación y mejora de la atención
+sanitaria) y las garantías de anonimización de los datos. Su aceptación es
+obligatoria para registrarse y para acceder con Google. Es recomendable leerla
+antes de solicitar una autorización de descarga (Figura~\ref{fig:terminos}).
+
+\captura[0.8\textwidth]{terminos}{Página de Términos y Condiciones de Uso.}
+
+% ==========================================================
+\seccion{Mensajes del sistema y solución de problemas}
+\label{sec:problemas}
+% ==========================================================
+
+\subsection{Mensajes del sistema}
+
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{0.34\textwidth} >{\raggedright\arraybackslash}p{0.6\textwidth}@{}}
+\toprule
+\rowcolor{dermaSoft}
+\textbf{Mensaje} & \textbf{Causa y solución} \\
+\midrule
+\endhead
+\mensaje{Credenciales incorrectas.} & El correo o la contraseña no son correctos.
+Revíselos (las mayúsculas cuentan) o recupere la contraseña
+(sección~\ref{sec:recuperar}). \\
+\addlinespace
+\mensaje{Debes confirmar tu correo electrónico antes de iniciar sesión.} & No se
+ha pulsado el enlace del correo de confirmación. Búsquelo en su bandeja de
+entrada o en correo no deseado. \\
+\addlinespace
+\mensaje{Tu cuenta no está activa. Espere a que sea aprobada o contacte al
+administrador.} & La cuenta aún no ha sido aprobada, o un administrador la ha
+desactivado. \\
+\addlinespace
+\mensaje{Tu cuenta ha sido creada y está pendiente de aprobación por un
+administrador.} & Primer acceso con Google. Espere el correo de aprobación. \\
+\addlinespace
+\mensaje{Ya existe una cuenta con ese correo electrónico.} & El correo ya está
+registrado. Inicie sesión o recupere la contraseña. \\
+\addlinespace
+\mensaje{Debe aceptar los términos y condiciones antes de iniciar sesión con
+Google.} & Marque la casilla de aceptación antes de pulsar el botón de Google. \\
+\addlinespace
+\mensaje{Ha alcanzado el límite de vista previa\ldots} & Los visitantes solo ven
+diez imágenes. Inicie sesión para ver el catálogo completo. \\
+\addlinespace
+\mensaje{No se encontraron imágenes con los filtros actuales.} & Ningún caso
+cumple todos los filtros. Pulse \boton{Restablecer} o reduzca los filtros. \\
+\addlinespace
+\mensaje{Necesita autorización de un administrador para descargar contenido.} &
+Aparece en la ventana de solicitud: su cuenta aún no tiene autorización de
+descarga. Envíe la solicitud (sección~\ref{sec:autorizacion}). \\
+\addlinespace
+\mensaje{No fue posible sincronizar las métricas en este momento.} & El servidor
+no respondió al cargar los indicadores. Recargue la página pasados unos minutos. \\
+\bottomrule
+\end{longtable}
+
+\subsection{Problemas frecuentes}
+
+\textbf{No recibo el correo de confirmación o de recuperación.}\\
+Revise la carpeta de correo no deseado y compruebe que escribió bien la
+dirección. Si el problema persiste, contacte con el administrador: es posible que
+el envío de correo no esté configurado en la instalación.
+
+\textbf{La página muestra un aviso de reconexión o deja de responder.}\\
+La conexión con el servidor se ha interrumpido. Espere a que se restablezca o
+recargue la página con la tecla F5.
+
+\textbf{El enlace del correo indica que no es válido.}\\
+Los enlaces de confirmación y de recuperación caducan (por defecto, a las 24
+horas). Para la contraseña, solicite un enlace nuevo; para la confirmación,
+contacte con el administrador.
+
+\textbf{La página de instituciones aparece vacía.}\\
+El listado de instituciones requiere iniciar sesión. Sin sesión se muestra
+\mensaje{No se encontraron instituciones con imágenes aportadas.}
+
+\textbf{Al recargar \menu{Mi perfil} o \menu{Usuarios} aparece la pantalla de inicio
+de sesión.}\\
+Ocurre al recargar la página (F5) o al abrir su dirección directamente, aunque la
+sesión siga abierta (su nombre continúa en la barra de navegación). Acceda a estas
+páginas desde el menú de usuario o desde la barra de navegación.
+
+\textbf{El mapa de provincias muestra marcas de agua sobre el fondo.}\\
+El proveedor de mapas base requiere una clave de acceso que aún no está
+configurada. Los datos por provincia (marcadores y tabla lateral) se muestran
+correctamente.
+
+\textbf{Me han asignado un rol nuevo pero no veo las nuevas opciones.}\\
+Cierre sesión y vuelva a iniciarla para que se apliquen los permisos.
+
+% ==========================================================
+\seccion{Preguntas frecuentes}
+% ==========================================================
+
+\textbf{¿Por qué no puedo iniciar sesión justo después de registrarme?}\\
+Porque la cuenta necesita que confirme su correo y que un administrador la
+apruebe (sección~\ref{sec:registro}).
+
+\textbf{¿Cómo subo nuevas imágenes al repositorio?}\\
+La interfaz web no incluye un formulario de carga. Las imágenes se aportan mediante
+la API (sección~\ref{sec:desarrolladores}), con una cuenta de rol Contributor o
+Admin, normalmente desde otra aplicación del ecosistema DermaUH.
+
+\textbf{¿Puedo modificar los metadatos de una imagen?}\\
+No desde la interfaz web. La corrección de metadatos está reservada a los
+administradores a través de la API.
+
+\textbf{¿Tengo que pedir autorización cada vez que descargo?}\\
+No. Una vez aprobada, la autorización es permanente para su cuenta.
+
+\textbf{¿Qué contiene exactamente el archivo descargado?}\\
+Un ZIP con \texttt{metadata.csv} y/o la carpeta \texttt{images/}, según el formato
+elegido (sección~\ref{sec:descargar}).
+
+\textbf{¿Por qué algunas imágenes del repositorio no aparecen en la galería?}\\
+La galería solo muestra las imágenes marcadas como públicas.
+
+% ==========================================================
+\seccion{Glosario}
+\label{sec:glosario}
+% ==========================================================
+
+\begin{description}[style=nextline, leftmargin=1.5em, itemsep=1pt, topsep=2pt]
+  \item[Breslow (espesor de)] Profundidad de invasión de un melanoma, medida en
+  milímetros en el estudio histológico. Es un factor pronóstico fundamental.
+  \item[Carcinoma basocelular] Tipo de cáncer de piel más frecuente, de
+  crecimiento lento y rara vez metastásico.
+  \item[Categoría diagnóstica] Clasificación de la lesión como benigna,
+  indeterminada o maligna.
+  \item[Consentimiento informado] Autorización documentada del paciente para el
+  uso de sus imágenes con fines asistenciales, docentes o de investigación.
+  \item[CSV] Formato de texto con valores separados por comas que puede abrirse con
+  hojas de cálculo.
+  \item[Dermatoscopia] Técnica de exploración de la piel con un instrumento de
+  aumento e iluminación que permite ver estructuras no visibles a simple vista.
+  Puede ser con luz polarizada o no polarizada, y con o sin contacto.
+  \item[Fototipo] Clasificación de Fitzpatrick (I a VI) de la respuesta de la piel a
+  la exposición solar.
+  \item[Histopatología] Estudio microscópico de una muestra de tejido; es el
+  método de referencia para confirmar un diagnóstico.
+  \item[Índice mitótico] Número de células en división por milímetro cuadrado en
+  un melanoma.
+  \item[JWT] \textit{JSON Web Token}: credencial temporal que la plataforma emite al
+  iniciar sesión y que autoriza las peticiones a la API.
+  \item[Melanoma] Cáncer de piel originado en los melanocitos; el de mayor
+  gravedad.
+  \item[Metadatos] Datos que describen cada imagen: paciente, lesión, diagnóstico
+  y características de la captura.
+  \item[RCM] Microscopía confocal de reflectancia: técnica de imagen no invasiva de
+  alta resolución.
+  \item[Rol] Perfil de permisos de una cuenta (Viewer, Contributor, Admin).
+  \item[TBP] Fotografía corporal total (\textit{Total Body Photography}).
+  \item[ZIP] Formato de archivo comprimido que agrupa varios archivos en uno.
+\end{description}
+
+% ==========================================================
+\seccion{Soporte}
+% ==========================================================
+
+Para cualquier incidencia no resuelta en este manual (cuentas bloqueadas,
+solicitudes pendientes durante mucho tiempo, errores de la aplicación), contacte
+con el administrador de la plataforma de su institución. Al comunicar un problema,
+indique:
+
+\begin{itemize}
+  \item el correo de su cuenta;
+  \item la página en la que se encontraba y la acción que intentaba realizar;
+  \item el texto exacto del mensaje mostrado, o una captura de pantalla;
+  \item la fecha y hora aproximadas.
+\end{itemize}
+
+% ==========================================================
+\clearpage
+\appendix
+\renewcommand{\thesection}{\Alph{section}}
+\section{Anexo: instalación y despliegue con Docker}
+\label{anexo:despliegue}
+% ==========================================================
+
+Este anexo está dirigido al personal técnico responsable de instalar la
+plataforma. Los archivos mencionados se encuentran en la raíz del repositorio del
+proyecto.
+
+\subsection{Arquitectura}
+
+La plataforma se despliega con \textbf{Docker Compose} como un conjunto de
+contenedores:
+
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}l l Y@{}}
+\toprule
+\rowcolor{dermaSoft}
+\textbf{Servicio} & \textbf{Puerto (host)} & \textbf{Función} \\
+\midrule
+\texttt{web} & 5130 & Aplicación web (Blazor Server) que usan los usuarios. \\
+\texttt{api} & 5131 & API REST. La usa la aplicación web y las integraciones externas. \\
+\texttt{postgres} & 5432 (solo local) & Base de datos PostgreSQL 16. \\
+\texttt{mailpit} & 8025 & Opcional: servidor de correo de pruebas. \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+Los datos persistentes se guardan en volúmenes de Docker:
+\texttt{postgres\_data} (base de datos), \texttt{api\_images} (archivos de
+imagen) y \texttt{api\_keys} / \texttt{web\_keys} (claves de protección de
+datos, de las que dependen los enlaces de confirmación y de recuperación
+enviados por correo).
+
+\subsection{Requisitos}
+
+\begin{itemize}
+  \item Docker Engine con el complemento Docker Compose v2.
+  \item Al menos 2\,GB de memoria y espacio en disco suficiente para las imágenes.
+  \item Acceso a Internet durante la construcción de las imágenes (descarga de
+  dependencias).
+\end{itemize}
+
+\subsection{Configuración}
+
+\begin{pasos}
+  \item Copie el archivo de ejemplo de configuración:
+\begin{consola}
+cp .env.example .env
+\end{consola}
+  \item Edite \texttt{.env} y ajuste, como mínimo, las variables de la tabla
+  siguiente.
+\end{pasos}
+
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{0.36\textwidth} >{\raggedright\arraybackslash}p{0.58\textwidth}@{}}
+\toprule
+\rowcolor{dermaSoft}
+\textbf{Variable} & \textbf{Descripción} \\
+\midrule
+\endhead
+\texttt{POSTGRES\_PASSWORD} & Contraseña de la base de datos. \\
+\texttt{JWT\_SECRET\_KEY} & Clave de firma de las sesiones; cadena aleatoria de al
+menos 32 caracteres (\texttt{openssl rand -base64 48}). \\
+\texttt{BOOTSTRAP\_ADMIN\_EMAIL}, \texttt{BOOTSTRAP\_ADMIN\_PASSWORD} & Cuenta del
+primer administrador, que se crea al arrancar la API. \\
+\texttt{FRONTEND\_BASE\_URL} & URL pública de la aplicación web; se usa en los
+enlaces enviados por correo. \\
+\texttt{SMTP\_*} & Servidor de correo saliente. Sin él, los usuarios no reciben
+los correos de confirmación. \\
+\texttt{GOOGLE\_CLIENT\_ID} & Opcional: habilita el acceso con Google. \\
+\texttt{WEB\_PORT}, \texttt{API\_PORT} & Puertos publicados en el servidor. \\
+\bottomrule
+\end{longtable}
+
+\begin{warnbox}
+Antes de un despliegue en producción, sustituya los valores de ejemplo de
+\texttt{POSTGRES\_PASSWORD}, \texttt{JWT\_SECRET\_KEY} y
+\texttt{BOOTSTRAP\_ADMIN\_PASSWORD} por valores propios y seguros. El archivo
+\texttt{.env} no debe incluirse en el control de versiones.
+\end{warnbox}
+
+\subsection{Puesta en marcha}
+
+\begin{pasos}
+  \item Construya las imágenes y arranque los servicios:
+\begin{consola}
+docker compose up -d --build
+\end{consola}
+  \item Compruebe que la API ha arrancado y aplicado las migraciones:
+\begin{consola}
+docker compose logs -f api
+\end{consola}
+  \item Abra \texttt{http://localhost:5130} (o la URL pública configurada) e
+  inicie sesión con la cuenta del administrador inicial.
+\end{pasos}
+
+La API aplica automáticamente las migraciones de la base de datos en cada arranque;
+no se requiere ningún paso manual.
+
+\subsection{Primer administrador}
+
+Una base de datos nueva no contiene usuarios. Si se definen
+\texttt{BOOTSTRAP\_ADMIN\_EMAIL} y \texttt{BOOTSTRAP\_ADMIN\_PASSWORD}, la API crea
+esa cuenta (activa y con el correo confirmado) y le asigna el rol Admin; si la
+cuenta ya existe, solo se asegura de que tenga dicho rol. Una vez creado el
+administrador pueden dejarse vacías.
+
+\subsection{Correo electrónico}
+
+Configure las variables \texttt{SMTP\_*} con los datos de su servidor de correo.
+Para pruebas locales puede usarse Mailpit, que captura todos los correos sin
+enviarlos:
+
+\begin{consola}
+# En .env: SMTP_SERVER_ADDRESS=mailpit  y  SMTP_SERVER_PORT=1025
+docker compose --profile mail up -d
+\end{consola}
+
+Los correos capturados se consultan en \texttt{http://localhost:8025}.
+
+\subsection{Operación y mantenimiento}
+
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}l Y@{}}
+\toprule
+\rowcolor{dermaSoft}
+\textbf{Tarea} & \textbf{Comando} \\
+\midrule
+Detener & \texttt{docker compose down} \\
+Iniciar & \texttt{docker compose up -d} \\
+Actualizar versión & \texttt{git pull} y \texttt{docker compose up -d --build} \\
+Ver registros & \texttt{docker compose logs -f api web} \\
+Estado de servicios & \texttt{docker compose ps} \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\textbf{Copias de seguridad.} Deben respaldarse la base de datos y los archivos de
+imagen:
+
+\begin{consola}
+docker compose exec postgres pg_dump -U root DermaImage > dermauh.sql
+docker run --rm -v dermauh-image-database_api_images:/data \
+  -v "$PWD":/backup alpine tar czf /backup/imagenes.tar.gz -C /data .
+\end{consola}
+
+\begin{warnbox}
+\texttt{docker compose down -v} elimina también los volúmenes, es decir, la base
+de datos y las imágenes. No lo utilice sin disponer de una copia de seguridad.
+\end{warnbox}
+
+\subsection{Publicación en Internet}
+
+Para exponer la plataforma públicamente se recomienda situar delante de los
+servicios \texttt{web} y \texttt{api} un proxy inverso (por ejemplo, Nginx o
+Traefik) que proporcione HTTPS. El proxy debe \textbf{permitir conexiones
+WebSocket} hacia \texttt{web}, ya que la aplicación mantiene una conexión
+permanente con el navegador. Actualice \texttt{FRONTEND\_BASE\_URL} con la URL
+pública definitiva.
+
+\end{document}

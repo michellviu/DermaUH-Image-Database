@@ -133,6 +133,15 @@ docker compose exec postgres pg_dump -U root DermaImage > dermauh.sql   # copia 
 
 Si `docker compose build` falla con *timeouts* al restaurar paquetes de NuGet (HTTPS) mientras hay una VPN activa, la causa suele ser la MTU de la red de Docker: ajustar `"mtu"` en `/etc/docker/daemon.json` al valor de la interfaz de la VPN (p. ej. `1420`) y reiniciar Docker.
 
+## Manual de usuario
+
+El manual de usuario está en [`manual-usuario/manual.pdf`](manual-usuario/manual.pdf); su fuente LaTeX es `manual-usuario/manual.tex` y las capturas están en `manual-usuario/figuras/`. Para regenerarlo:
+
+```bash
+cd manual-usuario
+latexmk -pdf manual.tex
+```
+
 ## Configuración de Email SMTP
 
 La API usa `MailKit` y configuración tipada en `EmailSettings`.

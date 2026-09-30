@@ -67,3 +67,12 @@ stitch*/
 !.env.example
 appsettings.Development.json
 **/appsettings.Development.json
+
+# LaTeX build artifacts
+*.aux
+*.toc
+*.out
+*.log
+*.fls
+*.fdb_latexmk
+*.synctex.gz
